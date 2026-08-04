@@ -11,13 +11,17 @@ const SETTINGS = [
   { key: 'Help & support', value: null },
 ]
 
-export default function Me() {
+export default function Profile() {
   const { highContrast, setHighContrast, cartCount, questionsLeft, showToast } = useStore()
 
   return (
     <>
+      {/* Reached from the header avatar on Home and Horoscope, so it is a
+          drill-in and carries a back arrow rather than a tab. */}
       <TopBar
-        title="Me"
+        title="Profile"
+        back
+        backTo="/home"
         right={
           <button
             type="button"
@@ -63,12 +67,15 @@ export default function Me() {
         </Button>
       </Section>
 
+      {/* Everything that is not one of the five tabs lives here. Chart and
+          People in particular have no tab of their own, so this is their only
+          door — losing it would strand two whole screens. */}
       <Section label="Everything else">
+        <Row to="/chart" title="Your full chart" note="Eight placements, plainly written" />
         <Row to="/people" title="People" note="Charts you have read against yours" />
-        <Row to="/ask" title="Ask the Stars" meta={`${questionsLeft} left`} />
-        <Row to="/read" title="Read" note="Notes, long reads, clips and rooms" />
         <Row to="/notifications" title="Notifications" note="One a day, at eight" />
         <Row to="/premium" title="Premium" note="Reports, Eros, more questions" />
+        <Row to="/ask" title="Ask AI" meta={`${questionsLeft} left`} />
         <Row to="/shop" title="Shop" meta={`${cartCount} in cart`} />
       </Section>
 

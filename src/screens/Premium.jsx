@@ -8,7 +8,7 @@ export default function Premium() {
 
   return (
     <>
-      <TopBar title="Premium" back backTo="/me" />
+      <TopBar title="Premium" back backTo="/profile" />
 
       <section className="section pt-14">
         <h1 className="mx-auto max-w-[13ch] text-center text-display font-light">

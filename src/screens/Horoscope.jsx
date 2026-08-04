@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { days, user } from '../data/mock.js'
-import { TopBar, BarAction } from '../components/Chrome.jsx'
+import { TopBar } from '../components/Chrome.jsx'
 import {
   Acts,
+  Avatar,
   Button,
   Label,
   Row,
@@ -15,22 +17,41 @@ import {
 import { useStore } from '../store.jsx'
 
 const TABS = [
-  { key: 'yesterday', label: 'Yest' },
+  { key: 'yesterday', label: 'Yesterday' },
   { key: 'today', label: 'Today' },
-  { key: 'tomorrow', label: 'Tmrw' },
+  { key: 'tomorrow', label: 'Tomorrow' },
 ]
 
-export default function Today() {
+export default function Horoscope() {
   const [key, setKey] = useState('today')
   const { showToast, hasFlag, toggleFlag } = useStore()
   const day = days[key]
 
   return (
     <>
+      {/* Avatar into Profile on the left, share on the right — the same header
+          slots the reference app gives this screen. */}
       <TopBar
-        title={user.name}
+        title="Daily horoscope"
         sub={`${user.sunSign} · ${user.moonSign} · ${user.risingSign}`}
-        right={<BarAction to="/notifications" label="Notifications">Alerts</BarAction>}
+        left={
+          <Link
+            to="/profile"
+            aria-label="Your profile"
+            className="transition-opacity hover:opacity-60"
+          >
+            <Avatar initials={user.initials} size={28} />
+          </Link>
+        }
+        right={
+          <button
+            type="button"
+            onClick={() => showToast('Reading copied')}
+            className="text-label uppercase tracking-label text-t2"
+          >
+            Share
+          </button>
+        }
       />
 
       <Segmented items={TABS} value={key} onChange={setKey} />
@@ -247,7 +268,7 @@ export default function Today() {
         <Button to="/consult" variant="solid" className="mt-8">
           Book fifteen minutes
         </Button>
-        <Button to="/read" variant="quiet" className="mt-3">
+        <Button to="/home" variant="quiet" className="mt-3">
           Read something longer
         </Button>
       </Section>

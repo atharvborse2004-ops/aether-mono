@@ -3,12 +3,17 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 /* App chrome: the top bar, the bottom nav, the sheet and the toast.
    All four are flat — a hairline separates them from content, nothing else. */
 
+/**
+ * Five destinations, in the reference app's order. Profile deliberately lives
+ * behind the header avatar on Home and Horoscope so the bar stays at five —
+ * the same trade the reference makes, for the same reason.
+ */
 const TABS = [
-  { to: '/today', label: 'Today' },
-  { to: '/chart', label: 'Chart' },
-  { to: '/read', label: 'Read' },
+  { to: '/home', label: 'Home' },
+  { to: '/horoscope', label: 'Horoscope' },
   { to: '/consult', label: 'Consult' },
-  { to: '/me', label: 'Me' },
+  { to: '/ask', label: 'Ask AI' },
+  { to: '/shop', label: 'Shop' },
 ]
 
 /**
@@ -24,7 +29,9 @@ export function BottomNav() {
             <NavLink
               to={t.to}
               className={({ isActive }) =>
-                `block py-4 text-center text-micro uppercase tracking-caps transition-colors ${
+                // tracking-label, not tracking-caps: five labels including
+                // "Horoscope" do not fit at 0.18em in a 420px frame.
+                `block py-4 text-center text-micro uppercase tracking-label transition-colors ${
                   isActive ? 'font-medium text-t1' : 'text-t3'
                 }`
               }
@@ -48,7 +55,7 @@ export function BottomNav() {
  * is kept only as the fallback for a cold deep-link or a refresh, where there
  * is no history entry to return to.
  */
-export function TopBar({ title, back = false, backTo, right = null, sub = null }) {
+export function TopBar({ title, back = false, backTo, right = null, left = null, sub = null }) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -58,17 +65,20 @@ export function TopBar({ title, back = false, backTo, right = null, sub = null }
 
   const goBack = () => {
     if (hasHistory) navigate(-1)
-    else navigate(backTo || '/today', { replace: true })
+    else navigate(backTo || '/home', { replace: true })
   }
 
   return (
     <header className="sticky top-0 z-20 flex-none border-b border-rule bg-bg">
-      <div className="grid h-12 grid-cols-[56px_1fr_56px] items-center">
+      {/* 72px sides, not 56 — a right-slot label like "5 left" wraps at 56. */}
+      <div className="grid h-12 grid-cols-[72px_1fr_72px] items-center">
         <div className="flex items-center pl-4">
-          {back && (
+          {back ? (
             <button type="button" aria-label="Back" onClick={goBack} className="text-body text-t2">
               ←
             </button>
+          ) : (
+            left
           )}
         </div>
         <div className="min-w-0 text-center">

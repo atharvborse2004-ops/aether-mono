@@ -22,8 +22,7 @@ export default function Shop() {
     <>
       <TopBar
         title="Shop"
-        back
-        backTo="/me"
+        sub="Stones, maalas, remedies"
         right={
           <BarAction
             onClick={() => showToast(`${cartCount} in cart`)}

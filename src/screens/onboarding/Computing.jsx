@@ -45,7 +45,7 @@ export default function Computing() {
         </p>
 
         <div className="mt-auto pt-12">
-          <Button to="/today" variant="solid">
+          <Button to="/horoscope" variant="solid">
             Read today
           </Button>
           <Button to="/chart" variant="quiet" className="mt-3">

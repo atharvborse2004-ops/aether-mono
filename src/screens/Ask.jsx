@@ -46,11 +46,20 @@ export default function Ask() {
 
   return (
     <>
+      {/* A tab, so no back arrow. The quota lives in the right slot where the
+          reference app puts its "5 free left" pill. */}
       <TopBar
-        title="Ask the Stars"
-        back
-        backTo="/today"
-        sub={locked ? 'No questions left' : `${questionsLeft} questions left`}
+        title="Ask AI"
+        sub="Reads your chart"
+        right={
+          <span
+            className={`whitespace-nowrap text-micro uppercase tracking-label tnum ${
+              locked ? 'text-t1' : 'text-t2'
+            }`}
+          >
+            {locked ? 'None' : `${questionsLeft} free`}
+          </span>
+        }
       />
 
       <div className="section-tight">

@@ -10,7 +10,7 @@ import { Section, Stub } from '../components/Primitives.jsx'
 export default function Notifications() {
   return (
     <>
-      <TopBar title="Notifications" back backTo="/today" sub="One a day, at eight" />
+      <TopBar title="Notifications" back backTo="/horoscope" sub="One a day, at eight" />
 
       <Section label="This week">
         <ul>

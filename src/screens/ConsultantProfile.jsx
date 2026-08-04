@@ -8,6 +8,7 @@ import {
   Avatar,
   Button,
   Field,
+  firstName,
   Section,
   Segmented,
   Stub,
@@ -108,8 +109,8 @@ export default function ConsultantProfile() {
               variant={following ? 'solid' : 'quiet'}
               onClick={() =>
                 toggleFlag(`follow:${c.id}`, {
-                  on: `Following ${c.name.split(' ')[0]}`,
-                  off: `Unfollowed ${c.name.split(' ')[0]}`,
+                  on: `Following ${firstName(c.name)}`,
+                  off: `Unfollowed ${firstName(c.name)}`,
                 })
               }
             >
@@ -117,7 +118,7 @@ export default function ConsultantProfile() {
             </Button>
             <Button
               variant="quiet"
-              onClick={() => showToast(`Message sent to ${c.name.split(' ')[0]}`)}
+              onClick={() => showToast(`Message sent to ${firstName(c.name)}`)}
             >
               Message
             </Button>
@@ -133,7 +134,7 @@ export default function ConsultantProfile() {
             <Plate seed={`${c.id}-intro`} variant="orbit" className="aspect-video w-full">
               <span className="absolute inset-0 flex items-center justify-center">
                 <span className="border border-t1 bg-bg px-4 py-2 text-label uppercase tracking-label text-t1">
-                  ▶ Meet {c.name.split(' ')[0]} · 1:24
+                  ▶ Meet {firstName(c.name)} · 1:24
                 </span>
               </span>
             </Plate>
@@ -173,7 +174,7 @@ export default function ConsultantProfile() {
         </Button>
       </div>
 
-      <Sheet open={sheet} onClose={() => setSheet(false)} title={`Book ${c.name.split(' ')[0]}`}>
+      <Sheet open={sheet} onClose={() => setSheet(false)} title={`Book ${firstName(c.name)}`}>
         <p className="label text-left mb-4">Length</p>
         <div className="mb-10 flex gap-3">
           {c.slots.map((s) => (
@@ -292,8 +293,8 @@ function Work({ c }) {
           </li>
         ))}
       </ul>
-      <Link to="/read" className="act-link mt-6 inline-block text-meta">
-        See everything in Read
+      <Link to="/home" className="act-link mt-6 inline-block text-meta">
+        See everything in the feed
       </Link>
     </Section>
   )

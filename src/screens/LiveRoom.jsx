@@ -3,7 +3,13 @@ import { Navigate, useParams } from 'react-router-dom'
 import { liveChat, liveSessions } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
-import { Acts, Avatar, Button, Section } from '../components/Primitives.jsx'
+import {
+  Acts,
+  Avatar,
+  Button,
+  firstName,
+  Section,
+} from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 export default function LiveRoom() {
@@ -14,7 +20,7 @@ export default function LiveRoom() {
   const [hearts, setHearts] = useState(0)
 
   const room = liveSessions.find((l) => l.id === id)
-  if (!room) return <Navigate to="/read" replace />
+  if (!room) return <Navigate to="/home" replace />
 
   const following = hasFlag(`follow:${room.consultantId}`)
   const reminded = hasFlag(`remind:${room.id}`)
@@ -31,7 +37,7 @@ export default function LiveRoom() {
       <TopBar
         title={room.live ? 'Live' : 'Scheduled'}
         back
-        backTo="/read"
+        backTo="/home"
         sub={room.live ? `${room.viewers} watching` : room.startsIn}
         right={
           <button
@@ -61,8 +67,8 @@ export default function LiveRoom() {
               variant={following ? 'solid' : 'default'}
               onClick={() =>
                 toggleFlag(`follow:${room.consultantId}`, {
-                  on: `Following ${room.consultant.split(' ')[0]}`,
-                  off: `Unfollowed ${room.consultant.split(' ')[0]}`,
+                  on: `Following ${firstName(room.consultant)}`,
+                  off: `Unfollowed ${firstName(room.consultant)}`,
                 })
               }
             >
@@ -146,8 +152,8 @@ export default function LiveRoom() {
       ) : (
         <Section label="Not started" last>
           <p className="horoscope">This one opens {room.startsIn}. Nothing to watch yet.</p>
-          <Button to="/read" variant="quiet" className="mt-10">
-            Back to Read
+          <Button to="/home" variant="quiet" className="mt-10">
+            Back to Home
           </Button>
         </Section>
       )}

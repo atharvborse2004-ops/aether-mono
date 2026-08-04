@@ -261,6 +261,16 @@ export function Search({ value, onChange, placeholder, label = 'Search' }) {
   )
 }
 
+/**
+ * First name for a rail label. Skips an honorific, so "Dr. Nandita Rao"
+ * reads as "Nandita" rather than "Dr.".
+ */
+export function firstName(full = '') {
+  const parts = full.split(' ').filter(Boolean)
+  if (parts.length > 1 && /^(dr|mr|mrs|ms|prof)\.?$/i.test(parts[0])) return parts[1]
+  return parts[0] || full
+}
+
 /** Non-interactive tag. Deliberately not a chip — chips read as tappable. */
 export function Tag({ children }) {
   return (

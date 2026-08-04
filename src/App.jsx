@@ -9,22 +9,24 @@ import AskTime from './screens/onboarding/AskTime.jsx'
 import AskPlace from './screens/onboarding/AskPlace.jsx'
 import Computing from './screens/onboarding/Computing.jsx'
 
-import Today from './screens/Today.jsx'
+import Home from './screens/Home.jsx'
+import Horoscope from './screens/Horoscope.jsx'
+import Consult from './screens/Consult.jsx'
+import Ask from './screens/Ask.jsx'
+import Shop from './screens/Shop.jsx'
+
+import Profile from './screens/Profile.jsx'
 import Chart from './screens/Chart.jsx'
 import Placement from './screens/Placement.jsx'
 import People from './screens/People.jsx'
 import Synastry from './screens/Synastry.jsx'
 import Invite from './screens/Invite.jsx'
-import Read from './screens/Read.jsx'
-import Clip from './screens/Clip.jsx'
+import Article from './screens/Article.jsx'
+import ReelViewer from './screens/ReelViewer.jsx'
 import LiveRoom from './screens/LiveRoom.jsx'
-import Consult from './screens/Consult.jsx'
 import ConsultantProfile from './screens/ConsultantProfile.jsx'
-import Ask from './screens/Ask.jsx'
-import Shop from './screens/Shop.jsx'
 import Notifications from './screens/Notifications.jsx'
 import Premium from './screens/Premium.jsx'
-import Me from './screens/Me.jsx'
 
 /** Tab shell — nav takes real layout space rather than floating over content. */
 function TabLayout() {
@@ -66,28 +68,30 @@ function Frame() {
             <Route path="/onboarding/place" element={<AskPlace />} />
             <Route path="/onboarding/computing" element={<Computing />} />
 
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/chart" element={<Chart />} />
             <Route path="/chart/:id" element={<Placement />} />
             <Route path="/people" element={<People />} />
             <Route path="/people/invite" element={<Invite />} />
             <Route path="/people/:id" element={<Synastry />} />
-            <Route path="/read/clip/:id" element={<Clip />} />
-            <Route path="/read/live/:id" element={<LiveRoom />} />
+            <Route path="/read/:id" element={<Article />} />
+            <Route path="/reels/:id" element={<ReelViewer />} />
+            <Route path="/live/:id" element={<LiveRoom />} />
             <Route path="/consult/:id" element={<ConsultantProfile />} />
-            <Route path="/ask" element={<Ask />} />
-            <Route path="/shop" element={<Shop />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/premium" element={<Premium />} />
           </Route>
 
+          {/* The five destinations, in the reference app's order. */}
           <Route element={<TabLayout />}>
-            <Route path="/today" element={<Today />} />
-            <Route path="/chart" element={<Chart />} />
-            <Route path="/read" element={<Read />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/consult" element={<Consult />} />
-            <Route path="/me" element={<Me />} />
+            <Route path="/ask" element={<Ask />} />
+            <Route path="/shop" element={<Shop />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/today" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
 
         <Toast message={toast} />

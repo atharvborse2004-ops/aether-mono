@@ -2,7 +2,15 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories, consultants, timeSlots } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
-import { Avatar, Button, Field, Search, Section, Ticks } from '../components/Primitives.jsx'
+import {
+  Avatar,
+  Button,
+  Field,
+  firstName,
+  Search,
+  Section,
+  Ticks,
+} from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 /** Slots already taken today. Fixed rather than random so the UI is stable. */
@@ -104,7 +112,7 @@ export default function Consult() {
               <div className="mt-4 flex gap-3">
                 <Button
                   variant="quiet"
-                  onClick={() => showToast(`Chat request sent to ${c.name.split(' ')[0]}`)}
+                  onClick={() => showToast(`Chat request sent to ${firstName(c.name)}`)}
                 >
                   Chat
                 </Button>
@@ -178,7 +186,7 @@ export default function Consult() {
               variant="solid"
               disabled={!slot}
               onClick={() => {
-                showToast(`Booked · ${booking.name.split(' ')[0]} · today ${slot}`)
+                showToast(`Booked · ${firstName(booking.name)} · today ${slot}`)
                 setBooking(null)
               }}
             >

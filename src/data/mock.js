@@ -469,6 +469,13 @@ export const reads = [
     views: '42.1k',
     date: '1 Aug',
     tag: 'Transits',
+    body: [
+      'Everyone tells you the Saturn return is coming. Almost nobody tells you what it actually does, which is why it arrives feeling like a personal failure rather than a scheduled transit.',
+      'Saturn takes roughly twenty-nine and a half years to go around the sun. At some point between twenty-eight and thirty-one it returns to the degree it occupied when you were born, and stays in the neighbourhood for about two years. That is the whole mechanism. There is nothing mystical about the timing.',
+      'What it asks is narrow and consistent: it audits the structures you built on borrowed assumptions. The career you chose because it was legible to your parents. The relationship that works as long as nobody raises the real question. The city you moved to for one job you no longer have.',
+      'It lands hardest in three places. The first is work, because that is where most people have accepted a default. The second is the relationship you have already privately decided about. The third is your relationship to your own authority — whether you are still waiting for someone to tell you it is allowed.',
+      'The advice everyone gives is to endure it. That is half right. What actually shortens it is being the one who ends things, rather than waiting to be ended. Saturn does not reward patience. It rewards accuracy.',
+    ],
   },
   {
     id: 'b2',
@@ -482,6 +489,13 @@ export const reads = [
     views: '31.5k',
     date: '29 Jul',
     tag: 'Wellness',
+    body: [
+      'Clinical psychology and astrology agree on almost nothing. They agree on this: ritual gives loss a shape, and shapeless loss is the kind that does not move.',
+      'The 8th house is the traditional territory of death, inheritance and everything else you do not get to choose. Read plainly, it is the part of a chart that describes how you metabolise what happens to you rather than what you make happen.',
+      'In practice, people arrive with the same problem stated two ways. Either the ritual stopped working, or there was never one to begin with. The first group has a funeral, an anniversary, a set of gestures that used to hold — and now feel like theatre. The second has nothing but the date.',
+      'What helps is not a better ritual. It is accepting that the shape has to keep changing, because you keep changing, and a rite built for the person you were at the moment of the loss will not fit the person you are three years later.',
+      'Make one small enough to repeat. Big rituals fail because you cannot face them twice.',
+    ],
   },
   {
     id: 'b3',
@@ -495,6 +509,13 @@ export const reads = [
     views: '18.7k',
     date: '27 Jul',
     tag: 'Basics',
+    body: [
+      'Your Moon sign gets described as your emotional nature, which is vague enough to be useless. Here is a working definition: the Moon is how you recover.',
+      'Not what upsets you — that is most of the chart. Recovery. What you reach for when the day has already gone wrong, and how long it takes before you are available to other people again.',
+      'A water Moon recovers by withdrawing and processing in private, which the people around you will read as withdrawal, because it is. An air Moon recovers by talking it into a shape. An earth Moon recovers by doing something with a visible result. A fire Moon recovers by moving.',
+      'The useful part is not the label. It is that recovery styles are not interchangeable, and most conflict about feelings is actually conflict about method — one person wants to be talked through it and the other needs an hour alone, and both read the other as withholding.',
+      'Tell someone how you recover once, plainly, before the next time you need to. It is a much shorter conversation in advance than during.',
+    ],
   },
   {
     id: 'b4',
@@ -508,6 +529,13 @@ export const reads = [
     views: '17.4k',
     date: '24 Jul',
     tag: 'Career',
+    body: [
+      'The year after you quit is not a gap. It is the work. Nobody posts about it because there is no photograph of it.',
+      'The structure that helps is boring: name the thing you are actually optimising for, give the search a deadline, and separate the money question from the meaning question so they stop contaminating each other.',
+      'Most people conflate those two and then wonder why every option feels wrong. A job can be a bridge without being a betrayal of the plan. Deciding that in advance removes about half the anguish.',
+      'Expect the middle to be long, and expect to be worse company during it. Both are normal, and neither is evidence that the decision was wrong.',
+      'The people who come out of it well are the ones who set a review date and kept it, rather than the ones who waited to feel certain.',
+    ],
   },
 ]
 

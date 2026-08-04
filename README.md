@@ -42,11 +42,12 @@ Only the *presentation* changed. Nothing was dropped.
 | Corners        | 16–24px radius                    | 0, enforced globally              |
 | Depth          | Glass blur, glows, shadows        | 1px rules and whitespace only     |
 | Nav            | Floating liquid-glass pill        | Text-only bar, hairline top       |
+| Tab order      | Home · Horoscope · Consult · Ask AI · Shop | Identical                |
 | Type           | Inter + Cormorant display         | Inter only, 300/400/500           |
 | Alignment      | Left-aligned cards                | Centered editorial + real grid    |
 | Motion         | Springs, slides, twinkle          | Fades. Nothing else               |
-| Home           | Content feed                      | The daily reading, first thing    |
-| Onboarding     | 3-step form                       | One question per screen           |
+| Home           | Content feed, 3 modes             | Identical — Feed / Reels / Live   |
+| Onboarding     | 3-step form                       | One question per screen, 4 steps  |
 
 ## Feature parity with the original
 
@@ -54,19 +55,19 @@ Every feature of `aether-astrology-app` is present. Where it lives here:
 
 | Original feature                          | Here                                      |
 | ----------------------------------------- | ----------------------------------------- |
-| Feed of posts + articles                  | Read → Notes / Long                       |
-| Post like / reply / share / save          | Read → Notes, `<Acts>` row                |
-| Reels vertical snap player                | `/read/clip/:id` — snap-scrolls all clips |
-| Live story rail                           | Read, above the search field              |
-| Live tab + live room, chat, hearts, gifts | Read → Live, `/read/live/:id`             |
-| Daily horoscope, 3-day switcher           | Today, segmented control                  |
-| Mood / lucky colour / lucky number        | Today, specimen row under the reading     |
-| Day intensity meter                       | Today → Intensity ruler                   |
-| Four-area ratings                         | Today → Read across four areas            |
-| Power / Pressure                          | Today → Power & pressure                  |
-| Transit alerts                            | Today → Current transits                  |
-| "Do this" focus line                      | Today → its own section                   |
-| Horoscope share / save                    | Today, under the reading                  |
+| Feed of posts + articles                  | Home → Feed, zip-merged into one timeline |
+| Post like / reply / share / save          | Home → Feed, `<Acts>` row                 |
+| Reels vertical snap player                | Home → Reels, and `/reels/:id`            |
+| Live story rail                           | Home → Feed, above the search field       |
+| Live tab + live room, chat, hearts, gifts | Home → Live, `/live/:id`                  |
+| Daily horoscope, 3-day switcher           | Horoscope, segmented control              |
+| Mood / lucky colour / lucky number        | Horoscope, specimen row under the reading |
+| Day intensity meter                       | Horoscope → Intensity ruler               |
+| Four-area ratings                         | Horoscope → Read across four areas        |
+| Power / Pressure                          | Horoscope → Power & pressure              |
+| Transit alerts                            | Horoscope → Current transits              |
+| "Do this" focus line                      | Horoscope → its own section               |
+| Horoscope share / save                    | Horoscope, under the reading              |
 | Consultant list + category filter         | Consult                                   |
 | Consultant search                         | Consult, search field                     |
 | Quick-book sheet from the list            | Consult → Book a slot                     |
@@ -83,14 +84,15 @@ Every feature of `aether-astrology-app` is present. Where it lives here:
 | Shop search                               | Shop, search field                        |
 | Chart-based product suggestion            | Shop → For your chart                     |
 | Discount percentage                       | Shop, on the plate                        |
-| Profile, birth details, edit              | Me → Birth data                           |
-| Kundli download / share                   | Me, under the wheel                       |
-| Wallet balance + top-up                   | Me → Wallet                               |
-| Settings rows                             | Me → Settings                             |
-| Session history + receipts                | Me → Past sessions                        |
-| Restart onboarding                        | Me → About this build                     |
+| Profile, birth details, edit              | Profile → Birth data                      |
+| Kundli download / share                   | Profile, under the wheel                  |
+| Wallet balance + top-up                   | Profile → Wallet                          |
+| Settings rows                             | Profile → Settings                        |
+| Session history + receipts                | Profile → Past sessions                   |
+| Restart onboarding                        | Profile → About this build                |
 | Onboarding: name, date, time, place       | One question per screen                   |
 | Chart-ready reveal                        | `/onboarding/computing`, second beat      |
+| Article reader (FEATURES.md Tier 1 gap)   | `/read/:id`, full long-form screen        |
 
 Screens with no counterpart in the original — People, synastry, the placement
 detail pages, Premium, Notifications and the contrast toggle — are additions,
@@ -98,23 +100,24 @@ not replacements.
 
 ## Screens
 
-**Onboarding** — intro → birth date → birth time (to the minute) → birth place
-→ a computing screen that names its data source. One question per screen, huge
-type, deliberately no progress bar.
+**Onboarding** — intro → name → birth date → birth time (to the minute) →
+birth place → a computing screen that names its data source, then reveals the
+chart. One question per screen, huge type, deliberately no progress bar.
 
-**Tabs**
+**Tabs** — five destinations, in the reference app's order. Profile lives
+behind the header avatar on Home and Horoscope so the bar stays at five.
 
-| Tab     | What's in it                                                                                                                             |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Today   | The reading first, then Day at a Glance, labelled Do / Don't, Getting Along With, current transits, Power & Pressure, four ratings, reflection prompts. Yesterday / Today / Tomorrow switcher |
-| Chart   | **Table view by default**, wheel view one tap away. Every row drills into a placement page                                                 |
-| Read    | Notes, long reads, clips and live rooms                                                                                                   |
-| Consult | Category filters, consultant list, profile with a booking sheet                                                                            |
-| Me      | Birth data, wallet, contrast toggle, session history, links to everything else                                                             |
+| Tab       | What's in it                                                                                                                                                          |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home      | Three modes behind one switcher. **Feed** — live rail, search, and a zip-merged timeline of notes and article link-previews, closing on a horoscope teaser. **Reels** — the vertical snap player, inline. **Live** — room list with status and viewer counts |
+| Horoscope | The reading first, then Day at a Glance, the mood / colour / number specimen, the focus line, labelled Do / Don't, Getting Along With, current transits, Power & Pressure, four ratings, reflection prompts. Yesterday / Today / Tomorrow switcher |
+| Consult   | Search, category filters, consultant list with Chat / Book, quick-book sheet                                                                                            |
+| Ask AI    | Chart-aware thread, free-question quota, packs sheet, reset reminder                                                                                                    |
+| Shop      | Search, chart-based suggestion, category filters, product grid with computed discounts, cart                                                                            |
 
-**Drill-in screens** — placement detail, People → synastry → invite, clip
-viewer, live room, consultant profile, Ask the Stars, Shop, Notifications,
-Premium.
+**Drill-in screens** — Profile, chart (table + wheel) → placement detail,
+People → synastry → invite, the article reader, the standalone reel route,
+live room, consultant profile, Notifications, Premium.
 
 ## Structure
 
@@ -126,8 +129,9 @@ src/
   data/mock.js             all hardcoded content, plus the voice rules
   components/
     Primitives.jsx         Label, Section, Button, Row, TextLink, Segmented,
-                           Ticks, Ruler, Avatar, Field, Tag, Stub
+                           Acts, Search, Ticks, Ruler, Avatar, Field, Tag, Stub
     Chrome.jsx             TopBar, BottomNav, Sheet, Toast
+    ReelFeed.jsx           vertical snap player, shared by Home and /reels/:id
     Plate.jsx              procedurally generated greyscale imagery
     ChartWheel.jsx         engraved SVG chart wheel
   screens/

@@ -6,7 +6,7 @@ import { Avatar, Button, Section } from '../components/Primitives.jsx'
 export default function People() {
   return (
     <>
-      <TopBar title="People" back backTo="/today" />
+      <TopBar title="People" back backTo="/horoscope" />
 
       <Section label={`${people.length} charts on file`}>
         <ul>
