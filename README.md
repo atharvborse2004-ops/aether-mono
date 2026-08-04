@@ -1,9 +1,9 @@
 # Aether Mono — monochrome editorial layout
 
 A second, independent layout for the Aether astrology app, built to a
-brutalist-editorial spec: pure white canvas, no colour, no rounded corners, no
-shadows, hairline rules and a lot of whitespace. White is primary and black is
-secondary — ink on paper.
+brutalist-editorial spec: pure black canvas, no colour, no rounded corners, no
+shadows, hairline rules and a lot of whitespace. Black is primary and white is
+secondary.
 
 It carries the **full feature set** of `aether-astrology-app`, re-expressed in
 this layout rather than reduced by it. See the parity table below.
@@ -37,8 +37,8 @@ Only the *presentation* changed. Nothing was dropped.
 
 |                | Original (`aether-astrology-app`) | This one                          |
 | -------------- | --------------------------------- | --------------------------------- |
-| Canvas         | Midnight blue, star field         | `#FFFFFF`, nothing behind content |
-| Accent         | Gold gradients                    | None. White, black, four greys    |
+| Canvas         | Midnight blue, star field         | `#000000`, nothing behind content |
+| Accent         | Gold gradients                    | None. Black, white, four greys    |
 | Corners        | 16–24px radius                    | 0, enforced globally              |
 | Depth          | Glass blur, glows, shadows        | 1px rules and whitespace only     |
 | Nav            | Floating liquid-glass pill        | Text-only bar, hairline top       |

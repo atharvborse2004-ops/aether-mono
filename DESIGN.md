@@ -5,25 +5,24 @@ that is, is noted.
 
 ## 1. Tokens
 
-White is primary, black is secondary. Ink on paper, not chalk on slate.
+Black is primary, white is secondary — the reference spec's own direction.
 
 | Token         | Value                | Notes                                     |
 | ------------- | -------------------- | ----------------------------------------- |
-| Background    | `#FFFFFF`            | Pure white. Not off-white                 |
-| Surface       | `#F2F2F2`            | Plates only                               |
-| Primary text  | `#000000`            |                                           |
-| Secondary     | `#565656`            | 7.0:1 on white — passes AA                |
-| Tertiary      | `#6B6B6B`            | 5.1:1 — the floor for readable text       |
-| Non-text grey | `#A3A3A3`            | 2.6:1 — ticks, spokes, placeholders only  |
-| Hairline      | `1px solid #D6D6D6`  |                                           |
+| Background    | `#000000`            | Pure black. Not dark grey                 |
+| Surface       | `#0A0A0A`            | Plates only                               |
+| Primary text  | `#FFFFFF`            |                                           |
+| Secondary     | `#8A8A8A`            | 6.1:1 on black — passes AA                |
+| Tertiary      | `#757575`            | 4.6:1 — the floor for readable text       |
+| Non-text grey | `#5C5C5C`            | 3.1:1 — ticks, spokes, placeholders only  |
+| Hairline      | `1px solid #262626`  |                                           |
 | Accent        | none                 | Colour is the enemy here                  |
 | Radius        | `0`                  | Everywhere                                |
 | Elevation     | none                 | Rules and whitespace, never shadows       |
 
-The greys are re-derived rather than arithmetically flipped from the previous
-dark set. Grey-on-white and grey-on-black do not land at the same luminance for
-the same contrast ratio, so inverting the hex values would have quietly dropped
-body text below AA.
+The greys are derived against black, not flipped from a light set. The same
+hex does not hold the same contrast ratio on both canvases, so an arithmetic
+inversion would have quietly dropped body text below AA.
 
 Declared in `src/index.css`. Tailwind's default palette is **replaced**, not
 extended (`tailwind.config.js`), so no other colour is reachable from a class
@@ -85,16 +84,16 @@ addressed:
 1. **Inconsistent link affordances** → the three-shape system above.
    `src/components/Primitives.jsx`, `.act-*` in `src/index.css`.
 
-2. **Grey contrast failing WCAG** → `--text-2` and `--text-3` are set to ratios
-   that pass AA (7.0:1 and 5.1:1). The 2.6:1 grey exists but is restricted to
-   non-text marks. On top of that, **Me → Display → Increase contrast**
-   re-points every grey token darker at runtime
+2. **Grey-on-black contrast failing WCAG** → `--text-2` and `--text-3` are set
+   to ratios that pass AA (6.1:1 and 4.6:1). The 3.1:1 grey exists but is
+   restricted to non-text marks. On top of that, **Profile → Display → Increase
+   contrast** re-points every grey token upward at runtime
    (`:root[data-contrast='high']` in `index.css`, toggled from `store.jsx`).
    Focus rings are visible everywhere (`:focus-visible`).
 
 3. **Unlabelled Do / Don't** → both columns carry an explicit header, and the
    section opens with a sentence saying what the two lists mean.
-   `src/screens/Today.jsx`.
+   `src/screens/Horoscope.jsx`.
 
 4. **Everything centered with no grid** → centering is reserved for editorial
    moments (section labels, the reading, reflection prompts, verdicts).
@@ -104,7 +103,7 @@ addressed:
 
 5. **Daily horoscope buried** → it is the first content block on the landing
    tab, above the fold, with nothing competing for the position.
-   `src/screens/Today.jsx`.
+   `src/screens/Horoscope.jsx`.
 
 ## 7. Voice
 
@@ -118,7 +117,7 @@ template.
 
 ## 8. What is not borrowed
 
-The aesthetic system — white canvas, all-caps grotesk, hairline rules, blunt
+The aesthetic system — black canvas, all-caps grotesk, hairline rules, blunt
 copy — is a general editorial idiom and freely reusable. Deliberately **not**
 reproduced: any existing app's wordmark, its commissioned collage
 illustrations, or its horoscope copy. All imagery here is generated in SVG

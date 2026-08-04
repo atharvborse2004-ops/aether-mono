@@ -131,7 +131,7 @@ export function Sheet({ open, onClose, title, children }) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-t1 opacity-30"
+        className="absolute inset-0 bg-black opacity-80"
       />
       <div className="relative animate-sheet-in max-h-[82%] overflow-y-auto border-t border-rule bg-bg no-scrollbar">
         <div className="flex items-center justify-between border-b border-rule px-6 py-4">

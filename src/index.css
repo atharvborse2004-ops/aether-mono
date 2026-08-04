@@ -4,34 +4,35 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TOKENS
-   Pure white canvas, four greys, one hairline. No accent colour exists — if
+   Pure black canvas, four greys, one hairline. No accent colour exists — if
    you find yourself needing one, the hierarchy is wrong, not the palette.
 
-   White is primary, black is secondary: ink on paper. The greys are
-   re-derived rather than arithmetically flipped — grey-on-white and
-   grey-on-black do not land at the same luminance for the same contrast
-   ratio, so a naive inversion would quietly fail WCAG in one direction.
+   Black is primary, white is secondary — the reference spec's own direction.
+   The greys are derived against black, not flipped from a light set: the same
+   hex does not hold the same contrast ratio on both canvases, so an
+   arithmetic inversion would quietly drop body text below AA.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg: #ffffff;
-  --surface: #f2f2f2;
-  --text: #000000;
-  --text-2: #565656; /* 7.0:1 on white — passes WCAG AA for body text    */
-  --text-3: #6b6b6b; /* 5.1:1 on white — the floor for anything readable */
-  --text-4: #a3a3a3; /* 2.6:1 — NON-TEXT ONLY: ticks, spokes, dividers   */
-  --rule: #d6d6d6;
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --text: #ffffff;
+  --text-2: #8a8a8a; /* 6.1:1 on black — passes WCAG AA for body text */
+  --text-3: #757575; /* 4.6:1 on black — the floor for anything readable  */
+  --text-4: #5c5c5c; /* 3.1:1 — NON-TEXT ONLY: ticks, spokes, dividers   */
+  --rule: #262626;
 
   --sp: 8px;
 }
 
-/* Accessibility fix for the known grey-on-white failure. Toggled from
-   Me → Display. Every grey darkens; nothing else about the layout changes. */
+/* Accessibility fix for the known grey-on-black failure. Toggled from
+   Profile → Display. Every grey moves up; nothing else about the layout
+   changes. */
 :root[data-contrast='high'] {
-  --text-2: #303030; /* 12.6:1 */
-  --text-3: #3d3d3d; /* 10.4:1 */
-  --text-4: #5c5c5c; /*  7.0:1 */
-  --rule: #a0a0a0;
+  --text-2: #c4c4c4; /* 11.6:1 */
+  --text-3: #a8a8a8; /*  8.6:1 */
+  --text-4: #8a8a8a; /*  6.1:1 */
+  --rule: #4a4a4a;
 }
 
 @layer base {
@@ -239,10 +240,8 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    opacity: 0.22;
-    /* multiply, not overlay — on a paper-white plate overlay blows the noise
-       out to near-invisible. Multiply keeps it reading as ink tooth. */
-    mix-blend-mode: multiply;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
@@ -252,10 +251,7 @@
   .plate {
     @apply relative overflow-hidden;
     background: var(--surface);
-    /* Contrast boost dropped with the inversion: it was tuned to deepen a
-       near-black plate, and on a near-white one it only washes the faint
-       strokes out. Greyscale still guards against a stray colour. */
-    filter: grayscale(1);
+    filter: grayscale(1) contrast(1.05);
   }
 
   /* ── Meters ───────────────────────────────────────────────────────────

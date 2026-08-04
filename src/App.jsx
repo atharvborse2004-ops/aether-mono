@@ -55,7 +55,7 @@ function Frame() {
   const { toast } = useStore()
 
   return (
-    <div className="flex min-h-[100dvh] w-full justify-center bg-surface">
+    <div className="flex min-h-[100dvh] w-full justify-center bg-black">
       <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden border-x border-rule bg-bg text-t1">
         <Routes>
           <Route path="/" element={<Navigate to="/onboarding" replace />} />
