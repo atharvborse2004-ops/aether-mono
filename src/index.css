@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOKENS
+   Pure black canvas, four greys, one hairline. No accent colour exists — if
+   you find yourself needing one, the hierarchy is wrong, not the palette.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --text: #ffffff;
+  --text-2: #8a8a8a; /* 6.1:1 on black — passes WCAG AA for body text */
+  --text-3: #757575; /* 4.6:1 on black — the floor for anything readable  */
+  --text-4: #5c5c5c; /* 3.1:1 — NON-TEXT ONLY: ticks, spokes, dividers   */
+  --rule: #262626;
+
+  --sp: 8px;
+}
+
+/* Accessibility fix for the known grey-on-black failure. Toggled from
+   Me → Display. Every grey moves up; nothing else about the layout changes. */
+:root[data-contrast='high'] {
+  --text-2: #c4c4c4; /* 11.6:1 */
+  --text-3: #a8a8a8; /*  8.6:1 */
+  --text-4: #8a8a8a; /*  6.1:1 */
+  --rule: #4a4a4a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: theme('fontFamily.sans');
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* The vibe, enforced. Nothing in this app is allowed a soft corner. */
+  * {
+    border-radius: 0 !important;
+  }
+
+  /* Visible focus is non-negotiable — it is the only affordance a keyboard
+     user gets, and this layout gives them nothing else to go on. */
+  :focus-visible {
+    outline: 1px solid var(--text);
+    outline-offset: 2px;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  /* ── Type roles ───────────────────────────────────────────────────────
+     Hierarchy comes from size, case and colour. Almost no bold: 500 is the
+     heaviest weight loaded, and it is reserved for the active nav item. */
+
+  .label {
+    @apply text-label uppercase tracking-label text-t2;
+  }
+
+  /* Centered section header — the printed-page moment. */
+  .label-c {
+    @apply label text-center;
+  }
+
+  .horoscope {
+    @apply text-read text-center mx-auto max-w-measure;
+    color: var(--text);
+  }
+
+  .prose-c {
+    @apply text-body text-center mx-auto max-w-prose2 text-t2;
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* ── Structure ────────────────────────────────────────────────────────
+     Sections are separated by a 1px rule and a lot of air. Never by a card,
+     never by a shadow, never by a background change. */
+
+  .section {
+    padding: calc(var(--sp) * 5) calc(var(--sp) * 3);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .section-tight {
+    padding: calc(var(--sp) * 3) calc(var(--sp) * 3);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .rule-b {
+    border-bottom: 1px solid var(--rule);
+  }
+  .rule-t {
+    border-top: 1px solid var(--rule);
+  }
+
+  /* Short centered hairline used as a full stop between thoughts. */
+  .rule-stub {
+    width: 24px;
+    height: 1px;
+    background: var(--rule);
+    margin: 0 auto;
+  }
+
+  /* ── The three affordances ────────────────────────────────────────────
+     This app has exactly three tappable shapes and no others. If something
+     is interactive it wears one of these; if it wears none, it is text.
+     (Co-Star's biggest documented usability failure was mixing underlines,
+     all-caps and bare text with no rule about which meant "tap me".)
+
+       .act-btn   block button, bordered  → commits to something
+       .act-row   full-width row with →   → navigates somewhere
+       .act-link  underlined inline text  → navigates from inside prose
+  */
+
+  .act-btn {
+    @apply block w-full text-label uppercase tracking-label text-center;
+    padding: calc(var(--sp) * 2) calc(var(--sp) * 2);
+    border: 1px solid var(--text);
+    color: var(--text);
+    background: transparent;
+    transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
+  }
+  .act-btn:hover,
+  .act-btn:active {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .act-btn[disabled] {
+    border-color: var(--rule);
+    color: var(--text-4);
+    background: transparent;
+    cursor: not-allowed;
+  }
+
+  /* Inverted variant for the single most important action on a screen. */
+  .act-btn-solid {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .act-btn-solid:hover,
+  .act-btn-solid:active {
+    background: transparent;
+    color: var(--text);
+  }
+
+  /* Secondary — same shape, quieter border. Still unmistakably a button. */
+  .act-btn-quiet {
+    border-color: var(--rule);
+    color: var(--text-2);
+  }
+
+  .act-row {
+    @apply flex w-full items-center justify-between gap-4 text-left;
+    padding: calc(var(--sp) * 2.25) 0;
+    border-bottom: 1px solid var(--rule);
+    transition: opacity 0.18s ease;
+  }
+  .act-row:hover,
+  .act-row:active {
+    opacity: 0.62;
+  }
+  /* The arrow is drawn by the class, so no row can forget it. */
+  .act-row::after {
+    content: '→';
+    color: var(--text-3);
+    font-size: 13px;
+    line-height: 1;
+    flex: none;
+  }
+
+  .act-link {
+    color: var(--text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+
+  /* ── Segmented control ────────────────────────────────────────────────
+     A row of tracked caps under a hairline. The active item is white with a
+     1px underline; the rest are grey. No pill, no slider, no glass. */
+
+  .seg {
+    @apply flex items-stretch;
+  }
+  .seg-item {
+    @apply flex-1 text-label uppercase tracking-label text-center text-t2;
+    padding: calc(var(--sp) * 1.5) 0;
+    border-bottom: 1px solid var(--rule);
+    transition: color 0.18s ease, border-color 0.18s ease;
+  }
+  .seg-item[aria-selected='true'],
+  .seg-item[data-active='true'] {
+    color: var(--text);
+    border-bottom-color: var(--text);
+  }
+
+  /* ── Imagery ──────────────────────────────────────────────────────────
+     No stock photography and no traced collage. Texture is generated:
+     a fractal-noise film grain over engraved SVG line art, always greyscale.
+     Sources for real plates, if you swap them in later, should be public
+     domain (The Met Open Access / NASA / Rijksmuseum). */
+
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.16;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* `.grain` is applied alongside `.plate` in markup rather than @apply-ed —
+     the grain lives entirely in a ::after pseudo-element, which @apply does
+     not carry across. */
+  .plate {
+    @apply relative overflow-hidden;
+    background: var(--surface);
+    filter: grayscale(1) contrast(1.05);
+  }
+
+  /* ── Meters ───────────────────────────────────────────────────────────
+     A rating is drawn as ticks, not a coloured bar. Filled = white. */
+
+  .tick {
+    height: 1px;
+    flex: 1;
+    background: var(--text-4);
+  }
+  .tick-on {
+    background: var(--text);
+    height: 2px;
+  }
+}
+
+/* Restraint is the brand — and a hard requirement for anyone who asked the
+   OS to stop moving things. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

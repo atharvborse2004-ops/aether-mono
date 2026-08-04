@@ -1,0 +1,138 @@
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+
+/* App chrome: the top bar, the bottom nav, the sheet and the toast.
+   All four are flat — a hairline separates them from content, nothing else. */
+
+const TABS = [
+  { to: '/today', label: 'Today' },
+  { to: '/chart', label: 'Chart' },
+  { to: '/read', label: 'Read' },
+  { to: '/consult', label: 'Consult' },
+  { to: '/me', label: 'Me' },
+]
+
+/**
+ * Text-only tab bar. No icons — an icon would need a second visual language,
+ * and this layout only has one. Active is white, the rest are grey.
+ */
+export function BottomNav() {
+  return (
+    <nav className="flex-none border-t border-rule bg-bg">
+      <ul className="flex">
+        {TABS.map((t) => (
+          <li key={t.to} className="flex-1">
+            <NavLink
+              to={t.to}
+              className={({ isActive }) =>
+                `block py-4 text-center text-micro uppercase tracking-caps transition-colors ${
+                  isActive ? 'font-medium text-t1' : 'text-t3'
+                }`
+              }
+            >
+              {t.label}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+/**
+ * Top bar. Left slot is either a back arrow or nothing; the title is the tiny
+ * tracked caps label, centered; right slot is one optional action.
+ */
+export function TopBar({ title, back = false, backTo, right = null, sub = null }) {
+  const navigate = useNavigate()
+
+  return (
+    <header className="sticky top-0 z-20 flex-none border-b border-rule bg-bg">
+      <div className="grid h-12 grid-cols-[56px_1fr_56px] items-center">
+        <div className="flex items-center pl-4">
+          {back && (
+            <button
+              type="button"
+              aria-label="Back"
+              onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
+              className="text-body text-t2"
+            >
+              ←
+            </button>
+          )}
+        </div>
+        <div className="min-w-0 text-center">
+          <p className="label truncate">{title}</p>
+          {sub && <p className="mt-0.5 truncate text-micro uppercase tracking-caps text-t3">{sub}</p>}
+        </div>
+        <div className="flex items-center justify-end pr-4">{right}</div>
+      </div>
+    </header>
+  )
+}
+
+/** The one-glyph top-right action. Used for notifications and the cart. */
+export function BarAction({ to, onClick, children, badge = null, label }) {
+  const body = (
+    <span className="relative inline-flex items-center text-label uppercase tracking-label text-t2">
+      {children}
+      {badge ? <span className="ml-1 tnum text-t1">{badge}</span> : null}
+    </span>
+  )
+  if (to) {
+    return (
+      <Link to={to} aria-label={label}>
+        {body}
+      </Link>
+    )
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} aria-label={label}>
+        {body}
+      </button>
+    )
+  }
+  // Read-only status (the cart count, for instance). Rendered as text rather
+  // than a dead button — a control that looks tappable and is not is exactly
+  // the affordance confusion this layout is trying to avoid.
+  return <span aria-label={label}>{body}</span>
+}
+
+/**
+ * Bottom sheet. Slides nowhere — it fades up 16px and stops. Full-width, one
+ * hairline at the top, black fill.
+ */
+export function Sheet({ open, onClose, title, children }) {
+  if (!open) return null
+  return (
+    <div className="absolute inset-0 z-40 flex flex-col justify-end">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black opacity-80"
+      />
+      <div className="relative animate-sheet-in max-h-[82%] overflow-y-auto border-t border-rule bg-bg no-scrollbar">
+        <div className="flex items-center justify-between border-b border-rule px-6 py-4">
+          <p className="label text-left">{title}</p>
+          <button type="button" onClick={onClose} className="label" aria-label="Close">
+            Close
+          </button>
+        </div>
+        <div className="px-6 py-8">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+/** Toast. One line, hairline box, fades. */
+export function Toast({ message }) {
+  if (!message) return null
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-20 z-50 flex justify-center px-6">
+      <p className="animate-fade border border-rule bg-bg px-4 py-3 text-label uppercase tracking-label text-t1">
+        {message}
+      </p>
+    </div>
+  )
+}
