@@ -1,4 +1,4 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
 /* App chrome: the top bar, the bottom nav, the sheet and the toast.
    All four are flat — a hairline separates them from content, nothing else. */
@@ -41,21 +41,32 @@ export function BottomNav() {
 /**
  * Top bar. Left slot is either a back arrow or nothing; the title is the tiny
  * tracked caps label, centered; right slot is one optional action.
+ *
+ * Back goes back — through real history, not to a hardcoded parent. Screens
+ * like Shop and Ask are reachable from more than one place, and a fixed
+ * `backTo` on those sends you somewhere you were never coming from. `backTo`
+ * is kept only as the fallback for a cold deep-link or a refresh, where there
+ * is no history entry to return to.
  */
 export function TopBar({ title, back = false, backTo, right = null, sub = null }) {
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // React Router stamps 'default' on the key when this is the first entry in
+  // the session — i.e. nothing to go back to.
+  const hasHistory = location.key !== 'default'
+
+  const goBack = () => {
+    if (hasHistory) navigate(-1)
+    else navigate(backTo || '/today', { replace: true })
+  }
 
   return (
     <header className="sticky top-0 z-20 flex-none border-b border-rule bg-bg">
       <div className="grid h-12 grid-cols-[56px_1fr_56px] items-center">
         <div className="flex items-center pl-4">
           {back && (
-            <button
-              type="button"
-              aria-label="Back"
-              onClick={() => (backTo ? navigate(backTo) : navigate(-1))}
-              className="text-body text-t2"
-            >
+            <button type="button" aria-label="Back" onClick={goBack} className="text-body text-t2">
               ←
             </button>
           )}
@@ -110,7 +121,7 @@ export function Sheet({ open, onClose, title, children }) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black opacity-80"
+        className="absolute inset-0 bg-t1 opacity-30"
       />
       <div className="relative animate-sheet-in max-h-[82%] overflow-y-auto border-t border-rule bg-bg no-scrollbar">
         <div className="flex items-center justify-between border-b border-rule px-6 py-4">

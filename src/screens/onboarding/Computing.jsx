@@ -1,25 +1,60 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { loadingLines } from '../../data/mock.js'
-import { Stub } from '../../components/Primitives.jsx'
+import { loadingLines, user } from '../../data/mock.js'
+import ChartWheel from '../../components/ChartWheel.jsx'
+import { Button, Field, Stub } from '../../components/Primitives.jsx'
+import { useStore } from '../../store.jsx'
 
 /**
- * The loading state does real brand work: naming the data source turns a spinner
- * into a credibility signal. It is the reason people believe the output, so it
- * gets its own screen rather than a spinner in a corner.
+ * Two beats on one screen: the compute, then the reveal.
+ *
+ * The loading state does real brand work — naming the data source turns a
+ * spinner into a credibility signal. The reveal that follows is the payoff for
+ * the four questions, and it does not auto-advance: dumping someone straight
+ * into a tab bar throws away the only moment the chart is the whole screen.
  */
 export default function Computing() {
-  const navigate = useNavigate()
+  const { birth } = useStore()
   const [step, setStep] = useState(0)
 
+  const done = step >= loadingLines.length
+  const name = birth.name || user.name
+
   useEffect(() => {
-    if (step >= loadingLines.length) {
-      const done = setTimeout(() => navigate('/today', { replace: true }), 700)
-      return () => clearTimeout(done)
-    }
+    if (done) return undefined
     const t = setTimeout(() => setStep((s) => s + 1), 780)
     return () => clearTimeout(t)
-  }, [step, navigate])
+  }, [step, done])
+
+  if (done) {
+    return (
+      <div className="flex min-h-full animate-fade flex-col px-6 pb-10 pt-12 text-center">
+        <p className="text-micro uppercase tracking-caps text-t3">Chart ready</p>
+        <h1 className="mx-auto mt-5 max-w-[12ch] text-display font-light">Here you are, {name}.</h1>
+
+        <Stub className="my-10" />
+        <ChartWheel size={240} />
+
+        <div className="mx-auto mt-12 w-full max-w-[18rem] text-left">
+          <Field k="Sun" v={`${user.sunSign} — how you push`} />
+          <Field k="Moon" v={`${user.moonSign} — how you feel`} />
+          <Field k="Rising" v={`${user.risingSign} — how you land`} />
+        </div>
+
+        <p className="prose-c mt-10">
+          Three positions out of eight. The rest are in your chart, and none of them are a verdict.
+        </p>
+
+        <div className="mt-auto pt-12">
+          <Button to="/today" variant="solid">
+            Read today
+          </Button>
+          <Button to="/chart" variant="quiet" className="mt-3">
+            See the whole chart first
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-6">

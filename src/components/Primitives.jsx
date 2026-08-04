@@ -204,6 +204,63 @@ export function Field({ k, v, className = '' }) {
   )
 }
 
+/**
+ * A row of small text toggles — like / save / share on a post, follow on a
+ * profile. Deliberately not a fourth *navigation* affordance: nothing here
+ * moves you to another screen, so it cannot be confused with <Row> or
+ * <TextLink>. An engaged toggle is inked and underlined; the rest are grey.
+ */
+export function Acts({ items, className = '' }) {
+  return (
+    <div className={`flex flex-wrap items-center gap-x-7 gap-y-3 ${className}`}>
+      {items.map((a) => (
+        <button
+          key={a.label}
+          type="button"
+          onClick={a.onClick}
+          aria-pressed={a.on === undefined ? undefined : a.on}
+          className={`text-micro uppercase tracking-caps transition-colors ${
+            a.on ? 'text-t1 underline underline-offset-4' : 'text-t3 hover:text-t1'
+          }`}
+        >
+          {a.on && a.onLabel ? a.onLabel : a.label}
+          {a.count != null && <span className="ml-2 tnum">{a.count}</span>}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Search field. A hairline and a caret, nothing else — a filled rounded box
+ * would be the only soft shape in the app.
+ */
+export function Search({ value, onChange, placeholder, label = 'Search' }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-rule px-6 py-4">
+      <span aria-hidden="true" className="flex-none text-label text-t3">
+        ⌕
+      </span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={label}
+        className="min-w-0 flex-1 bg-transparent text-body text-t1 outline-none placeholder:text-t4"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="flex-none text-micro uppercase tracking-caps text-t3 hover:text-t1"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  )
+}
+
 /** Non-interactive tag. Deliberately not a chip — chips read as tappable. */
 export function Tag({ children }) {
   return (

@@ -15,7 +15,7 @@ import {
  */
 const AppStore = createContext(null)
 
-const EMPTY_BIRTH = { date: '', time: '', place: '' }
+const EMPTY_BIRTH = { name: '', date: '', time: '', place: '' }
 
 export function AppProvider({ children }) {
   const [birth, setBirth] = useState(EMPTY_BIRTH)
@@ -24,6 +24,33 @@ export function AppProvider({ children }) {
   const [highContrast, setHighContrast] = useState(false)
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
+
+  /**
+   * One flat set of boolean flags for every "sticky" toggle in the app:
+   * `follow:a1`, `save:po2`, `like:r3`, `remind:l4`. A screen that toggles a
+   * flag and then navigates away finds it still set on the way back — which is
+   * the difference between a prototype and a broken one.
+   */
+  const [flags, setFlags] = useState(() => new Set(['save:po2']))
+
+  const hasFlag = useCallback((key) => flags.has(key), [flags])
+
+  const toggleFlag = useCallback((key, messages) => {
+    let next
+    setFlags((prev) => {
+      const copy = new Set(prev)
+      if (copy.has(key)) copy.delete(key)
+      else copy.add(key)
+      next = copy.has(key)
+      return copy
+    })
+    if (messages) {
+      setToast(next ? messages.on : messages.off)
+      clearTimeout(timer.current)
+      timer.current = setTimeout(() => setToast(null), 2400)
+    }
+    return next
+  }, [])
 
   // The contrast fix re-points CSS variables on <html>; nothing re-renders.
   useEffect(() => {
@@ -74,6 +101,8 @@ export function AppProvider({ children }) {
       addQuestions,
       highContrast,
       setHighContrast,
+      hasFlag,
+      toggleFlag,
       toast,
       showToast,
     }),
@@ -86,6 +115,8 @@ export function AppProvider({ children }) {
       spendQuestion,
       addQuestions,
       highContrast,
+      hasFlag,
+      toggleFlag,
       toast,
       showToast,
     ],

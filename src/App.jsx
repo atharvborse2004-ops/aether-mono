@@ -3,6 +3,7 @@ import { AppProvider, useStore } from './store.jsx'
 import { BottomNav, Toast } from './components/Chrome.jsx'
 
 import Intro from './screens/onboarding/Intro.jsx'
+import AskName from './screens/onboarding/AskName.jsx'
 import AskDate from './screens/onboarding/AskDate.jsx'
 import AskTime from './screens/onboarding/AskTime.jsx'
 import AskPlace from './screens/onboarding/AskPlace.jsx'
@@ -52,13 +53,14 @@ function Frame() {
   const { toast } = useStore()
 
   return (
-    <div className="flex min-h-[100dvh] w-full justify-center bg-black">
+    <div className="flex min-h-[100dvh] w-full justify-center bg-surface">
       <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden border-x border-rule bg-bg text-t1">
         <Routes>
           <Route path="/" element={<Navigate to="/onboarding" replace />} />
 
           <Route element={<PlainLayout />}>
             <Route path="/onboarding" element={<Intro />} />
+            <Route path="/onboarding/name" element={<AskName />} />
             <Route path="/onboarding/date" element={<AskDate />} />
             <Route path="/onboarding/time" element={<AskTime />} />
             <Route path="/onboarding/place" element={<AskPlace />} />

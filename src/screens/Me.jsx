@@ -1,15 +1,33 @@
 import { sessionHistory, user } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
-import { Avatar, Field, Row, Section, Stub } from '../components/Primitives.jsx'
+import { Avatar, Button, Field, Row, Section, Stub } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
+const SETTINGS = [
+  { key: 'Language', value: 'English' },
+  { key: 'Notifications', value: 'Daily at 08:00' },
+  { key: 'Privacy & data', value: 'On device' },
+  { key: 'Help & support', value: null },
+]
+
 export default function Me() {
-  const { highContrast, setHighContrast, cartCount, questionsLeft } = useStore()
+  const { highContrast, setHighContrast, cartCount, questionsLeft, showToast } = useStore()
 
   return (
     <>
-      <TopBar title="Me" />
+      <TopBar
+        title="Me"
+        right={
+          <button
+            type="button"
+            onClick={() => showToast('Settings — prototype only')}
+            className="text-label uppercase tracking-label text-t2"
+          >
+            Settings
+          </button>
+        }
+      />
 
       <section className="section pt-10 text-center">
         <Avatar initials={user.initials} size={56} />
@@ -19,6 +37,17 @@ export default function Me() {
         </p>
         <Stub className="my-8" />
         <ChartWheel size={180} />
+
+        {/* The kundli is the artefact people came for. Both ways of taking it
+            out of the app sit directly under it, not in a settings list. */}
+        <div className="mt-8 flex gap-3">
+          <Button variant="quiet" onClick={() => showToast('Kundli PDF downloaded')}>
+            Download
+          </Button>
+          <Button variant="quiet" onClick={() => showToast('Chart link copied')}>
+            Share
+          </Button>
+        </div>
       </section>
 
       <Section label="Birth data">
@@ -29,11 +58,15 @@ export default function Me() {
           Change any of these and every reading in the app changes with it. That is the point of
           asking so precisely.
         </p>
+        <Button to="/onboarding/date" variant="quiet" className="mt-6">
+          Edit birth details
+        </Button>
       </Section>
 
       <Section label="Everything else">
         <Row to="/people" title="People" note="Charts you have read against yours" />
         <Row to="/ask" title="Ask the Stars" meta={`${questionsLeft} left`} />
+        <Row to="/read" title="Read" note="Notes, long reads, clips and rooms" />
         <Row to="/notifications" title="Notifications" note="One a day, at eight" />
         <Row to="/premium" title="Premium" note="Reports, Eros, more questions" />
         <Row to="/shop" title="Shop" meta={`${cartCount} in cart`} />
@@ -42,11 +75,19 @@ export default function Me() {
       <Section label="Wallet">
         <Field k="Balance" v={`₹${user.walletBalance.toLocaleString('en-IN')}`} />
         <Field k="Questions" v={questionsLeft} />
+        <div className="mt-6 flex gap-3">
+          <Button variant="quiet" onClick={() => showToast('Top-up — prototype only')}>
+            Add money
+          </Button>
+          <Button variant="quiet" onClick={() => showToast('Statement — prototype only')}>
+            Statement
+          </Button>
+        </div>
       </Section>
 
-      {/* Accessibility control. The reference palette puts grey text on black at
-          ratios that fail WCAG AA; this raises every grey token by one step
-          without changing a single layout decision. */}
+      {/* Accessibility control. The reference palette puts grey text on its
+          background at ratios that fail WCAG AA; this darkens every grey by one
+          step without changing a single layout decision. */}
       <Section label="Display">
         <button
           type="button"
@@ -57,7 +98,7 @@ export default function Me() {
           <span>
             <span className="block text-body text-t1">Increase contrast</span>
             <span className="mt-1 block text-meta text-t3">
-              Raises every grey. Nothing else moves.
+              Darkens every grey. Nothing else moves.
             </span>
           </span>
           <span className="flex-none text-label uppercase tracking-label text-t1">
@@ -66,26 +107,45 @@ export default function Me() {
         </button>
       </Section>
 
+      <Section label="Settings">
+        <ul>
+          {SETTINGS.map((s) => (
+            <li key={s.key}>
+              <Row
+                onClick={() => showToast(`${s.key} — prototype only`)}
+                title={s.key}
+                meta={s.value}
+              />
+            </li>
+          ))}
+        </ul>
+      </Section>
+
       <Section label="Past sessions">
         <ul>
           {sessionHistory.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center gap-4 border-b border-rule py-4 last:border-b-0"
-            >
-              <Avatar initials={s.initials} size={34} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-body text-t1">{s.consultant}</span>
-                <span className="mt-1 block text-micro uppercase tracking-caps text-t3 tnum">
-                  {s.type} · {s.date}
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => showToast(`Receipt · ${s.consultant}`)}
+                className="flex w-full items-center gap-4 border-b border-rule py-4 text-left transition-opacity hover:opacity-60"
+              >
+                <Avatar initials={s.initials} size={34} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body text-t1">{s.consultant}</span>
+                  <span className="mt-1 block text-micro uppercase tracking-caps text-t3 tnum">
+                    {s.type} · {s.date}
+                  </span>
                 </span>
-              </span>
-              <span className="flex-none text-right">
-                <span className="block text-meta text-t1 tnum">
-                  {s.amount ? `₹${s.amount.toLocaleString('en-IN')}` : '—'}
+                <span className="flex-none text-right">
+                  <span className="block text-meta text-t1 tnum">
+                    {s.amount ? `₹${s.amount.toLocaleString('en-IN')}` : '—'}
+                  </span>
+                  <span className="block text-micro uppercase tracking-caps text-t3">
+                    {s.status}
+                  </span>
                 </span>
-                <span className="block text-micro uppercase tracking-caps text-t3">{s.status}</span>
-              </span>
+              </button>
             </li>
           ))}
         </ul>

@@ -60,11 +60,11 @@ function Orbit({ h }) {
   const cx = 60 + (h % 80)
   const cy = 60 + ((h >> 3) % 80)
   return (
-    <g fill="none" stroke="#FFFFFF">
+    <g fill="none" stroke="var(--text)">
       <circle cx={cx} cy={cy} r="70" strokeOpacity="0.13" />
       <circle cx={cx} cy={cy} r="52" strokeOpacity="0.18" />
       <circle cx={cx} cy={cy} r="30" strokeOpacity="0.24" />
-      <circle cx={cx} cy={cy} r="4" fill="#FFFFFF" fillOpacity="0.5" stroke="none" />
+      <circle cx={cx} cy={cy} r="4" fill="var(--text)" fillOpacity="0.5" stroke="none" />
       {Array.from({ length: 48 }, (_, i) => {
         const a = ((i * 7.5 - 90) * Math.PI) / 180
         const long = i % 4 === 0
@@ -94,7 +94,7 @@ function Orbit({ h }) {
 function Engraving({ h }) {
   const tilt = h % 40
   return (
-    <g stroke="#FFFFFF" fill="none">
+    <g stroke="var(--text)" fill="none">
       {Array.from({ length: 54 }, (_, i) => {
         const y = i * 4 - 8
         const amp = 3 + ((i * (h % 5)) % 7)
@@ -107,7 +107,7 @@ function Engraving({ h }) {
           />
         )
       })}
-      <circle cx={100 + tilt} cy={100 - tilt} r="34" stroke="none" fill="#000000" fillOpacity="0.55" />
+      <circle cx={100 + tilt} cy={100 - tilt} r="34" stroke="none" fill="var(--bg)" fillOpacity="0.55" />
       <circle cx={100 + tilt} cy={100 - tilt} r="34" strokeOpacity="0.32" />
     </g>
   )
@@ -125,7 +125,7 @@ function Halftone({ h }) {
     }
   }
   return (
-    <g fill="#FFFFFF" fillOpacity="0.34">
+    <g fill="var(--text)" fillOpacity="0.34">
       {dots}
     </g>
   )
@@ -133,7 +133,7 @@ function Halftone({ h }) {
 
 function Contour({ h }) {
   return (
-    <g stroke="#FFFFFF" fill="none">
+    <g stroke="var(--text)" fill="none">
       {Array.from({ length: 16 }, (_, i) => {
         const r = 12 + i * 7
         const wobble = (h >> i) % 9

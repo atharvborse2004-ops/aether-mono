@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { days, user } from '../data/mock.js'
 import { TopBar, BarAction } from '../components/Chrome.jsx'
 import {
+  Acts,
   Button,
   Label,
   Row,
@@ -11,6 +12,7 @@ import {
   Stub,
   Ticks,
 } from '../components/Primitives.jsx'
+import { useStore } from '../store.jsx'
 
 const TABS = [
   { key: 'yesterday', label: 'Yest' },
@@ -20,6 +22,7 @@ const TABS = [
 
 export default function Today() {
   const [key, setKey] = useState('today')
+  const { showToast, hasFlag, toggleFlag } = useStore()
   const day = days[key]
 
   return (
@@ -38,10 +41,58 @@ export default function Today() {
           it sits above the fold with nothing competing for the position. */}
       <section key={key} className="animate-fade section pt-10">
         <p className="label mb-8">{day.date}</p>
+
+        {/* Tense marker. Without it, a past-tense reading under a big
+            headline reads as a broken forecast rather than a review. */}
+        {day.context && (
+          <p className="mb-6 text-center text-micro uppercase tracking-caps text-t3">
+            {day.context}
+          </p>
+        )}
+
         <h1 className="mx-auto max-w-[16ch] text-center text-title font-light">{day.headline}</h1>
         <Stub className="my-8" />
         <p className="horoscope">{day.body}</p>
+
+        {/* Mood / colour / number — the three throwaway values people
+            actually screenshot. Set as a specimen line, not as badges. */}
+        <dl className="mx-auto mt-10 grid max-w-[18rem] grid-cols-3 border-y border-rule">
+          {[
+            ['Mood', day.mood],
+            ['Colour', day.luckyColour],
+            ['Number', day.luckyNumber],
+          ].map(([k, v], i) => (
+            <div key={k} className={`py-4 text-center ${i > 0 ? 'border-l border-rule' : ''}`}>
+              <dt className="text-micro uppercase tracking-caps text-t3">{k}</dt>
+              <dd className="mt-1.5 text-meta text-t1 tnum">{v}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <Acts
+          className="mt-8 justify-center"
+          items={[
+            {
+              label: 'Save',
+              onLabel: 'Saved',
+              on: hasFlag(`save:day-${key}`),
+              onClick: () =>
+                toggleFlag(`save:day-${key}`, {
+                  on: 'Saved to your readings',
+                  off: 'Removed from your readings',
+                }),
+            },
+            { label: 'Share', onClick: () => showToast('Reading copied') },
+          ]}
+        />
       </section>
+
+      {/* ── The one instruction ──────────────────────────────────────────
+          Everything above is description. This is the only line that asks
+          for something, so it gets a section to itself. */}
+      <Section label={day.focusLabel}>
+        <p className="mx-auto max-w-[20ch] text-center text-lead font-light">{day.focus}</p>
+      </Section>
 
       {/* ── Day at a glance ─────────────────────────────────────────────── */}
       <Section label="Day at a glance">
@@ -182,8 +233,21 @@ export default function Today() {
       <Section label="Go deeper" last>
         <Row to="/ask" title="Ask the Stars" note="Put a real question to your chart" />
         <Row to="/chart" title="Your full chart" note="Eight placements, plainly written" />
+        <Row to="/people" title="Your people" note="Read their chart against yours" />
+        <Row to="/shop" title="Shop" note="Stones and remedies, honestly described" />
         <Row to="/premium" title="Premium" note="Reports, Eros, unlimited questions" />
-        <Button to="/read" variant="quiet" className="mt-10">
+
+        {/* The cross-sell. A daily reading is a general forecast; this is the
+            one place it is worth saying so out loud. */}
+        <Stub className="my-10" />
+        <p className="prose-c">
+          This is written for everyone with your placements. If you want it read against your whole
+          chart, that takes a person.
+        </p>
+        <Button to="/consult" variant="solid" className="mt-8">
+          Book fifteen minutes
+        </Button>
+        <Button to="/read" variant="quiet" className="mt-3">
           Read something longer
         </Button>
       </Section>

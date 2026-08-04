@@ -3,17 +3,21 @@ import { Navigate, useParams } from 'react-router-dom'
 import { liveChat, liveSessions } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
-import { Avatar, Button, Section } from '../components/Primitives.jsx'
+import { Acts, Avatar, Button, Section } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 export default function LiveRoom() {
   const { id } = useParams()
-  const { showToast } = useStore()
+  const { showToast, hasFlag, toggleFlag } = useStore()
   const [chat, setChat] = useState(liveChat)
   const [draft, setDraft] = useState('')
+  const [hearts, setHearts] = useState(0)
 
   const room = liveSessions.find((l) => l.id === id)
   if (!room) return <Navigate to="/read" replace />
+
+  const following = hasFlag(`follow:${room.consultantId}`)
+  const reminded = hasFlag(`remind:${room.id}`)
 
   const send = () => {
     const text = draft.trim()
@@ -29,6 +33,15 @@ export default function LiveRoom() {
         back
         backTo="/read"
         sub={room.live ? `${room.viewers} watching` : room.startsIn}
+        right={
+          <button
+            type="button"
+            onClick={() => showToast('Room link copied')}
+            className="text-label uppercase tracking-label text-t2"
+          >
+            Share
+          </button>
+        }
       />
 
       <Plate seed={room.id} variant="orbit" className="aspect-video w-full">
@@ -42,13 +55,52 @@ export default function LiveRoom() {
         <div className="mt-5 flex items-center gap-3">
           <Avatar initials={room.initials} size={32} />
           <span className="flex-1 text-meta text-t2">{room.consultant}</span>
-          <Button
-            className="w-auto px-4"
-            onClick={() => showToast(room.live ? 'Following' : 'You will be reminded')}
-          >
-            {room.live ? 'Follow' : 'Remind me'}
-          </Button>
+          {room.live ? (
+            <Button
+              className="w-auto px-4"
+              variant={following ? 'solid' : 'default'}
+              onClick={() =>
+                toggleFlag(`follow:${room.consultantId}`, {
+                  on: `Following ${room.consultant.split(' ')[0]}`,
+                  off: `Unfollowed ${room.consultant.split(' ')[0]}`,
+                })
+              }
+            >
+              {following ? 'Following' : 'Follow'}
+            </Button>
+          ) : (
+            <Button
+              className="w-auto px-4"
+              variant={reminded ? 'solid' : 'default'}
+              onClick={() =>
+                toggleFlag(`remind:${room.id}`, {
+                  on: 'You will be reminded',
+                  off: 'Reminder removed',
+                })
+              }
+            >
+              {reminded ? 'Reminder set' : 'Remind me'}
+            </Button>
+          )}
         </div>
+
+        {/* Reactions. A heart is a counter, not an animation — a stream of
+            floating hearts over this palette would be the only motion in the
+            app that means nothing. */}
+        <Acts
+          className="mt-6"
+          items={[
+            {
+              label: 'Heart',
+              onLabel: 'Hearted',
+              on: hearts > 0,
+              count: hearts || null,
+              onClick: () => setHearts((h) => h + 1),
+            },
+            { label: 'Send a gift', onClick: () => showToast('Gifts — prototype only') },
+            { label: 'Share', onClick: () => showToast('Room link copied') },
+          ]}
+        />
       </Section>
 
       {room.live ? (

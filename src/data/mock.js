@@ -31,6 +31,15 @@ export const days = {
     date: 'Sunday, 2 August',
     headline: 'You were right to wait.',
     body: 'The morning asked more of you than it gave back. Whatever you left unsaid at lunch was the correct call. It would have landed badly and you knew it.',
+    // Shown above the reading on any day that is not today, so the tense of
+    // the copy is never a surprise.
+    context: 'Looking back.',
+    // The one instruction. On yesterday it is framed as a review.
+    focus: 'Note what you avoided, and why.',
+    focusLabel: 'Looking back',
+    mood: 'Restless',
+    luckyColour: 'Rust',
+    luckyNumber: 3,
     // "Day at a Glance" — three plain readings, no icons, no scores out of ten.
     glance: [
       { key: 'Mood', value: 'Restless' },
@@ -68,6 +77,12 @@ export const days = {
     date: 'Monday, 3 August',
     headline: 'Say less than you want to.',
     body: 'Mercury softens the noise around a decision you have been circling for weeks. The person you are negotiating with is closer to yes than they look. Do not talk them out of it.',
+    context: null,
+    focus: 'Say the plain version of the thing.',
+    focusLabel: 'Do this',
+    mood: 'Reflective',
+    luckyColour: 'Deep teal',
+    luckyNumber: 7,
     glance: [
       { key: 'Mood', value: 'Reflective' },
       { key: 'Energy', value: 'Steady' },
@@ -111,6 +126,12 @@ export const days = {
     date: 'Tuesday, 4 August',
     headline: 'Protect the first two hours.',
     body: 'Mars moves into your 3rd house and the pace picks up sharply. Front-load anything that needs care. By afternoon you will be reacting rather than choosing.',
+    context: 'Keep the morning clear.',
+    focus: 'Front-load the day.',
+    focusLabel: 'Do this',
+    mood: 'Charged',
+    luckyColour: 'Gold',
+    luckyNumber: 1,
     glance: [
       { key: 'Mood', value: 'Charged' },
       { key: 'Energy', value: 'Front-loaded' },
@@ -390,6 +411,8 @@ export const posts = [
     text: 'For the people messaging me at midnight: a difficult transit is a forecast, not a sentence. Rain is coming. You still choose whether to carry an umbrella or cancel the trip.',
     likes: 1842,
     comments: 96,
+    shares: 41,
+    saved: false,
   },
   {
     id: 'po2',
@@ -402,6 +425,8 @@ export const posts = [
     plate: 'Eight of Cups',
     likes: 3120,
     comments: 214,
+    shares: 88,
+    saved: true,
   },
   {
     id: 'po3',
@@ -413,6 +438,8 @@ export const posts = [
     text: 'Four clients this week described the same thing: they know the decision, they are waiting for someone to approve it. Consider this your approval.',
     likes: 967,
     comments: 52,
+    shares: 23,
+    saved: false,
   },
   {
     id: 'po4',
@@ -424,6 +451,8 @@ export const posts = [
     text: 'A business name is not a lucky charm. It is a promise you have to keep saying out loud for ten years. Pick one you can stand to hear.',
     likes: 512,
     comments: 31,
+    shares: 12,
+    saved: false,
   },
 ]
 
@@ -489,6 +518,7 @@ export const clips = [
     consultant: 'Ritu Kashyap',
     initials: 'RK',
     caption: 'Your Saturn return is not a punishment. It is an audit.',
+    audio: 'Original audio · Ritu Kashyap',
     duration: '0:48',
     views: '312k',
     likes: '24.1k',
@@ -500,6 +530,7 @@ export const clips = [
     consultant: 'Meher Bano',
     initials: 'MB',
     caption: 'Pull one card before you reply to that message. Here is how.',
+    audio: 'Original audio · Meher Bano',
     duration: '1:12',
     views: '186k',
     likes: '15.7k',
@@ -511,6 +542,7 @@ export const clips = [
     consultant: 'Dev Malhotra',
     initials: 'DM',
     caption: 'Three compatibility myths that keep good people apart.',
+    audio: 'Original audio · Dev Malhotra',
     duration: '0:36',
     views: '97.4k',
     likes: '8.9k',
@@ -522,6 +554,7 @@ export const clips = [
     consultant: 'Dr. Nandita Rao',
     initials: 'NR',
     caption: 'Grief does not have stages. It has weather.',
+    audio: 'Original audio · Dr. Nandita Rao',
     duration: '1:04',
     views: '441k',
     likes: '52.3k',
@@ -533,6 +566,7 @@ export const clips = [
     consultant: 'Yogesh Pandit',
     initials: 'YP',
     caption: 'Pick your launch date like you pick a wedding date.',
+    audio: 'Original audio · Yogesh Pandit',
     duration: '0:52',
     views: '64.2k',
     likes: '5.1k',

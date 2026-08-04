@@ -19,8 +19,8 @@ export default function Intro() {
       <Plate seed="intro-plate" variant="orbit" className="my-12 h-52 w-full animate-fade-slow" />
 
       <div className="mt-auto">
-        <p className="label mb-6">Three questions. Then we compute.</p>
-        <Button to="/onboarding/date" variant="solid">
+        <p className="label mb-6">Four questions. Then we compute.</p>
+        <Button to="/onboarding/name" variant="solid">
           Begin
         </Button>
         <p className="mt-6 text-center text-micro uppercase tracking-caps text-t3">

@@ -5,18 +5,25 @@ that is, is noted.
 
 ## 1. Tokens
 
+White is primary, black is secondary. Ink on paper, not chalk on slate.
+
 | Token         | Value                | Notes                                     |
 | ------------- | -------------------- | ----------------------------------------- |
-| Background    | `#000000`            | Pure black. Not dark grey                 |
-| Surface       | `#0A0A0A`            | Plates only                               |
-| Primary text  | `#FFFFFF`            |                                           |
-| Secondary     | `#8A8A8A`            | 6.1:1 on black — passes AA                |
-| Tertiary      | `#757575`            | 4.6:1 — the floor for readable text       |
-| Non-text grey | `#5C5C5C`            | 3.1:1 — ticks, spokes, placeholders only  |
-| Hairline      | `1px solid #262626`  |                                           |
+| Background    | `#FFFFFF`            | Pure white. Not off-white                 |
+| Surface       | `#F2F2F2`            | Plates only                               |
+| Primary text  | `#000000`            |                                           |
+| Secondary     | `#565656`            | 7.0:1 on white — passes AA                |
+| Tertiary      | `#6B6B6B`            | 5.1:1 — the floor for readable text       |
+| Non-text grey | `#A3A3A3`            | 2.6:1 — ticks, spokes, placeholders only  |
+| Hairline      | `1px solid #D6D6D6`  |                                           |
 | Accent        | none                 | Colour is the enemy here                  |
 | Radius        | `0`                  | Everywhere                                |
 | Elevation     | none                 | Rules and whitespace, never shadows       |
+
+The greys are re-derived rather than arithmetically flipped from the previous
+dark set. Grey-on-white and grey-on-black do not land at the same luminance for
+the same contrast ratio, so inverting the hex values would have quietly dropped
+body text below AA.
 
 Declared in `src/index.css`. Tailwind's default palette is **replaced**, not
 extended (`tailwind.config.js`), so no other colour is reachable from a class
@@ -64,6 +71,12 @@ draws its trailing `→` from CSS, so no row can ship without it and every row
 in the app looks identical. Selectors (segmented controls, filters) use one
 shared language: tracked caps with a 1px underline on the active item.
 
+`<Acts>` is the one addition — the like / save / share / follow toggles. It is
+not a fourth *navigation* shape: nothing in an `Acts` row moves you to another
+screen, so it cannot be mistaken for a `Row` or a `TextLink`. An engaged toggle
+is inked and underlined; the rest are grey. State lives in the store's flag set
+(`store.jsx`), so a follow or a save survives navigating away and back.
+
 ## 6. The five known flaws, and where each is fixed
 
 The published critiques of the reference app name five problems. All five are
@@ -72,10 +85,10 @@ addressed:
 1. **Inconsistent link affordances** → the three-shape system above.
    `src/components/Primitives.jsx`, `.act-*` in `src/index.css`.
 
-2. **Grey-on-black contrast failing WCAG** → `--text-2` and `--text-3` are set
-   to ratios that pass AA (6.1:1 and 4.6:1). The 3.1:1 grey exists but is
-   restricted to non-text marks. On top of that, **Me → Display → Increase
-   contrast** re-points every grey token upward at runtime
+2. **Grey contrast failing WCAG** → `--text-2` and `--text-3` are set to ratios
+   that pass AA (7.0:1 and 5.1:1). The 2.6:1 grey exists but is restricted to
+   non-text marks. On top of that, **Me → Display → Increase contrast**
+   re-points every grey token darker at runtime
    (`:root[data-contrast='high']` in `index.css`, toggled from `store.jsx`).
    Focus rings are visible everywhere (`:focus-visible`).
 
@@ -105,7 +118,7 @@ template.
 
 ## 8. What is not borrowed
 
-The aesthetic system — black canvas, all-caps grotesk, hairline rules, blunt
+The aesthetic system — white canvas, all-caps grotesk, hairline rules, blunt
 copy — is a general editorial idiom and freely reusable. Deliberately **not**
 reproduced: any existing app's wordmark, its commissioned collage
 illustrations, or its horoscope copy. All imagery here is generated in SVG

@@ -13,7 +13,7 @@ const REPLIES = [
 ]
 
 export default function Ask() {
-  const { questionsLeft, spendQuestion, addQuestions } = useStore()
+  const { questionsLeft, spendQuestion, addQuestions, showToast } = useStore()
   const [messages, setMessages] = useState(askConversation)
   const [draft, setDraft] = useState('')
   const [thinking, setThinking] = useState(false)
@@ -77,6 +77,16 @@ export default function Ask() {
           </p>
           <Button className="mt-10" variant="solid" onClick={() => setSheet(true)}>
             Get more questions
+          </Button>
+          <Button
+            className="mt-3"
+            variant="quiet"
+            onClick={() => showToast('We will tell you when they reset')}
+          >
+            Remind me when they reset
+          </Button>
+          <Button to="/consult" variant="quiet" className="mt-3">
+            Or ask a person instead
           </Button>
         </Section>
       ) : (
