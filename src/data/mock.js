@@ -931,3 +931,200 @@ export const loadingLines = [
   'Placing eight bodies',
   'Reading the houses',
 ]
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WALLET — balance, ledger and top-up presets. Prototype state only; the
+   balance lives in the store and resets on reload.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const topUpAmounts = [500, 1000, 2000, 5000]
+
+export const walletTransactions = [
+  { id: 'w1', label: 'Ritu Kashyap · 30 min', kind: 'debit', amount: 1499, date: '28 Jul', method: 'Wallet' },
+  { id: 'w2', label: 'Added money', kind: 'credit', amount: 2000, date: '27 Jul', method: 'UPI' },
+  { id: 'w3', label: 'Question pack · 12', kind: 'debit', amount: 349, date: '24 Jul', method: 'Wallet' },
+  { id: 'w4', label: 'Meher Bano · 15 min', kind: 'debit', amount: 899, date: '19 Jul', method: 'Wallet' },
+  { id: 'w5', label: 'Cashback · first session', kind: 'credit', amount: 150, date: '19 Jul', method: 'Promo' },
+  { id: 'w6', label: 'Added money', kind: 'credit', amount: 1000, date: '11 Jul', method: 'Card' },
+]
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACADEMY — courses, live events and saved downloads.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const courses = [
+  {
+    id: 'c1',
+    title: 'Reading a birth chart from scratch',
+    tutor: 'Ritu Kashyap',
+    initials: 'RK',
+    lessons: 12,
+    duration: '4h 20m',
+    level: 'Beginner',
+    price: 2499,
+    progress: 35,
+    url: 'https://www.youtube.com/results?search_query=birth+chart+basics',
+  },
+  {
+    id: 'c2',
+    title: 'Dashas and timing: when, not whether',
+    tutor: 'Dev Malhotra',
+    initials: 'DM',
+    lessons: 9,
+    duration: '3h 05m',
+    level: 'Intermediate',
+    price: 3499,
+    progress: 0,
+    url: 'https://www.youtube.com/results?search_query=vimshottari+dasha',
+  },
+  {
+    id: 'c3',
+    title: 'Tarot as a thinking tool',
+    tutor: 'Meher Bano',
+    initials: 'MB',
+    lessons: 8,
+    duration: '2h 40m',
+    level: 'Beginner',
+    price: 1999,
+    progress: 72,
+    url: 'https://www.youtube.com/results?search_query=tarot+for+beginners',
+  },
+  {
+    id: 'c4',
+    title: 'Synastry: charts against each other',
+    tutor: 'Simran Kaur',
+    initials: 'SK',
+    lessons: 10,
+    duration: '3h 30m',
+    level: 'Advanced',
+    price: 4299,
+    progress: 0,
+    url: 'https://www.youtube.com/results?search_query=synastry+astrology',
+  },
+]
+
+export const academyEvents = [
+  {
+    id: 'e1',
+    title: 'Saturn return, live clinic',
+    host: 'Ritu Kashyap',
+    initials: 'RK',
+    date: 'Thu, 7 Aug',
+    time: '19:00',
+    seats: 40,
+    taken: 31,
+    price: 0,
+    kind: 'Webinar',
+  },
+  {
+    id: 'e2',
+    title: 'Chart-reading intensive, weekend one',
+    host: 'Dev Malhotra',
+    initials: 'DM',
+    date: 'Sat, 9 Aug',
+    time: '11:00',
+    seats: 25,
+    taken: 25,
+    price: 1499,
+    kind: 'Seminar',
+  },
+  {
+    id: 'e3',
+    title: 'Grief and the 8th house',
+    host: 'Dr. Nandita Rao',
+    initials: 'NR',
+    date: 'Tue, 12 Aug',
+    time: '18:30',
+    seats: 60,
+    taken: 12,
+    price: 499,
+    kind: 'Webinar',
+  },
+]
+
+export const downloads = [
+  { id: 'd1', title: 'Birth chart basics — lesson 1', kind: 'Video', size: '182 MB', saved: '2 days ago', course: 'Reading a birth chart' },
+  { id: 'd2', title: 'Dasha reference tables', kind: 'PDF', size: '1.4 MB', saved: '5 days ago', course: 'Dashas and timing' },
+  { id: 'd3', title: 'Tarot spreads worksheet', kind: 'PDF', size: '820 KB', saved: '1 week ago', course: 'Tarot as a thinking tool' },
+  { id: 'd4', title: 'Saturn return clinic — recording', kind: 'Video', size: '410 MB', saved: '2 weeks ago', course: 'Live event' },
+]
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CHAT — consultant threads for the side panel. The AI tab reuses
+   askConversation; these are the human ones.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const chatThreads = [
+  {
+    id: 'ct1',
+    consultantId: 'a1',
+    name: 'Ritu Kashyap',
+    initials: 'RK',
+    online: true,
+    unread: 2,
+    last: 'Send me the exact minute and I will look again.',
+    time: '2m',
+    messages: [
+      { id: 'm1', from: 'them', text: 'You booked the 30 minute slot. Bring the offer letter.', time: '09:02' },
+      { id: 'm2', from: 'me', text: 'It says the role reports to a new manager after six months.', time: '09:04' },
+      { id: 'm3', from: 'them', text: 'That is the part to negotiate, not the salary. Your 10th house is strong until September.', time: '09:05' },
+      { id: 'm4', from: 'them', text: 'Send me the exact minute and I will look again.', time: '09:06' },
+    ],
+  },
+  {
+    id: 'ct2',
+    consultantId: 'a3',
+    name: 'Meher Bano',
+    initials: 'MB',
+    online: true,
+    unread: 0,
+    last: 'Pull one card before you reply. Not three.',
+    time: '1h',
+    messages: [
+      { id: 'm1', from: 'me', text: 'I keep redrafting the same message.', time: '08:10' },
+      { id: 'm2', from: 'them', text: 'Pull one card before you reply. Not three.', time: '08:12' },
+    ],
+  },
+  {
+    id: 'ct3',
+    consultantId: 'a4',
+    name: 'Dr. Nandita Rao',
+    initials: 'NR',
+    online: false,
+    unread: 0,
+    last: 'Next session Tuesday. Bring the sleep log.',
+    time: '2d',
+    messages: [{ id: 'm1', from: 'them', text: 'Next session Tuesday. Bring the sleep log.', time: 'Mon' }],
+  },
+]
+
+/** Canned consultant replies so the mock thread keeps moving without a backend. */
+export const consultantReplies = [
+  'Give me a minute with the chart.',
+  'That reads like a 7th house question, not a 10th house one.',
+  'Do not decide before Thursday. The window opens then.',
+  'Say the plain version to them. You have been editing it for a week.',
+]
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HOME FEED — one stream, mixed formats. `kind` decides how a card renders;
+   `refId` cross-references clips / reads / posts / consultants so every card
+   resolves to something real rather than carrying a duplicate copy.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const feed = [
+  { id: 'f1', kind: 'post', refId: 'po1' },
+  { id: 'f2', kind: 'reel', refId: 'r1' },
+  { id: 'f3', kind: 'reading', refId: 'today' },
+  { id: 'f4', kind: 'article', refId: 'b1' },
+  { id: 'f5', kind: 'post', refId: 'po2' },
+  { id: 'f6', kind: 'live', refId: 'l1' },
+  { id: 'f7', kind: 'reel', refId: 'r4' },
+  { id: 'f8', kind: 'course', refId: 'c1' },
+  { id: 'f9', kind: 'article', refId: 'b2' },
+  { id: 'f10', kind: 'post', refId: 'po3' },
+  { id: 'f11', kind: 'reel', refId: 'r2' },
+  { id: 'f12', kind: 'product', refId: 'sh1' },
+  { id: 'f13', kind: 'post', refId: 'po4' },
+  { id: 'f14', kind: 'article', refId: 'b3' },
+]

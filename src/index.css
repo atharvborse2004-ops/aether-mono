@@ -14,14 +14,31 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg: #000000;
-  --surface: #0a0a0a;
+  /* NeoPOP canvas. #0d0d0d and #121212 verbatim from the spec — never pure
+     #000, which is the one colour NeoPOP explicitly rules out. */
+  --bg: #0d0d0d;
+  --surface: #121212;
+  --surface-2: #161616;
+  --stroke: rgba(255, 255, 255, 0.1);
+
   --text: #ffffff;
-  --text-2: #8a8a8a; /* 6.1:1 on black — passes WCAG AA for body text */
-  --text-3: #757575; /* 4.6:1 on black — the floor for anything readable  */
-  --text-4: #5c5c5c; /* 3.1:1 — NON-TEXT ONLY: ticks, spokes, dividers   */
+  --text-2: #8a8a8a; /* 5.6:1 on #0d0d0d — passes WCAG AA for body text */
+  --text-3: #757575; /* 4.2:1 — the floor for anything readable         */
+  --text-4: #5c5c5c; /* 2.8:1 — NON-TEXT ONLY: ticks, spokes, dividers  */
   --rule: #262626;
 
+  /* The single voltage. NeoPOP allows exactly one accent per screen and this
+     app spends it on gold — the astrology identity the spec says to keep
+     rather than swapping in a neon. */
+  --gold: #d4a24c;
+  --gold-dim: #b47f28;
+  --gold-wash: rgba(212, 162, 76, 0.12);
+
+  /* Status, verbatim from the spec's ramp. */
+  --live: #ee4d37;
+  --ok: #06c270;
+
+  --edge: #3d3d3d; /* the shadow block colour on dark surfaces */
   --sp: 8px;
 }
 
@@ -33,6 +50,7 @@
   --text-3: #a8a8a8; /*  8.6:1 */
   --text-4: #8a8a8a; /*  6.1:1 */
   --rule: #4a4a4a;
+  --stroke: rgba(255, 255, 255, 0.22);
 }
 
 @layer base {
@@ -55,6 +73,17 @@
   /* The vibe, enforced. Nothing in this app is allowed a soft corner. */
   * {
     border-radius: 0 !important;
+  }
+
+  /* The deliberate exceptions. NeoPOP is all rectangles, so a circle is the
+     loudest shape available — which is exactly why the two primary actions
+     (the live CTA and the floating Ask AI button) use it and nothing else
+     does. This needs `!important` to beat the blanket rule above; an inline
+     style cannot, since `!important` outranks it. */
+  .is-round,
+  .is-round::after,
+  .is-round::before {
+    border-radius: 9999px !important;
   }
 
   /* Visible focus is non-negotiable — it is the only affordance a keyboard
@@ -102,9 +131,13 @@
     @apply text-body text-center mx-auto max-w-prose2 text-t2;
   }
 
+  /* Numerals, prices and meta run in Overpass Mono — the spec's third
+     family, and the reason CRED's figures read as instrumentation. */
   .tnum {
+    font-family: theme('fontFamily.mono');
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum' 1;
+    letter-spacing: -0.01em;
   }
 
   /* ── Structure ────────────────────────────────────────────────────────
@@ -251,7 +284,114 @@
   .plate {
     @apply relative overflow-hidden;
     background: var(--surface);
+  }
+
+  /* Greyscale belongs to the ARTWORK, not the container. While the filter sat
+     on `.plate` it also desaturated everything overlaid on top — the red LIVE
+     badge, the gold play buttons and the discount chips all came out grey.
+     Scoping it to the svg keeps the engraving monochrome and lets the voltage
+     accent through. */
+  .plate > svg {
     filter: grayscale(1) contrast(1.05);
+  }
+
+  /* ── NeoPOP ───────────────────────────────────────────────────────────
+     Hard elevation: the shadow is an offset SOLID BLOCK, never blurred, and
+     the offset equals the press travel so the face lands exactly on its own
+     shadow. Blur is always 0 — that single rule is most of the look.
+
+     `.pop-card` is the surface: #121212 on a #0d0d0d page, 1px white-10%
+     stroke. Radius is already 0 globally, so nothing here re-states it. */
+
+  .pop-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+  }
+
+  /* Raised variant — used sparingly, for the one object on a screen that is
+     meant to read as a physical tile (wallet, live CTA, course cards). */
+  .pop-raised {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    box-shadow: 4px 4px 0 0 var(--edge);
+  }
+
+  .pop-btn {
+    @apply inline-flex items-center justify-center text-center;
+    padding: calc(var(--sp) * 2) calc(var(--sp) * 2.5);
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 4px 4px 0 0 var(--edge);
+    transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
+  }
+  .pop-btn:active {
+    transform: translate3d(4px, 4px, 0);
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  /* The voltage CTA. One per screen — if a screen needs two, the hierarchy
+     is wrong, not the palette. */
+  .pop-btn-gold {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0d0d0d;
+    box-shadow: 4px 4px 0 0 var(--gold-dim);
+    font-weight: 600;
+  }
+  .pop-btn-gold:active {
+    box-shadow: 0 0 0 0 transparent;
+  }
+
+  .pop-btn[disabled] {
+    color: var(--text-4);
+    border-color: var(--rule);
+    background: var(--surface);
+    box-shadow: 0 0 0 0 transparent;
+    cursor: not-allowed;
+  }
+
+  /* CAPS — the signature move. Every label, tag, kicker and button string.
+     10–13px, uppercase, bold, wide tracking. */
+  .caps {
+    @apply uppercase;
+    font-size: 11px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+  .caps-sm {
+    @apply uppercase;
+    font-size: 10px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+  }
+
+  /* The opacity ladder — how NeoPOP gets hierarchy without extra colours. */
+  .t-heading {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .t-sub {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .t-body {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .t-faint {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .gold {
+    color: var(--gold);
+  }
+
+  /* Live badge — square, CAPS 10px, the spec's error red. */
+  .badge-live {
+    @apply caps-sm inline-flex items-center gap-1.5;
+    background: var(--live);
+    color: #fff;
+    padding: 3px 6px;
   }
 
   /* ── Meters ───────────────────────────────────────────────────────────

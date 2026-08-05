@@ -25,6 +25,17 @@ export function AppProvider({ children }) {
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
 
+  /* Wallet. The opening balance matches the `user` record so Profile and the
+     wallet never disagree on load; every spend and top-up moves this one
+     number, and the ledger is prepended to. */
+  const [balance, setBalance] = useState(1240)
+  const [ledger, setLedger] = useState([])
+
+  /* The chat panel — a right-side overlay rather than a route, so it can be
+     opened from any tab and from the floating button without navigating. */
+  const [chatOpen, setChatOpen] = useState(false)
+  const [chatTab, setChatTab] = useState('live')
+
   /**
    * One flat set of boolean flags for every "sticky" toggle in the app:
    * `follow:a1`, `save:po2`, `like:r3`, `remind:l4`. A screen that toggles a
@@ -90,6 +101,44 @@ export function AppProvider({ children }) {
     [showToast],
   )
 
+  const addMoney = useCallback(
+    (amount) => {
+      setBalance((b) => b + amount)
+      setLedger((l) => [
+        { id: `t${l.length}-${amount}`, label: 'Added money', kind: 'credit', amount, date: 'Just now', method: 'UPI' },
+        ...l,
+      ])
+      showToast(`₹${amount.toLocaleString('en-IN')} added`)
+    },
+    [showToast],
+  )
+
+  /**
+   * Spend against the wallet. Returns false and says why when the balance is
+   * short, so callers can stop rather than silently going negative — the one
+   * piece of money logic in the prototype that has to be right.
+   */
+  const spend = useCallback(
+    (amount, label) => {
+      if (amount > balance) {
+        showToast('Not enough balance')
+        return false
+      }
+      setBalance((b) => b - amount)
+      setLedger((l) => [
+        { id: `t${l.length}-${amount}`, label, kind: 'debit', amount, date: 'Just now', method: 'Wallet' },
+        ...l,
+      ])
+      return true
+    },
+    [balance, showToast],
+  )
+
+  const openChat = useCallback((tab = 'live') => {
+    setChatTab(tab)
+    setChatOpen(true)
+  }, [])
+
   const value = useMemo(
     () => ({
       birth,
@@ -103,6 +152,15 @@ export function AppProvider({ children }) {
       setHighContrast,
       hasFlag,
       toggleFlag,
+      balance,
+      ledger,
+      addMoney,
+      spend,
+      chatOpen,
+      setChatOpen,
+      chatTab,
+      setChatTab,
+      openChat,
       toast,
       showToast,
     }),
@@ -117,6 +175,13 @@ export function AppProvider({ children }) {
       highContrast,
       hasFlag,
       toggleFlag,
+      balance,
+      ledger,
+      addMoney,
+      spend,
+      chatOpen,
+      chatTab,
+      openChat,
       toast,
       showToast,
     ],

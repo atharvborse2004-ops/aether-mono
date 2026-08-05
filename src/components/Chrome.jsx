@@ -1,47 +1,76 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useStore } from '../store.jsx'
 
 /* App chrome: the top bar, the bottom nav, the sheet and the toast.
    All four are flat — a hairline separates them from content, nothing else. */
 
 /**
- * Five destinations, in the reference app's order. Profile deliberately lives
- * behind the header avatar on Home and Horoscope so the bar stays at five —
- * the same trade the reference makes, for the same reason.
+ * Five destinations. Horoscope moves inside Profile as a tab and Ask AI moves
+ * into the chat panel, which frees the two slots Live and Academy need.
  */
 const TABS = [
   { to: '/home', label: 'Home' },
-  { to: '/horoscope', label: 'Horoscope' },
   { to: '/consult', label: 'Consult' },
-  { to: '/ask', label: 'Ask AI' },
+  { to: '/live', label: 'Live' },
+  { to: '/academy', label: 'Academy' },
   { to: '/shop', label: 'Shop' },
 ]
 
 /**
  * Text-only tab bar. No icons — an icon would need a second visual language,
- * and this layout only has one. Active is white, the rest are grey.
+ * and this layout only has one. The active item is marked by a hard 2px gold
+ * bar rather than a fill: the one place the voltage shows in the chrome.
  */
 export function BottomNav() {
   return (
-    <nav className="flex-none border-t border-rule bg-bg">
+    <nav className="flex-none border-t border-stroke bg-bg">
       <ul className="flex">
         {TABS.map((t) => (
           <li key={t.to} className="flex-1">
             <NavLink
               to={t.to}
               className={({ isActive }) =>
-                // tracking-label, not tracking-caps: five labels including
-                // "Horoscope" do not fit at 0.18em in a 420px frame.
-                `block py-4 text-center text-micro uppercase tracking-label transition-colors ${
-                  isActive ? 'font-medium text-t1' : 'text-t3'
+                `relative block py-4 text-center caps-sm transition-colors ${
+                  isActive ? 'gold' : 't-faint'
                 }`
               }
             >
-              {t.label}
+              {({ isActive }) => (
+                <>
+                  {isActive && <span className="absolute inset-x-0 top-0 h-[2px] bg-gold" />}
+                  {t.label}
+                </>
+              )}
             </NavLink>
           </li>
         ))}
       </ul>
     </nav>
+  )
+}
+
+/**
+ * Floating Ask AI button. Sits above the tab bar on every tab, opens the chat
+ * panel straight onto the AI tab. Round on purpose — the single curved shape
+ * in the app, which is exactly why it reads as the action.
+ */
+export function AskAiButton() {
+  const { openChat } = useStore()
+
+  return (
+    <button
+      type="button"
+      onClick={() => openChat('ai')}
+      aria-label="Ask AI"
+      className="is-round absolute bottom-[76px] right-4 z-30 flex h-14 w-14 items-center justify-center border border-gold bg-bg text-gold transition-transform active:translate-y-[2px]"
+      style={{
+        // Zero-blur rings rather than a glow — a soft shadow is the one thing
+        // NeoPOP does not allow, so the "glow" is drawn as a hard halo.
+        boxShadow: '0 0 0 1px rgba(212,162,76,0.35), 0 0 0 6px rgba(212,162,76,0.08)',
+      }}
+    >
+      <span className="caps-sm leading-none">AI</span>
+    </button>
   )
 }
 

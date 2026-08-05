@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppProvider, useStore } from './store.jsx'
-import { BottomNav, Toast } from './components/Chrome.jsx'
+import { AskAiButton, BottomNav, Toast } from './components/Chrome.jsx'
+import ChatPanel from './components/ChatPanel.jsx'
 
 import Intro from './screens/onboarding/Intro.jsx'
 import AskName from './screens/onboarding/AskName.jsx'
@@ -10,12 +11,15 @@ import AskPlace from './screens/onboarding/AskPlace.jsx'
 import Computing from './screens/onboarding/Computing.jsx'
 
 import Home from './screens/Home.jsx'
-import Horoscope from './screens/Horoscope.jsx'
 import Consult from './screens/Consult.jsx'
-import Ask from './screens/Ask.jsx'
+import Live from './screens/Live.jsx'
+import Academy from './screens/Academy.jsx'
 import Shop from './screens/Shop.jsx'
 
 import Profile from './screens/Profile.jsx'
+import Wallet from './screens/Wallet.jsx'
+import Horoscope from './screens/Horoscope.jsx'
+import Ask from './screens/Ask.jsx'
 import Chart from './screens/Chart.jsx'
 import Placement from './screens/Placement.jsx'
 import People from './screens/People.jsx'
@@ -28,7 +32,10 @@ import ConsultantProfile from './screens/ConsultantProfile.jsx'
 import Notifications from './screens/Notifications.jsx'
 import Premium from './screens/Premium.jsx'
 
-/** Tab shell — nav takes real layout space rather than floating over content. */
+/**
+ * Tab shell. The nav takes real layout space; the floating Ask AI button sits
+ * above it and stays visible on every tab.
+ */
 function TabLayout() {
   const { pathname } = useLocation()
   return (
@@ -36,6 +43,7 @@ function TabLayout() {
       <main key={pathname} className="no-scrollbar min-h-0 flex-1 animate-fade overflow-y-auto">
         <Outlet />
       </main>
+      <AskAiButton />
       <BottomNav />
     </>
   )
@@ -56,7 +64,7 @@ function Frame() {
 
   return (
     <div className="flex min-h-[100dvh] w-full justify-center bg-black">
-      <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden border-x border-rule bg-bg text-t1">
+      <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden border-x border-stroke bg-bg text-t1">
         <Routes>
           <Route path="/" element={<Navigate to="/onboarding" replace />} />
 
@@ -68,7 +76,12 @@ function Frame() {
             <Route path="/onboarding/place" element={<AskPlace />} />
             <Route path="/onboarding/computing" element={<Computing />} />
 
+            {/* Profile carries its tab in the URL so it stays deep-linkable. */}
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:tab" element={<Profile />} />
+            <Route path="/wallet" element={<Wallet />} />
+            <Route path="/horoscope" element={<Horoscope />} />
+            <Route path="/ask" element={<Ask />} />
             <Route path="/chart" element={<Chart />} />
             <Route path="/chart/:id" element={<Placement />} />
             <Route path="/people" element={<People />} />
@@ -82,18 +95,20 @@ function Frame() {
             <Route path="/premium" element={<Premium />} />
           </Route>
 
-          {/* The five destinations, in the reference app's order. */}
+          {/* The five destinations. */}
           <Route element={<TabLayout />}>
             <Route path="/home" element={<Home />} />
-            <Route path="/horoscope" element={<Horoscope />} />
             <Route path="/consult" element={<Consult />} />
-            <Route path="/ask" element={<Ask />} />
+            <Route path="/live" element={<Live />} />
+            <Route path="/academy" element={<Academy />} />
             <Route path="/shop" element={<Shop />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
 
+        {/* Global overlays — above every screen, inside the phone frame. */}
+        <ChatPanel />
         <Toast message={toast} />
       </div>
     </div>

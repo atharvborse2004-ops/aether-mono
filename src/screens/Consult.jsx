@@ -1,23 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories, consultants, timeSlots } from '../data/mock.js'
-import { Sheet, TopBar } from '../components/Chrome.jsx'
-import {
-  Avatar,
-  Button,
-  Field,
-  firstName,
-  Search,
-  Section,
-  Ticks,
-} from '../components/Primitives.jsx'
+import { Sheet } from '../components/Chrome.jsx'
+import { Button, Field, firstName, Search, Ticks } from '../components/Primitives.jsx'
+import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { useStore } from '../store.jsx'
 
 /** Slots already taken today. Fixed rather than random so the UI is stable. */
 const TAKEN = ['13:30', '18:30']
 
 export default function Consult() {
-  const { showToast } = useStore()
+  const { showToast, openChat } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
 
@@ -50,22 +43,27 @@ export default function Consult() {
 
   return (
     <>
-      <TopBar title="Consult" sub={`${consultants.filter((c) => c.online).length} online now`} />
+      <header className="sticky top-0 z-20 flex-none border-b border-stroke bg-bg px-5 py-4">
+        <p className="font-display text-lead leading-none t-heading">Consult</p>
+        <p className="mt-1 caps-sm t-faint tnum">
+          {consultants.filter((c) => c.online).length} of {consultants.length} online now
+        </p>
+      </header>
 
       <Search value={query} onChange={setQuery} placeholder="Search by name, concern or language" />
 
       {/* Filters use the same tracked-caps + underline language as every other
           selector in the app. Nothing here is a pill or a chip — a chip in this
           layout reads as a button, and these do not commit to anything. */}
-      <div className="no-scrollbar flex gap-6 overflow-x-auto border-b border-rule px-6 py-4">
+      <div className="no-scrollbar flex gap-5 overflow-x-auto border-b border-rule px-5 py-4">
         {filters.map((f) => (
           <button
             key={f}
             type="button"
             aria-pressed={cat === f}
             onClick={() => setCat(f)}
-            className={`flex-none border-b pb-1 text-label uppercase tracking-label transition-colors ${
-              cat === f ? 'border-t1 text-t1' : 'border-transparent text-t3'
+            className={`caps-sm flex-none border-b-2 pb-1 transition-colors ${
+              cat === f ? 'border-gold gold' : 'border-transparent t-faint'
             }`}
           >
             {f}
@@ -73,15 +71,16 @@ export default function Consult() {
         ))}
       </div>
 
-      <Section label={`${list.length} ${list.length === 1 ? 'person' : 'people'}`} last>
-        <ul>
+      <section className="px-5 py-6">
+        <Kicker>{`${list.length} ${list.length === 1 ? 'person' : 'people'}`}</Kicker>
+        <ul className="mt-4 space-y-3">
           {list.map((c) => (
-            <li key={c.id} className="border-b border-rule py-5">
+            <li key={c.id} className="pop-card p-4">
               <Link
                 to={`/consult/${c.id}`}
                 className="flex items-start gap-4 transition-opacity hover:opacity-60"
               >
-                <Avatar initials={c.initials} size={44} />
+                <PopAvatar initials={c.initials} size={44} online={c.online} />
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
@@ -110,15 +109,10 @@ export default function Consult() {
               {/* Chat and Book, on the row. Both were on the card in the
                   previous layout and both are how people actually start. */}
               <div className="mt-4 flex gap-3">
-                <Button
-                  variant="quiet"
-                  onClick={() => showToast(`Chat request sent to ${firstName(c.name)}`)}
-                >
-                  Chat
-                </Button>
-                <Button variant="solid" onClick={() => openBooking(c)}>
+                <PopButton onClick={() => openChat('live')}>Chat</PopButton>
+                <PopButton variant="gold" onClick={() => openBooking(c)}>
                   Book a slot
-                </Button>
+                </PopButton>
               </div>
             </li>
           ))}
@@ -129,15 +123,15 @@ export default function Consult() {
             Nobody matches that. Clear the search or pick another category.
           </p>
         )}
-      </Section>
+      </section>
 
-      <div className="h-8" />
+      <div className="h-24" />
 
       <Sheet open={!!booking} onClose={() => setBooking(null)} title="Book a slot">
         {booking && (
           <>
             <div className="mb-10 flex items-center gap-4">
-              <Avatar initials={booking.initials} size={44} />
+              <PopAvatar initials={booking.initials} size={44} online={booking.online} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-body text-t1">{booking.name}</p>
                 <p className="mt-1 truncate text-micro uppercase tracking-caps text-t3">
@@ -181,9 +175,9 @@ export default function Consult() {
             <Field k="Length" v={duration} />
             <Field k="Total" v={`₹${priceFor(booking, duration).toLocaleString('en-IN')}`} />
 
-            <Button
+            <PopButton
               className="mt-10"
-              variant="solid"
+              variant="gold"
               disabled={!slot}
               onClick={() => {
                 showToast(`Booked · ${firstName(booking.name)} · today ${slot}`)
@@ -191,7 +185,7 @@ export default function Consult() {
               }}
             >
               {slot ? `Confirm ${slot}` : 'Pick a time'}
-            </Button>
+            </PopButton>
             <p className="mt-5 text-center text-meta text-t3">
               Prototype — no payment is taken and nothing is booked.
             </p>

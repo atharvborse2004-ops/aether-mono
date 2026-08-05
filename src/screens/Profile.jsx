@@ -1,8 +1,17 @@
-import { sessionHistory, user } from '../data/mock.js'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { days, sessionHistory, user, walletTransactions } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
-import { Avatar, Button, Field, Row, Section, Stub } from '../components/Primitives.jsx'
+import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
+import { Acts, Row, Segmented, Ticks } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
+
+const TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'horoscope', label: 'Horoscope' },
+  { key: 'wallet', label: 'Wallet' },
+  { key: 'settings', label: 'Settings' },
+]
 
 const SETTINGS = [
   { key: 'Language', value: 'English' },
@@ -11,144 +20,126 @@ const SETTINGS = [
   { key: 'Help & support', value: null },
 ]
 
+/**
+ * Profile.
+ *
+ * Horoscope is a tab in here rather than a separate page — the tab bar spends
+ * its five slots on Home / Consult / Live / Academy / Shop, and the daily
+ * reading belongs to the person, not to a destination. The URL still carries
+ * the tab (`/profile/horoscope`) so it stays deep-linkable and the header
+ * shortcut on Home can land straight on it.
+ */
 export default function Profile() {
-  const { highContrast, setHighContrast, cartCount, questionsLeft, showToast } = useStore()
+  const { tab = 'overview' } = useParams()
+  const navigate = useNavigate()
+
+  if (!TABS.some((t) => t.key === tab)) return <Navigate to="/profile" replace />
 
   return (
     <>
-      {/* Reached from the header avatar on Home and Horoscope, so it is a
-          drill-in and carries a back arrow rather than a tab. */}
-      <TopBar
-        title="Profile"
-        back
-        backTo="/home"
-        right={
-          <button
-            type="button"
-            onClick={() => showToast('Settings — prototype only')}
-            className="text-label uppercase tracking-label text-t2"
-          >
-            Settings
-          </button>
-        }
+      <TopBar title="Profile" back backTo="/home" />
+
+      <section className="flex items-center gap-4 border-b border-stroke px-5 py-6">
+        <PopAvatar initials={user.initials} size={56} />
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-title leading-none t-heading">{user.name}</h1>
+          <p className="mt-2 caps-sm t-faint">
+            {user.sunSign} · {user.moonSign} · {user.risingSign}
+          </p>
+        </div>
+        <PopTag tone="gold">Member</PopTag>
+      </section>
+
+      <Segmented
+        items={TABS}
+        value={tab}
+        onChange={(k) => navigate(k === 'overview' ? '/profile' : `/profile/${k}`)}
       />
 
-      <section className="section pt-10 text-center">
-        <Avatar initials={user.initials} size={56} />
-        <h1 className="mt-5 text-title font-light">{user.name}</h1>
-        <p className="mt-2 text-micro uppercase tracking-caps text-t3">
-          {user.sunSign} sun · {user.moonSign} moon · {user.risingSign} rising
-        </p>
-        <Stub className="my-8" />
-        <ChartWheel size={180} />
+      <div key={tab} className="animate-fade">
+        {tab === 'overview' && <Overview />}
+        {tab === 'horoscope' && <HoroscopeTab />}
+        {tab === 'wallet' && <WalletTab />}
+        {tab === 'settings' && <SettingsTab />}
+      </div>
 
-        {/* The kundli is the artefact people came for. Both ways of taking it
-            out of the app sit directly under it, not in a settings list. */}
-        <div className="mt-8 flex gap-3">
-          <Button variant="quiet" onClick={() => showToast('Kundli PDF downloaded')}>
-            Download
-          </Button>
-          <Button variant="quiet" onClick={() => showToast('Chart link copied')}>
-            Share
-          </Button>
+      <div className="h-24" />
+    </>
+  )
+}
+
+/* ── Overview ────────────────────────────────────────────────────────────── */
+
+function Overview() {
+  const { showToast, questionsLeft, cartCount } = useStore()
+
+  return (
+    <>
+      <section className="border-b border-rule px-5 py-6 text-center">
+        <ChartWheel size={200} />
+        <div className="mt-6 flex gap-3">
+          <PopButton onClick={() => showToast('Kundli PDF downloaded')}>Download</PopButton>
+          <PopButton onClick={() => showToast('Chart link copied')}>Share</PopButton>
         </div>
       </section>
 
-      <Section label="Birth data">
-        <Field k="Date" v={user.birthDate} />
-        <Field k="Time" v={user.birthTime} />
-        <Field k="Place" v={user.birthPlace} />
-        <p className="mt-5 text-meta text-t3">
-          Change any of these and every reading in the app changes with it. That is the point of
-          asking so precisely.
-        </p>
-        <Button to="/onboarding/date" variant="quiet" className="mt-6">
-          Edit birth details
-        </Button>
-      </Section>
-
-      {/* Everything that is not one of the five tabs lives here. Chart and
-          People in particular have no tab of their own, so this is their only
-          door — losing it would strand two whole screens. */}
-      <Section label="Everything else">
-        <Row to="/chart" title="Your full chart" note="Eight placements, plainly written" />
-        <Row to="/people" title="People" note="Charts you have read against yours" />
-        <Row to="/notifications" title="Notifications" note="One a day, at eight" />
-        <Row to="/premium" title="Premium" note="Reports, Eros, more questions" />
-        <Row to="/ask" title="Ask AI" meta={`${questionsLeft} left`} />
-        <Row to="/shop" title="Shop" meta={`${cartCount} in cart`} />
-      </Section>
-
-      <Section label="Wallet">
-        <Field k="Balance" v={`₹${user.walletBalance.toLocaleString('en-IN')}`} />
-        <Field k="Questions" v={questionsLeft} />
-        <div className="mt-6 flex gap-3">
-          <Button variant="quiet" onClick={() => showToast('Top-up — prototype only')}>
-            Add money
-          </Button>
-          <Button variant="quiet" onClick={() => showToast('Statement — prototype only')}>
-            Statement
-          </Button>
-        </div>
-      </Section>
-
-      {/* Accessibility control. The reference palette puts grey text on its
-          background at ratios that fail WCAG AA; this darkens every grey by one
-          step without changing a single layout decision. */}
-      <Section label="Display">
-        <button
-          type="button"
-          onClick={() => setHighContrast(!highContrast)}
-          aria-pressed={highContrast}
-          className="flex w-full items-center justify-between gap-4 border-b border-rule py-4 text-left transition-opacity hover:opacity-60"
-        >
-          <span>
-            <span className="block text-body text-t1">Increase contrast</span>
-            <span className="mt-1 block text-meta text-t3">
-              Darkens every grey. Nothing else moves.
-            </span>
-          </span>
-          <span className="flex-none text-label uppercase tracking-label text-t1">
-            {highContrast ? 'On' : 'Off'}
-          </span>
-        </button>
-      </Section>
-
-      <Section label="Settings">
-        <ul>
-          {SETTINGS.map((s) => (
-            <li key={s.key}>
-              <Row
-                onClick={() => showToast(`${s.key} — prototype only`)}
-                title={s.key}
-                meta={s.value}
-              />
-            </li>
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Birth data</Kicker>
+        <dl className="mt-4">
+          {[
+            ['Date', user.birthDate],
+            ['Time', user.birthTime],
+            ['Place', user.birthPlace],
+          ].map(([k, v]) => (
+            <div key={k} className="flex items-baseline justify-between gap-6 border-b border-rule py-3">
+              <dt className="caps-sm t-faint">{k}</dt>
+              <dd className="text-meta tnum t-heading">{v}</dd>
+            </div>
           ))}
-        </ul>
-      </Section>
+        </dl>
+        <PopButton to="/onboarding/date" className="mt-5">
+          Edit birth details
+        </PopButton>
+      </section>
 
-      <Section label="Past sessions">
-        <ul>
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Everything else</Kicker>
+        <div className="mt-2">
+          <Row to="/chart" title="Your full chart" note="Eight placements, plainly written" />
+          <Row to="/people" title="People" note="Charts you have read against yours" />
+          <Row to="/premium" title="Premium" note="Reports, Eros, more questions" />
+          <Row to="/academy" title="Academy" note="Courses, events and downloads" />
+          <Row to="/ask" title="Ask the Stars" meta={`${questionsLeft} left`} />
+          <Row to="/shop" title="Shop" meta={`${cartCount} in cart`} />
+        </div>
+      </section>
+
+      <section className="px-5 py-6">
+        <Kicker action="All" onAction={() => showToast('Full history — prototype only')}>
+          Past sessions
+        </Kicker>
+        <ul className="mt-4">
           {sessionHistory.map((s) => (
             <li key={s.id}>
               <button
                 type="button"
                 onClick={() => showToast(`Receipt · ${s.consultant}`)}
-                className="flex w-full items-center gap-4 border-b border-rule py-4 text-left transition-opacity hover:opacity-60"
+                className="flex w-full items-center gap-3 border-b border-rule py-3.5 text-left transition-opacity hover:opacity-70"
               >
-                <Avatar initials={s.initials} size={34} />
+                <PopAvatar initials={s.initials} size={34} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-body text-t1">{s.consultant}</span>
-                  <span className="mt-1 block text-micro uppercase tracking-caps text-t3 tnum">
+                  <span className="block truncate text-meta t-heading">{s.consultant}</span>
+                  <span className="mt-1 block caps-sm t-faint tnum">
                     {s.type} · {s.date}
                   </span>
                 </span>
                 <span className="flex-none text-right">
-                  <span className="block text-meta text-t1 tnum">
+                  <span className="block text-meta tnum t-sub">
                     {s.amount ? `₹${s.amount.toLocaleString('en-IN')}` : '—'}
                   </span>
-                  <span className="block text-micro uppercase tracking-caps text-t3">
+                  <span
+                    className={`block caps-sm ${s.status === 'Completed' ? 'text-ok' : 'text-live'}`}
+                  >
                     {s.status}
                   </span>
                 </span>
@@ -156,17 +147,255 @@ export default function Profile() {
             </li>
           ))}
         </ul>
-      </Section>
+      </section>
+    </>
+  )
+}
 
-      <Section label="About this build" last>
-        <p className="prose-c">
-          Aether Mono. A front-end layout prototype — no backend, no auth, no network calls. Every
-          value on screen comes from one hardcoded file.
+/* ── Horoscope tab ───────────────────────────────────────────────────────── */
+
+/**
+ * The daily reading, as a tab. Summary cards, the three placements, the
+ * current transit and a short reading — the compact version. The full
+ * three-day view with Do/Don't and transits lives on `/horoscope`.
+ */
+function HoroscopeTab() {
+  const { showToast, hasFlag, toggleFlag } = useStore()
+  const day = days.today
+  const transit = day.transits[0]
+
+  return (
+    <>
+      {/* Summary cards */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker action="Full reading" to="/horoscope">
+          Today
+        </Kicker>
+
+        <PopCard raised className="mt-4 p-5">
+          <p className="caps-sm gold">{day.date}</p>
+          <h2 className="mt-3 font-display text-title leading-tight t-heading">{day.headline}</h2>
+
+          <dl className="mt-5 grid grid-cols-3 border-y border-stroke py-4">
+            {[
+              ['Mood', day.mood],
+              ['Colour', day.luckyColour],
+              ['Number', day.luckyNumber],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="caps-sm t-faint">{k}</dt>
+                <dd className="mt-1 text-meta tnum t-heading">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="mt-4">
+            <div className="mb-2 flex items-baseline justify-between">
+              <span className="caps-sm t-faint">Day intensity</span>
+              <span className="caps-sm gold tnum">{day.intensity}%</span>
+            </div>
+            <PopBar value={day.intensity} />
+            <p className="mt-2 text-meta t-faint">
+              How much the sky is asking of you, relative to your own average.
+            </p>
+          </div>
+        </PopCard>
+      </section>
+
+      {/* Sun / Moon / Rising */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker action="Full chart" to="/chart">
+          Your placements
+        </Kicker>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {[
+            ['Sun', user.sunSign, 'how you push'],
+            ['Moon', user.moonSign, 'how you feel'],
+            ['Rising', user.risingSign, 'how you land'],
+          ].map(([label, sign, note]) => (
+            <PopCard key={label} className="p-3">
+              <p className="caps-sm gold">{label}</p>
+              <p className="mt-2 text-body t-heading">{sign}</p>
+              <p className="mt-1 caps-sm t-faint">{note}</p>
+            </PopCard>
+          ))}
+        </div>
+      </section>
+
+      {/* Current transit */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Current transit</Kicker>
+        <PopCard className="mt-4 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-body t-heading">{transit.title}</p>
+            <PopTag tone="gold">{transit.weight}</PopTag>
+          </div>
+          <p className="mt-2 caps-sm t-faint tnum">{transit.window}</p>
+          <p className="mt-3 text-meta t-body">{transit.body}</p>
+        </PopCard>
+      </section>
+
+      {/* Daily reading */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Daily reading</Kicker>
+        <p className="mt-4 text-read t-sub">{day.body}</p>
+
+        <PopCard className="mt-5 p-4">
+          <p className="caps-sm gold">{day.focusLabel}</p>
+          <p className="mt-2 text-body t-heading">{day.focus}</p>
+        </PopCard>
+
+        <Acts
+          className="mt-5"
+          items={[
+            {
+              label: 'Save',
+              onLabel: 'Saved',
+              on: hasFlag('save:day-today'),
+              onClick: () =>
+                toggleFlag('save:day-today', {
+                  on: 'Saved to your readings',
+                  off: 'Removed from your readings',
+                }),
+            },
+            { label: 'Share', onClick: () => showToast('Reading copied') },
+          ]}
+        />
+      </section>
+
+      {/* Ratings */}
+      <section className="px-5 py-6">
+        <Kicker>Across four areas</Kicker>
+        <ul className="mt-4">
+          {Object.entries(day.ratings).map(([area, value]) => (
+            <li key={area} className="flex items-center gap-4 border-b border-rule py-3.5">
+              <span className="w-16 flex-none caps-sm t-faint">{area}</span>
+              <Ticks value={value} className="flex-1" />
+              <span className="w-8 flex-none text-right caps-sm tnum t-sub">{value}/5</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+}
+
+/* ── Wallet tab ──────────────────────────────────────────────────────────── */
+
+/** A compact wallet summary. The full screen lives at `/profile/wallet`. */
+function WalletTab() {
+  const { balance, ledger, questionsLeft } = useStore()
+  const rows = [...ledger, ...walletTransactions].slice(0, 5)
+
+  return (
+    <>
+      <section className="border-b border-rule px-5 py-6">
+        <PopCard raised className="p-5">
+          <p className="caps-sm t-faint">Available balance</p>
+          <p className="mt-2 font-display text-display leading-none tnum t-heading">
+            ₹{balance.toLocaleString('en-IN')}
+          </p>
+          <div className="mt-6 flex gap-3">
+            <PopButton to="/wallet" variant="gold">
+              Add money
+            </PopButton>
+            <PopButton to="/wallet">Open wallet</PopButton>
+          </div>
+        </PopCard>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <PopCard className="p-4">
+            <Stat label="Questions left" value={questionsLeft} />
+          </PopCard>
+          <PopCard className="p-4">
+            <Stat label="Sessions" value={sessionHistory.length} sub="all time" />
+          </PopCard>
+        </div>
+      </section>
+
+      <section className="px-5 py-6">
+        <Kicker action="All" to="/wallet">
+          Recent
+        </Kicker>
+        <ul className="mt-4">
+          {rows.map((t) => (
+            <li
+              key={t.id}
+              className="flex items-center gap-3 border-b border-rule py-3.5 last:border-b-0"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-meta t-heading">{t.label}</span>
+                <span className="mt-1 block caps-sm t-faint tnum">
+                  {t.date} · {t.method}
+                </span>
+              </span>
+              <span
+                className={`flex-none text-meta tnum ${t.kind === 'credit' ? 'text-ok' : 't-sub'}`}
+              >
+                {t.kind === 'credit' ? '+' : '−'}₹{t.amount.toLocaleString('en-IN')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  )
+}
+
+/* ── Settings tab ────────────────────────────────────────────────────────── */
+
+function SettingsTab() {
+  const { highContrast, setHighContrast, showToast } = useStore()
+
+  return (
+    <>
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Display</Kicker>
+        <button
+          type="button"
+          onClick={() => setHighContrast(!highContrast)}
+          aria-pressed={highContrast}
+          className="mt-4 flex w-full items-center justify-between gap-4 border-b border-rule py-4 text-left transition-opacity hover:opacity-70"
+        >
+          <span>
+            <span className="block text-body t-heading">Increase contrast</span>
+            <span className="mt-1 block text-meta t-faint">
+              Raises every grey. Nothing else moves.
+            </span>
+          </span>
+          <span className={`flex-none caps-sm ${highContrast ? 'gold' : 't-faint'}`}>
+            {highContrast ? 'On' : 'Off'}
+          </span>
+        </button>
+      </section>
+
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Preferences</Kicker>
+        <div className="mt-2">
+          {SETTINGS.map((s) => (
+            <Row
+              key={s.key}
+              onClick={() => showToast(`${s.key} — prototype only`)}
+              title={s.key}
+              meta={s.value}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="px-5 py-6">
+        <Kicker>About</Kicker>
+        <p className="mt-4 text-meta t-body">
+          Aether. A front-end layout prototype — no backend, no auth, no network calls. Every value
+          on screen comes from one hardcoded file, and nothing survives a reload.
         </p>
-        <Row to="/onboarding" title="Run onboarding again" className="mt-8" />
-      </Section>
-
-      <div className="h-8" />
+        <PopButton to="/onboarding" className="mt-5">
+          Run onboarding again
+        </PopButton>
+        <Link to="/notifications" className="mt-4 block text-center caps-sm t-faint">
+          Notification history
+        </Link>
+      </section>
     </>
   )
 }
