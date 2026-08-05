@@ -47,7 +47,7 @@ export default function Wallet() {
           </p>
 
           <div className="mt-6 flex gap-3">
-            <PopButton variant="gold" onClick={() => setSheet(true)}>
+            <PopButton size="sm" variant="gold" onClick={() => setSheet(true)}>
               Add money
             </PopButton>
             <PopButton onClick={() => showToast('Statement — prototype only')}>
@@ -160,7 +160,7 @@ export default function Wallet() {
           </span>
         </div>
 
-        <PopButton variant="gold" disabled={!valid} onClick={confirm} className="mt-6">
+        <PopButton size="sm" variant="gold" disabled={!valid} onClick={confirm} className="mt-6">
           {valid ? `Add ₹${chosen.toLocaleString('en-IN')}` : 'Choose an amount'}
         </PopButton>
 

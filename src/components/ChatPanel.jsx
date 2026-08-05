@@ -228,7 +228,7 @@ function AskAi({ questionsLeft, spendQuestion }) {
   return (
     <>
       <div className="flex flex-none items-center justify-between gap-3 border-b border-rule px-4 py-3">
-        <p className="caps-sm t-body">Aether AI · reads your chart</p>
+        <p className="caps-sm t-body">Veda AI · reads your chart</p>
         <span className={`caps-sm tnum ${locked ? 'text-live' : 'gold'}`}>
           {locked ? 'None left' : `${questionsLeft} free`}
         </span>
@@ -249,7 +249,7 @@ function AskAi({ questionsLeft, spendQuestion }) {
             <p className="mt-2 text-meta t-body">
               You have used your five. The chart has not changed in the last ten minutes.
             </p>
-            <PopButton to="/profile/wallet" variant="gold" className="mt-4">
+            <PopButton size="sm" to="/profile/wallet" variant="gold" className="mt-4">
               Buy a pack
             </PopButton>
           </div>

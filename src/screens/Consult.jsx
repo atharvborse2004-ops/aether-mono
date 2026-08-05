@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories, consultants, timeSlots } from '../data/mock.js'
 import { Sheet } from '../components/Chrome.jsx'
+import Plate from '../components/Plate.jsx'
 import { Button, Field, firstName, Search, Ticks } from '../components/Primitives.jsx'
 import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { useStore } from '../store.jsx'
@@ -70,6 +71,27 @@ export default function Consult() {
           </button>
         ))}
       </div>
+
+      {/* Reports sit above the roster: a report is the other way to get a
+          reading, and the one that does not need a calendar. */}
+      <section className="border-b border-rule px-5 py-5">
+        <Kicker action="See all" to="/reports">
+          Reports
+        </Kicker>
+        <Link
+          to="/reports"
+          className="pop-card mt-3 flex items-center gap-3 p-3 transition-colors hover:border-gold"
+        >
+          <Plate seed="reports" className="h-14 w-14 flex-none" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-meta t-heading">Written readings, from ₹1,347</span>
+            <span className="mt-1 block caps-sm t-faint">
+              Natal · career · synastry · year ahead
+            </span>
+          </span>
+          <span className="flex-none caps-sm gold">→</span>
+        </Link>
+      </section>
 
       <section className="px-5 py-6">
         <Kicker>{`${list.length} ${list.length === 1 ? 'person' : 'people'}`}</Kicker>

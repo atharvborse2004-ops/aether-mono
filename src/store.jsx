@@ -19,11 +19,15 @@ const EMPTY_BIRTH = { name: '', date: '', time: '', place: '' }
 
 export function AppProvider({ children }) {
   const [birth, setBirth] = useState(EMPTY_BIRTH)
-  const [cartCount, setCartCount] = useState(2)
   const [questionsLeft, setQuestionsLeft] = useState(5)
-  const [highContrast, setHighContrast] = useState(false)
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
+
+  /* Contrast is a two-way setting, not a one-shot switch. It starts HIGH —
+     the raised greys are the accessible default — and can be stepped back
+     down to normal. The old control could only ever be turned on. */
+  const [contrast, setContrast] = useState('high')
+  const highContrast = contrast === 'high'
 
   /* Wallet. The opening balance matches the `user` record so Profile and the
      wallet never disagree on load; every spend and top-up moves this one
@@ -35,6 +39,16 @@ export function AppProvider({ children }) {
      opened from any tab and from the floating button without navigating. */
   const [chatOpen, setChatOpen] = useState(false)
   const [chatTab, setChatTab] = useState('live')
+
+  /* The horoscope panel. Also an overlay: the top-right Horoscope control is a
+     focused action, so it must not navigate away from whatever tab you are on
+     — sending it to Profile was the bug. */
+  const [horoscopeOpen, setHoroscopeOpen] = useState(false)
+
+  /* The cart, as real line items rather than a bare count, so the cart sheet
+     has something to show and the total is computed rather than typed. */
+  const [cart, setCart] = useState([])
+  const [cartOpen, setCartOpen] = useState(false)
 
   /**
    * One flat set of boolean flags for every "sticky" toggle in the app:
@@ -63,12 +77,13 @@ export function AppProvider({ children }) {
     return next
   }, [])
 
-  // The contrast fix re-points CSS variables on <html>; nothing re-renders.
+  // Re-points CSS variables on <html>; nothing re-renders. Driven off the
+  // string so 'normal' is a real state you can return to, not just "not high".
   useEffect(() => {
     const root = document.documentElement
-    if (highContrast) root.setAttribute('data-contrast', 'high')
+    if (contrast === 'high') root.setAttribute('data-contrast', 'high')
     else root.removeAttribute('data-contrast')
-  }, [highContrast])
+  }, [contrast])
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
@@ -83,13 +98,35 @@ export function AppProvider({ children }) {
     [],
   )
 
+  /** Add a line, or bump its quantity if the product is already in the cart. */
   const addToCart = useCallback(
-    (product) => {
-      setCartCount((n) => n + 1)
-      showToast(`${product.name} — added`)
+    (product, silent = false) => {
+      setCart((c) => {
+        const at = c.findIndex((l) => l.id === product.id)
+        if (at === -1) return [...c, { ...product, qty: 1 }]
+        const copy = [...c]
+        copy[at] = { ...copy[at], qty: copy[at].qty + 1 }
+        return copy
+      })
+      if (!silent) showToast(`${product.name} — added`)
     },
     [showToast],
   )
+
+  const removeFromCart = useCallback((id) => setCart((c) => c.filter((l) => l.id !== id)), [])
+
+  const setQty = useCallback(
+    (id, qty) =>
+      setCart((c) =>
+        qty <= 0 ? c.filter((l) => l.id !== id) : c.map((l) => (l.id === id ? { ...l, qty } : l)),
+      ),
+    [],
+  )
+
+  const clearCart = useCallback(() => setCart([]), [])
+
+  const cartCount = cart.reduce((n, l) => n + l.qty, 0)
+  const cartTotal = cart.reduce((n, l) => n + l.price * l.qty, 0)
 
   const spendQuestion = useCallback(() => setQuestionsLeft((n) => Math.max(0, n - 1)), [])
 
@@ -139,17 +176,39 @@ export function AppProvider({ children }) {
     setChatOpen(true)
   }, [])
 
+  /** Buy now — charge the wallet directly and skip the cart entirely. */
+  const buyNow = useCallback(
+    (product) => {
+      if (spend(product.price, product.name)) {
+        showToast(`Ordered · ${product.name}`)
+        return true
+      }
+      return false
+    },
+    [spend, showToast],
+  )
+
+  // Hooks must stay unconditional; this list is just the public surface.
   const value = useMemo(
     () => ({
       birth,
       setBirthField,
+      cart,
       cartCount,
+      cartTotal,
       addToCart,
+      removeFromCart,
+      setQty,
+      clearCart,
+      cartOpen,
+      setCartOpen,
+      buyNow,
       questionsLeft,
       spendQuestion,
       addQuestions,
+      contrast,
+      setContrast,
       highContrast,
-      setHighContrast,
       hasFlag,
       toggleFlag,
       balance,
@@ -161,17 +220,27 @@ export function AppProvider({ children }) {
       chatTab,
       setChatTab,
       openChat,
+      horoscopeOpen,
+      setHoroscopeOpen,
       toast,
       showToast,
     }),
     [
       birth,
       setBirthField,
+      cart,
       cartCount,
+      cartTotal,
       addToCart,
+      removeFromCart,
+      setQty,
+      clearCart,
+      cartOpen,
+      buyNow,
       questionsLeft,
       spendQuestion,
       addQuestions,
+      contrast,
       highContrast,
       hasFlag,
       toggleFlag,
@@ -182,6 +251,7 @@ export function AppProvider({ children }) {
       chatOpen,
       chatTab,
       openChat,
+      horoscopeOpen,
       toast,
       showToast,
     ],

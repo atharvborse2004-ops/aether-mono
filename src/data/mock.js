@@ -906,10 +906,10 @@ export const products = [
   { id: 'sh3', name: 'Rudraksha 5 Mukhi Mala', subtitle: '108 beads · Nepali origin', price: 2400, mrp: 3200, category: 'Rudraksha', recommendedBy: 'Yogesh Pandit' },
   { id: 'sh4', name: 'Sphatik Crystal Maala', subtitle: '108 beads · Hand-knotted', price: 1650, mrp: null, category: 'Maalas', recommendedBy: null },
   { id: 'sh5', name: 'Tulsi Maala', subtitle: '108 beads · Vrindavan wood', price: 890, mrp: 1200, category: 'Maalas', recommendedBy: 'Dev Malhotra' },
-  { id: 'sh6', name: '1 Mukhi Rudraksha', subtitle: 'Lab certified · Java', price: 7200, mrp: null, category: 'Rudraksha', recommendedBy: null },
+  { id: 'sh6', name: '1 Mukhi Rudraksha', subtitle: 'Lab certified · Java', price: 7200, mrp: null, category: 'Rudraksha', recommendedBy: null, soldOut: true },
   { id: 'sh7', name: 'Shani Shanti Kit', subtitle: 'Oil, cloth & mantra card', price: 1150, mrp: 1500, category: 'Remedies', recommendedBy: 'Ritu Kashyap' },
   { id: 'sh8', name: 'Copper Yantra — Shree', subtitle: '3×3 in · Energised', price: 2100, mrp: null, category: 'Remedies', recommendedBy: null },
-  { id: 'sh9', name: 'Emerald (Panna)', subtitle: '2.8 ct · Zambian', price: 15900, mrp: 19500, category: 'Gemstones', recommendedBy: 'Meher Bano' },
+  { id: 'sh9', name: 'Emerald (Panna)', subtitle: '2.8 ct · Zambian', price: 15900, mrp: 19500, category: 'Gemstones', recommendedBy: 'Meher Bano', soldOut: true },
   { id: 'sh10', name: 'Camphor & Loban Set', subtitle: 'Weekly cleansing ritual', price: 640, mrp: null, category: 'Remedies', recommendedBy: null },
 ]
 
@@ -1128,3 +1128,89 @@ export const feed = [
   { id: 'f13', kind: 'post', refId: 'po4' },
   { id: 'f14', kind: 'article', refId: 'b3' },
 ]
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REPORTS — the paid long-form artefacts, sold from Profile and Consult.
+
+   PRICING NOTE: the brief asked for "3x the displayed price in the
+   screenshot", but no screenshot was supplied. `base` below is the ordinary
+   catalogue price for each report; `price` is the 3x figure the UI shows, and
+   it is DERIVED rather than typed so the multiplier stays visible and is
+   trivial to change in one place if the reference numbers turn up.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export const REPORT_MULTIPLIER = 3
+
+const reportCatalogue = [
+  {
+    id: 'rp1',
+    name: 'Full Birth Chart Report',
+    tag: 'Natal',
+    base: 499,
+    pages: 42,
+    delivery: '24 hours',
+    line: 'Every placement, house and aspect written out in plain language. The whole chart, once, properly.',
+    includes: ['All 12 houses read', 'Eight placements in detail', 'Aspect grid with notes'],
+    popular: true,
+  },
+  {
+    id: 'rp2',
+    name: 'Career & Timing Report',
+    tag: 'Career',
+    base: 699,
+    pages: 28,
+    delivery: '48 hours',
+    line: 'The 10th house, your dasha sequence, and the windows worth moving in over the next three years.',
+    includes: ['10th house audit', 'Dasha timeline to 2029', 'Three named windows'],
+    popular: false,
+  },
+  {
+    id: 'rp3',
+    name: 'The Relationship Report',
+    tag: 'Love',
+    base: 899,
+    pages: 40,
+    delivery: '48 hours',
+    line: 'How you attach, what you withhold, and the pattern you keep re-entering.',
+    includes: ['Venus & Mars audit', '7th house reading', 'The habit you deny'],
+    popular: true,
+  },
+  {
+    id: 'rp4',
+    name: 'Eros — Synastry for Two',
+    tag: 'Synastry',
+    base: 1299,
+    pages: 56,
+    delivery: '72 hours',
+    line: 'One reading written for both of you to read at the same time. It will start an argument. That is the product.',
+    includes: ['Full synastry grid', 'Composite chart', 'Two named friction points'],
+    popular: false,
+  },
+  {
+    id: 'rp5',
+    name: 'Year Ahead Forecast',
+    tag: 'Transits',
+    base: 599,
+    pages: 34,
+    delivery: '24 hours',
+    line: 'Twelve months of transits, ranked by weight, with the three that actually matter marked.',
+    includes: ['Month-by-month transits', 'Three ranked events', 'What to front-load'],
+    popular: false,
+  },
+  {
+    id: 'rp6',
+    name: 'Remedies & Gemstone Report',
+    tag: 'Remedial',
+    base: 449,
+    pages: 18,
+    delivery: '24 hours',
+    line: 'What is conventionally prescribed for your placements, and an honest note on what it can and cannot do.',
+    includes: ['Stone suitability', 'Ritual calendar', 'What not to bother with'],
+    popular: false,
+  },
+]
+
+export const reports = reportCatalogue.map((r) => ({
+  ...r,
+  price: r.base * REPORT_MULTIPLIER,
+}))

@@ -2,6 +2,9 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppProvider, useStore } from './store.jsx'
 import { AskAiButton, BottomNav, Toast } from './components/Chrome.jsx'
 import ChatPanel from './components/ChatPanel.jsx'
+import HoroscopePanel from './components/HoroscopePanel.jsx'
+import CartSheet from './components/CartSheet.jsx'
+import Reports from './screens/Reports.jsx'
 
 import Intro from './screens/onboarding/Intro.jsx'
 import AskName from './screens/onboarding/AskName.jsx'
@@ -93,6 +96,7 @@ function Frame() {
             <Route path="/consult/:id" element={<ConsultantProfile />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/premium" element={<Premium />} />
+            <Route path="/reports" element={<Reports />} />
           </Route>
 
           {/* The five destinations. */}
@@ -109,6 +113,8 @@ function Frame() {
 
         {/* Global overlays — above every screen, inside the phone frame. */}
         <ChatPanel />
+        <HoroscopePanel />
+        <CartSheet />
         <Toast message={toast} />
       </div>
     </div>

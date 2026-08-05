@@ -44,13 +44,16 @@ export default function Computing() {
           Three positions out of eight. The rest are in your chart, and none of them are a verdict.
         </p>
 
+        {/* Both routes land in the tabbed app shell. Sending someone
+            straight to /horoscope or /chart dropped them on a screen with no
+            bottom nav and no way back — the stranded flow this fixes. */}
         <div className="mt-auto pt-12">
-          <Button to="/horoscope" variant="solid">
-            Read today
+          <Button to="/home" variant="solid">
+            Enter Veda
           </Button>
-          <Button to="/chart" variant="quiet" className="mt-3">
-            See the whole chart first
-          </Button>
+          <p className="mt-4 text-center text-meta text-t3">
+            Your chart and today&apos;s reading are both waiting inside.
+          </p>
         </div>
       </div>
     )

@@ -8,43 +8,83 @@ import { useStore } from '../store.jsx'
  * Five destinations. Horoscope moves inside Profile as a tab and Ask AI moves
  * into the chat panel, which frees the two slots Live and Academy need.
  */
-const TABS = [
+/** Live sits in the middle deliberately — it is the raised one. */
+const LEFT = [
   { to: '/home', label: 'Home' },
   { to: '/consult', label: 'Consult' },
-  { to: '/live', label: 'Live' },
+]
+const RIGHT = [
   { to: '/academy', label: 'Academy' },
   { to: '/shop', label: 'Shop' },
 ]
 
+function Tab({ to, label }) {
+  return (
+    <li className="flex-1">
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          `relative block py-4 text-center caps-sm transition-colors ${
+            isActive ? 'gold' : 't-faint'
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {isActive && <span className="absolute inset-x-0 top-0 h-[2px] bg-gold" />}
+            {label}
+          </>
+        )}
+      </NavLink>
+    </li>
+  )
+}
+
 /**
- * Text-only tab bar. No icons — an icon would need a second visual language,
- * and this layout only has one. The active item is marked by a hard 2px gold
- * bar rather than a fill: the one place the voltage shows in the chrome.
+ * Text-only tab bar with a raised centre.
+ *
+ * Live is a circle that breaks the top edge of the bar and sits half above it,
+ * the way CRED raises its primary action. It stays part of the bar rather than
+ * floating free: the nav keeps a notch of its own background behind the circle
+ * so the two read as one object, not a widget parked on top of a strip.
  */
 export function BottomNav() {
   return (
-    <nav className="flex-none border-t border-stroke bg-bg">
-      <ul className="flex">
-        {TABS.map((t) => (
-          <li key={t.to} className="flex-1">
-            <NavLink
-              to={t.to}
-              className={({ isActive }) =>
-                `relative block py-4 text-center caps-sm transition-colors ${
-                  isActive ? 'gold' : 't-faint'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <span className="absolute inset-x-0 top-0 h-[2px] bg-gold" />}
-                  {t.label}
-                </>
-              )}
-            </NavLink>
-          </li>
+    <nav className="relative flex-none border-t border-stroke bg-bg">
+      <ul className="flex items-stretch">
+        {LEFT.map((t) => (
+          <Tab key={t.to} {...t} />
+        ))}
+
+        {/* Reserves the slot the circle occupies so the four text tabs stay
+            evenly spaced and nothing sits underneath it. */}
+        <li className="w-20 flex-none" aria-hidden="true" />
+
+        {RIGHT.map((t) => (
+          <Tab key={t.to} {...t} />
         ))}
       </ul>
+
+      <NavLink
+        to="/live"
+        aria-label="Live"
+        className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
+      >
+        {({ isActive }) => (
+          <span
+            className={`is-round flex h-16 w-16 flex-col items-center justify-center border-2 transition-colors ${
+              isActive ? 'border-gold bg-gold text-bg' : 'border-gold bg-surface gold'
+            }`}
+            style={{
+              // Hard rings, no blur — the halo is drawn, not glowed.
+              boxShadow: '0 0 0 4px var(--bg), 0 0 0 5px rgba(212,162,76,0.35)',
+            }}
+          >
+            <span className="caps-sm leading-none">Live</span>
+            <span className="mt-1 block h-1.5 w-1.5 bg-live is-round" />
+          </span>
+        )}
+      </NavLink>
     </nav>
   )
 }
@@ -84,7 +124,15 @@ export function AskAiButton() {
  * is kept only as the fallback for a cold deep-link or a refresh, where there
  * is no history entry to return to.
  */
-export function TopBar({ title, back = false, backTo, right = null, left = null, sub = null }) {
+export function TopBar({
+  title,
+  back = false,
+  backTo,
+  hardBack = false,
+  right = null,
+  left = null,
+  sub = null,
+}) {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -92,8 +140,11 @@ export function TopBar({ title, back = false, backTo, right = null, left = null,
   // the session — i.e. nothing to go back to.
   const hasHistory = location.key !== 'default'
 
+  // `hardBack` always lands on `backTo`, ignoring history. Profile uses it:
+  // "back" there means Home, not whichever screen happened to precede it.
   const goBack = () => {
-    if (hasHistory) navigate(-1)
+    if (hardBack && backTo) navigate(backTo)
+    else if (hasHistory) navigate(-1)
     else navigate(backTo || '/home', { replace: true })
   }
 

@@ -62,7 +62,7 @@ function Courses() {
                     </div>
                     <PopBar value={c.progress} />
                   </div>
-                  <PopButton href={c.url} variant="gold" className="mt-4">
+                  <PopButton size="sm" href={c.url} variant="gold" className="mt-4">
                     Resume · watch now
                   </PopButton>
                 </PopCard>
@@ -113,7 +113,7 @@ function Courses() {
                     >
                       Enrol
                     </PopButton>
-                    <PopButton href={c.url} variant="gold" full={false} className="px-4">
+                    <PopButton size="sm" href={c.url} variant="gold" full={false} className="px-4">
                       Watch
                     </PopButton>
                   </div>

@@ -13,7 +13,7 @@ import { useStore } from '../store.jsx'
  * catalogue; the break gives the screen a front page.
  */
 export default function Shop() {
-  const { cartCount, addToCart, showToast } = useStore()
+  const { cartCount, addToCart, buyNow, setCartOpen, showToast } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
 
@@ -36,9 +36,12 @@ export default function Shop() {
           <p className="font-display text-lead leading-none t-heading">Shop</p>
           <p className="mt-1 caps-sm t-faint">Stones, rituals and reports</p>
         </div>
+        {/* The cart opens the sheet. It used to only fire a toast, which is
+            why the badge counted up all demo with nowhere to go. */}
         <button
           type="button"
-          onClick={() => showToast(`${cartCount} in cart`)}
+          onClick={() => setCartOpen(true)}
+          aria-label={`Cart, ${cartCount} items`}
           className="caps-sm flex-none border border-stroke px-3 py-2 t-body transition-colors hover:border-gold hover:text-gold"
         >
           Cart <span className="gold tnum">{cartCount}</span>
@@ -81,12 +84,15 @@ export default function Shop() {
                 not the same as proven.
               </p>
 
-              <div className="mt-5 flex items-center gap-3">
+              <div className="mt-5 flex items-center gap-2">
                 <p className="flex-1 text-title gold tnum">
                   ₹{hero.price.toLocaleString('en-IN')}
                 </p>
-                <PopButton onClick={() => addToCart(hero)} variant="gold" full={false} className="px-6">
+                <PopButton size="sm" full={false} onClick={() => addToCart(hero)}>
                   Add to cart
+                </PopButton>
+                <PopButton size="sm" full={false} variant="gold" onClick={() => buyNow(hero)}>
+                  Buy now
                 </PopButton>
               </div>
             </div>
@@ -110,9 +116,16 @@ export default function Shop() {
                 <li key={p.id}>
                   <PopCard className="flex h-full flex-col">
                     <Plate seed={p.id} className="aspect-square w-full">
-                      {off > 0 && (
+                      {off > 0 && !p.soldOut && (
                         <span className="caps-sm absolute left-2 top-2 bg-gold px-1.5 py-0.5 text-bg tnum">
                           {off}% off
+                        </span>
+                      )}
+                      {p.soldOut && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-bg/70">
+                          <span className="caps-sm border border-live px-2 py-1 text-live">
+                            Sold out
+                          </span>
                         </span>
                       )}
                     </Plate>
@@ -134,9 +147,31 @@ export default function Shop() {
                         <p className="mt-2 caps-sm t-faint">Named by {p.recommendedBy}</p>
                       )}
 
-                      <PopButton onClick={() => addToCart(p)} className="mt-auto pt-3">
-                        Add
-                      </PopButton>
+                      {/* Two actions per listing, both compact. A sold-out
+                          product keeps the row so the grid stays even, but
+                          neither control is live. */}
+                      <div className="mt-auto flex gap-1.5 pt-3">
+                        <PopButton
+                          size="sm"
+                          disabled={p.soldOut}
+                          onClick={() => addToCart(p)}
+                          className="flex-1"
+                          full={false}
+                        >
+                          {p.soldOut ? 'Sold out' : 'Add'}
+                        </PopButton>
+                        {!p.soldOut && (
+                          <PopButton
+                            size="sm"
+                            variant="gold"
+                            full={false}
+                            onClick={() => buyNow(p)}
+                            className="flex-1"
+                          >
+                            Buy
+                          </PopButton>
+                        )}
+                      </div>
                     </div>
                   </PopCard>
                 </li>
@@ -146,12 +181,8 @@ export default function Shop() {
         )}
 
         {cartCount > 0 && (
-          <PopButton
-            variant="gold"
-            onClick={() => showToast('Checkout — prototype only')}
-            className="mt-8"
-          >
-            Checkout · {cartCount} {cartCount === 1 ? 'item' : 'items'}
+          <PopButton size="sm" variant="gold" onClick={() => setCartOpen(true)} className="mt-8">
+            View cart · {cartCount} {cartCount === 1 ? 'item' : 'items'}
           </PopButton>
         )}
 

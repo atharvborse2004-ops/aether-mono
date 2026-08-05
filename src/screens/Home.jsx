@@ -82,20 +82,23 @@ export default function Home() {
 }
 
 function Header() {
-  const { openChat } = useStore()
+  const { openChat, setHoroscopeOpen } = useStore()
 
   return (
     <header className="sticky top-0 z-20 flex flex-none items-center gap-3 border-b border-stroke bg-bg px-4 py-3">
       <Link to="/profile" aria-label="Your profile" className="transition-opacity hover:opacity-70">
         <PopAvatar initials={user.initials} size={34} />
       </Link>
-      <p className="flex-1 font-display text-lead leading-none t-heading">Aether</p>
-      <Link
-        to="/profile/horoscope"
+      <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
+      {/* A focused action, not a redirect. This used to navigate to
+          Profile > Horoscope, which took you out of the tab you were on. */}
+      <button
+        type="button"
+        onClick={() => setHoroscopeOpen(true)}
         className="caps-sm border border-stroke px-2.5 py-1.5 t-body transition-colors hover:border-gold hover:text-gold"
       >
         Horoscope
-      </Link>
+      </button>
       {/* Alerts are gone — this opens the chat panel instead. */}
       <button
         type="button"
@@ -206,9 +209,10 @@ function ReelCard({ reel: r }) {
 
 /** The daily reading, inline. The product's core content, in the stream. */
 function ReadingCard({ day }) {
+  const { setHoroscopeOpen: setOpen } = useStore()
   return (
     <article className="px-5 py-6">
-      <Kicker action="Read all" to="/profile/horoscope">
+      <Kicker action="Read all" onAction={() => setOpen(true)}>
         Today&apos;s reading
       </Kicker>
       <PopCard raised className="mt-4 p-5">
@@ -337,7 +341,7 @@ function CourseCard({ course: c }) {
             <PopBar value={c.progress} />
           </div>
         )}
-        <PopButton to="/academy" variant="gold" className="mt-4">
+        <PopButton size="sm" to="/academy" variant="gold" className="mt-4">
           {c.progress > 0 ? 'Resume' : 'Start course'}
         </PopButton>
       </PopCard>

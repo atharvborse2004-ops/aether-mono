@@ -37,7 +37,9 @@ export default function Profile() {
 
   return (
     <>
-      <TopBar title="Profile" back backTo="/home" />
+      {/* hardBack: from Profile, "back" means Home — never an arbitrary
+          previous screen. */}
+      <TopBar title="Profile" back backTo="/home" hardBack />
 
       <section className="flex items-center gap-4 border-b border-stroke px-5 py-6">
         <PopAvatar initials={user.initials} size={56} />
@@ -107,7 +109,9 @@ function Overview() {
         <div className="mt-2">
           <Row to="/chart" title="Your full chart" note="Eight placements, plainly written" />
           <Row to="/people" title="People" note="Charts you have read against yours" />
-          <Row to="/premium" title="Premium" note="Reports, Eros, more questions" />
+          <Row to="/reports" title="Reports" note="Long-form readings, written once" />
+          <Row to="/wallet" title="Wallet" note="Balance, top-up and history" />
+          <Row to="/premium" title="Premium" note="Eros, packs and more questions" />
           <Row to="/academy" title="Academy" note="Courses, events and downloads" />
           <Row to="/ask" title="Ask the Stars" meta={`${questionsLeft} left`} />
           <Row to="/shop" title="Shop" meta={`${cartCount} in cart`} />
@@ -296,7 +300,7 @@ function WalletTab() {
             ₹{balance.toLocaleString('en-IN')}
           </p>
           <div className="mt-6 flex gap-3">
-            <PopButton to="/wallet" variant="gold">
+            <PopButton size="sm" to="/wallet" variant="gold">
               Add money
             </PopButton>
             <PopButton to="/wallet">Open wallet</PopButton>
@@ -345,28 +349,39 @@ function WalletTab() {
 /* ── Settings tab ────────────────────────────────────────────────────────── */
 
 function SettingsTab() {
-  const { highContrast, setHighContrast, showToast } = useStore()
+  const { contrast, setContrast, showToast } = useStore()
 
   return (
     <>
+      {/* Contrast is a two-way setting with a real 'normal' state to return
+          to. The old control could only ever be switched on. High is the
+          default, since the raised greys are the accessible ones. */}
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Display</Kicker>
-        <button
-          type="button"
-          onClick={() => setHighContrast(!highContrast)}
-          aria-pressed={highContrast}
-          className="mt-4 flex w-full items-center justify-between gap-4 border-b border-rule py-4 text-left transition-opacity hover:opacity-70"
-        >
-          <span>
-            <span className="block text-body t-heading">Increase contrast</span>
-            <span className="mt-1 block text-meta t-faint">
-              Raises every grey. Nothing else moves.
-            </span>
-          </span>
-          <span className={`flex-none caps-sm ${highContrast ? 'gold' : 't-faint'}`}>
-            {highContrast ? 'On' : 'Off'}
-          </span>
-        </button>
+        <p className="mt-3 text-meta t-body">
+          Raises or lowers every grey in the app. Nothing else moves.
+        </p>
+
+        <div className="mt-4 flex" role="group" aria-label="Contrast">
+          {[
+            { key: 'normal', label: 'Normal' },
+            { key: 'high', label: 'Increased' },
+          ].map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={contrast === c.key}
+              onClick={() => setContrast(c.key)}
+              className={`caps-sm flex-1 border px-3 py-3 transition-colors ${
+                contrast === c.key
+                  ? 'border-gold bg-gold-wash gold'
+                  : 'border-stroke t-faint hover:border-gold'
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="border-b border-rule px-5 py-6">
@@ -386,7 +401,7 @@ function SettingsTab() {
       <section className="px-5 py-6">
         <Kicker>About</Kicker>
         <p className="mt-4 text-meta t-body">
-          Aether. A front-end layout prototype — no backend, no auth, no network calls. Every value
+          Veda. A front-end layout prototype — no backend, no auth, no network calls. Every value
           on screen comes from one hardcoded file, and nothing survives a reload.
         </p>
         <PopButton to="/onboarding" className="mt-5">

@@ -30,6 +30,7 @@ export function PopButton({
   href,
   onClick,
   variant = 'default',
+  size = 'md',
   full = true,
   className = '',
   children,
@@ -37,6 +38,9 @@ export function PopButton({
 }) {
   const cls = [
     'pop-btn caps',
+    // `sm` is the house default for anything inline or paired — full-width
+    // blocky CTAs eat the screen, and the gold ones especially.
+    size === 'sm' && 'pop-btn-sm',
     variant === 'gold' && 'pop-btn-gold',
     variant === 'ghost' && 'shadow-pop-none bg-transparent',
     full && 'w-full',

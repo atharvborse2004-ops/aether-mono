@@ -316,18 +316,31 @@
     box-shadow: 4px 4px 0 0 var(--edge);
   }
 
+  /* Buttons are compact by default. The offset dropped from 4px to 3px with
+     the smaller padding — the block has to stay proportional to the face or
+     it reads as a drop shadow rather than an edge. */
   .pop-btn {
-    @apply inline-flex items-center justify-center text-center;
-    padding: calc(var(--sp) * 2) calc(var(--sp) * 2.5);
+    @apply inline-flex items-center justify-center whitespace-nowrap text-center;
+    padding: calc(var(--sp) * 1.25) calc(var(--sp) * 2);
     border: 1px solid var(--rule);
     background: var(--surface);
     color: var(--text);
-    box-shadow: 4px 4px 0 0 var(--edge);
+    box-shadow: 3px 3px 0 0 var(--edge);
     transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
   }
   .pop-btn:active {
-    transform: translate3d(4px, 4px, 0);
+    transform: translate3d(3px, 3px, 0);
     box-shadow: 0 0 0 0 transparent;
+  }
+
+  /* Smaller still — for anything inline, paired, or sitting inside a card. */
+  .pop-btn-sm {
+    padding: calc(var(--sp) * 0.875) calc(var(--sp) * 1.5);
+    font-size: 10px;
+    box-shadow: 2px 2px 0 0 var(--edge);
+  }
+  .pop-btn-sm:active {
+    transform: translate3d(2px, 2px, 0);
   }
 
   /* The voltage CTA. One per screen — if a screen needs two, the hierarchy
@@ -336,8 +349,11 @@
     background: var(--gold);
     border-color: var(--gold);
     color: #0d0d0d;
-    box-shadow: 4px 4px 0 0 var(--gold-dim);
+    box-shadow: 3px 3px 0 0 var(--gold-dim);
     font-weight: 600;
+  }
+  .pop-btn-gold.pop-btn-sm {
+    box-shadow: 2px 2px 0 0 var(--gold-dim);
   }
   .pop-btn-gold:active {
     box-shadow: 0 0 0 0 transparent;

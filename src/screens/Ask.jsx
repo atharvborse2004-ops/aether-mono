@@ -65,7 +65,7 @@ export default function Ask() {
       <div className="section-tight">
         {messages.map((m) => (
           <div key={m.id} className="border-b border-rule py-5 last:border-b-0">
-            <p className="label text-left mb-2">{m.role === 'ai' ? 'Aether' : 'You'}</p>
+            <p className="label text-left mb-2">{m.role === 'ai' ? 'Veda' : 'You'}</p>
             <p className={`text-read ${m.role === 'ai' ? 'text-t1' : 'text-t2'}`}>{m.text}</p>
           </div>
         ))}
