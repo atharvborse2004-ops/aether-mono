@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Icon from './Icon.jsx'
 
 /* ═══════════════════════════════════════════════════════════════════════════
    The whole vocabulary of the layout lives in this file.
@@ -221,23 +222,68 @@ export function Field({ k, v, className = '' }) {
  * moves you to another screen, so it cannot be confused with <Row> or
  * <TextLink>. An engaged toggle is inked and underlined; the rest are grey.
  */
+/* Label → glyph. Resolving the icon from the label keeps all eight call sites
+   untouched; anything unrecognised (LiveRoom's "Send a gift") falls through to
+   the original text rendering rather than vanishing. */
+function iconFor(label) {
+  const l = label.toLowerCase()
+  if (l.includes('like') || l.includes('heart')) return 'heart'
+  if (l.includes('repl') || l.includes('comment')) return 'chat'
+  if (l.includes('share')) return 'share'
+  if (l.includes('save') || l.includes('bookmark')) return 'bookmark'
+  return null
+}
+
 export function Acts({ items, className = '' }) {
   return (
-    <div className={`flex flex-wrap items-center gap-x-7 gap-y-3 ${className}`}>
-      {items.map((a) => (
-        <button
-          key={a.label}
-          type="button"
-          onClick={a.onClick}
-          aria-pressed={a.on === undefined ? undefined : a.on}
-          className={`text-micro uppercase tracking-caps transition-colors ${
-            a.on ? 'text-t1 underline underline-offset-4' : 'text-t3 hover:text-t1'
-          }`}
-        >
-          {a.on && a.onLabel ? a.onLabel : a.label}
-          {a.count != null && <span className="ml-2 tnum">{a.count}</span>}
-        </button>
-      ))}
+    <div className={`flex flex-wrap items-center gap-x-5 gap-y-3 ${className}`}>
+      {items.map((a, i) => {
+        const icon = iconFor(a.label)
+        const solid = a.on && (icon === 'heart' || icon === 'bookmark')
+        // The bookmark sits apart on the right, as it does on Instagram — but
+        // only on a full action row. On the two-item rows (Article, Horoscope)
+        // save comes first and pushing it would break their centring.
+        const apart = icon === 'bookmark' && i === items.length - 1 && items.length > 2
+
+        if (!icon) {
+          return (
+            <button
+              key={a.label}
+              type="button"
+              onClick={a.onClick}
+              className="text-micro uppercase tracking-caps text-t3 transition-colors hover:text-t1"
+            >
+              {a.on && a.onLabel ? a.onLabel : a.label}
+            </button>
+          )
+        }
+
+        return (
+          <button
+            key={a.label}
+            type="button"
+            onClick={a.onClick}
+            aria-pressed={a.on === undefined ? undefined : a.on}
+            aria-label={a.on && a.onLabel ? a.onLabel : a.label}
+            /* Only `transform` transitions. Fading the colour meant the
+               liked-heart red arrived over 150ms, and the press scale is the
+               feedback that actually matters — the colour should just be
+               there the instant you tap. */
+            className={`flex items-center gap-1.5 transition-transform duration-150 active:scale-90 ${
+              apart ? 'ml-auto' : ''
+            } ${
+              a.on
+                ? icon === 'heart'
+                  ? 'text-live'
+                  : 'text-t1'
+                : 'text-t2 hover:text-t1'
+            }`}
+          >
+            <Icon name={icon} size={22} weight={1.8} filled={solid} />
+            {a.count != null && <span className="text-meta tnum t-body">{a.count}</span>}
+          </button>
+        )
+      })}
     </div>
   )
 }

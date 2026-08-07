@@ -16,15 +16,14 @@ import { useStore } from '../store.jsx'
    where the thumb is and where the raised Live button needs mass to sit in. */
 
 /**
- * Five destinations. Horoscope moves inside Profile as a tab and Ask AI moves
- * into the chat panel, which frees the two slots Live and Academy need.
+ * Five destinations, all equal. Horoscope moves inside Profile as a tab and
+ * Ask AI moves into the chat panel, which frees the two slots Live and
+ * Academy need.
  */
-/** Live sits in the middle deliberately — it is the raised one. */
-const LEFT = [
+const TABS = [
   { to: '/home', label: 'Home', icon: 'home' },
   { to: '/consult', label: 'Consult', icon: 'consult' },
-]
-const RIGHT = [
+  { to: '/live', label: 'Live', icon: 'live' },
   { to: '/academy', label: 'Academy', icon: 'academy' },
   { to: '/shop', label: 'Shop', icon: 'shop' },
 ]
@@ -69,50 +68,18 @@ function Tab({ to, label, icon }) {
  * it anchors the page the way CRED's does, and it is why the canvas can stay
  * as pale as it is without the screen floating away at the bottom.
  *
- * Live is a circle that breaks the top edge and sits half above it. It stays
- * part of the bar rather than floating free: a ring of the page colour behind
- * the circle punches it out of the slab, so the two read as one object.
+ * Live used to be a raised circle breaking the top edge. It is a destination
+ * like the other four, not a mode, and giving it the loudest shape on the
+ * screen oversold it — it now sits in the row on the same footing.
  */
 export function BottomNav() {
   return (
     <nav className="navbar">
       <ul className="flex items-stretch">
-        {LEFT.map((t) => (
-          <Tab key={t.to} {...t} />
-        ))}
-
-        {/* Reserves the slot the circle occupies so the four text tabs stay
-            evenly spaced and nothing sits underneath it. */}
-        <li className="w-20 flex-none" aria-hidden="true" />
-
-        {RIGHT.map((t) => (
+        {TABS.map((t) => (
           <Tab key={t.to} {...t} />
         ))}
       </ul>
-
-      <NavLink
-        to="/live"
-        aria-label="Live"
-        className="group absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
-      >
-        {({ isActive }) => (
-          <span
-            className={`flex h-16 w-16 flex-col items-center justify-center rounded-full transition-transform duration-200 group-active:scale-95 ${
-              isActive ? 'bg-gold-fill text-ink' : 'bg-ink2 text-gold-fill'
-            }`}
-            style={{
-              // The page-coloured ring is what punches the circle out of the
-              // bar; the soft drop underneath it is what raises it.
-              boxShadow: '0 0 0 5px var(--bg), 0 8px 20px -6px rgba(28,26,25,0.45)',
-            }}
-          >
-            <Icon name="live" size={20} weight={2} />
-            <span className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.1em] leading-none">
-              Live
-            </span>
-          </span>
-        )}
-      </NavLink>
     </nav>
   )
 }
@@ -165,7 +132,7 @@ export function AskAiButton() {
       type="button"
       onClick={() => openChat('ai')}
       aria-label="Ask AI"
-      className="absolute bottom-[110px] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gold-fill text-ink shadow-gold transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
+      className="absolute bottom-[92px] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gold-fill text-ink shadow-gold transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
     >
       <span className="caps-sm leading-none">AI</span>
     </button>

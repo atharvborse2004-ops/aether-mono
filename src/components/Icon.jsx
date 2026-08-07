@@ -58,6 +58,17 @@ const PATHS = {
     </>
   ),
   chat: <path d="M20.4 11.5c0 4-3.8 7.3-8.4 7.3a9.7 9.7 0 0 1-2.6-.35L4.6 20.4l1.3-3.6a6.9 6.9 0 0 1-2.3-5.3c0-4 3.8-7.3 8.4-7.3s8.4 3.3 8.4 7.3Z" />,
+  /* The feed actions. Heart and bookmark are the two that take a filled
+     state — a stroke going solid is the clearest "this is now on" a line set
+     can manage without a second icon. */
+  heart: <path d="M12 20.4S4.5 15.7 4.5 10.6a4.2 4.2 0 0 1 7.5-2.6 4.2 4.2 0 0 1 7.5 2.6c0 5.1-7.5 9.8-7.5 9.8Z" />,
+  share: (
+    <>
+      <path d="M21 3.4 10.4 14" />
+      <path d="M21 3.4 14.3 21.1l-3.9-7.4-7.4-3.9L21 3.4Z" />
+    </>
+  ),
+  bookmark: <path d="M6.5 3.9h11a.9.9 0 0 1 .9.9v15.4L12 16.3l-6.4 3.9V4.8a.9.9 0 0 1 .9-.9Z" />,
   cart: (
     <>
       <path d="M3.2 4.4h2.3l2.4 10.9a1.5 1.5 0 0 0 1.5 1.2h8a1.5 1.5 0 0 0 1.5-1.15l1.6-6.75H6.4" />
@@ -71,8 +82,10 @@ const PATHS = {
  * @param name    one of the keys above
  * @param size    px, square. 20 in the tab bar, 18 in the top bar.
  * @param weight  stroke width. 1.6 at rest, 2.1 when active.
+ * @param filled  solid fill instead of an outline — the "on" state for the
+ *                heart and the bookmark.
  */
-export default function Icon({ name, size = 20, weight = 1.7, className = '' }) {
+export default function Icon({ name, size = 20, weight = 1.7, filled = false, className = '' }) {
   const d = PATHS[name]
   if (!d) return null
   return (
@@ -80,7 +93,7 @@ export default function Icon({ name, size = 20, weight = 1.7, className = '' }) 
       viewBox="0 0 24 24"
       width={size}
       height={size}
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={weight}
       strokeLinecap="round"
@@ -88,7 +101,7 @@ export default function Icon({ name, size = 20, weight = 1.7, className = '' }) 
       aria-hidden="true"
       focusable="false"
       className={className}
-      style={{ transition: 'stroke-width .2s ease' }}
+      style={{ transition: 'stroke-width .2s ease, fill .2s ease' }}
     >
       {d}
     </svg>
