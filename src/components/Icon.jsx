@@ -1,0 +1,96 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Icons.
+
+   Eight glyphs, drawn here rather than pulled from a library. An icon set is
+   a dependency, a bundle and a house style someone else picked; eight paths
+   is forty lines and they can be tuned to this app's stroke weight.
+
+   All of them share one geometry so they sit together in a row: a 24 unit
+   box, a ~2 unit optical margin, round caps and joins, and colour inherited
+   from the parent. Weight is the only thing a caller varies — the active tab
+   thickens rather than changing colour, which is how a line set shows state
+   without needing a second filled set.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const PATHS = {
+  home: (
+    <>
+      <path d="M3.4 10.7 12 3.9l8.6 6.8" />
+      <path d="M5.9 9.5v9.7a1.4 1.4 0 0 0 1.4 1.4h9.4a1.4 1.4 0 0 0 1.4-1.4V9.5" />
+    </>
+  ),
+  consult: (
+    <>
+      <circle cx="9.4" cy="8.4" r="3.3" />
+      <path d="M3.6 20.3a5.9 5.9 0 0 1 11.7 0" />
+      <path d="M16.4 5.9a3.1 3.1 0 0 1 0 5.9" />
+      <path d="M17.8 14.4a5.7 5.7 0 0 1 2.8 5.9" />
+    </>
+  ),
+  /* Broadcast — a source with two pairs of arcs leaving it. */
+  live: (
+    <>
+      <circle cx="12" cy="12" r="2.3" />
+      <path d="M8.3 8.3a5.2 5.2 0 0 0 0 7.4" />
+      <path d="M15.7 15.7a5.2 5.2 0 0 0 0-7.4" />
+      <path d="M5.5 5.5a9.2 9.2 0 0 0 0 13" />
+      <path d="M18.5 18.5a9.2 9.2 0 0 0 0-13" />
+    </>
+  ),
+  academy: (
+    <>
+      <path d="M12 4 2.6 8.5 12 13l9.4-4.5L12 4Z" />
+      <path d="M6.8 10.6v5c0 1.9 2.3 3.3 5.2 3.3s5.2-1.4 5.2-3.3v-5" />
+      <path d="M21.4 8.5v5.2" />
+    </>
+  ),
+  shop: (
+    <>
+      <path d="M5.4 8h13.2l-.9 11.9a1.4 1.4 0 0 1-1.4 1.3H7.7a1.4 1.4 0 0 1-1.4-1.3L5.4 8Z" />
+      <path d="M9 10.3V7a3 3 0 0 1 6 0v3.3" />
+    </>
+  ),
+  /* The daily reading. A sun, because the app's subject is the sky. */
+  horoscope: (
+    <>
+      <circle cx="12" cy="12" r="4.1" />
+      <path d="M12 2.6v2M12 19.4v2M4.4 4.4l1.5 1.5M18.1 18.1l1.5 1.5M2.6 12h2M19.4 12h2M4.4 19.6l1.5-1.5M18.1 5.9l1.5-1.5" />
+    </>
+  ),
+  chat: <path d="M20.4 11.5c0 4-3.8 7.3-8.4 7.3a9.7 9.7 0 0 1-2.6-.35L4.6 20.4l1.3-3.6a6.9 6.9 0 0 1-2.3-5.3c0-4 3.8-7.3 8.4-7.3s8.4 3.3 8.4 7.3Z" />,
+  cart: (
+    <>
+      <path d="M3.2 4.4h2.3l2.4 10.9a1.5 1.5 0 0 0 1.5 1.2h8a1.5 1.5 0 0 0 1.5-1.15l1.6-6.75H6.4" />
+      <circle cx="10" cy="20" r="1.3" />
+      <circle cx="17.4" cy="20" r="1.3" />
+    </>
+  ),
+}
+
+/**
+ * @param name    one of the keys above
+ * @param size    px, square. 20 in the tab bar, 18 in the top bar.
+ * @param weight  stroke width. 1.6 at rest, 2.1 when active.
+ */
+export default function Icon({ name, size = 20, weight = 1.7, className = '' }) {
+  const d = PATHS[name]
+  if (!d) return null
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={weight}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      className={className}
+      style={{ transition: 'stroke-width .2s ease' }}
+    >
+      {d}
+    </svg>
+  )
+}

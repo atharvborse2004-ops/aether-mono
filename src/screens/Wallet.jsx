@@ -130,9 +130,7 @@ export default function Wallet() {
                   setCustom('')
                 }}
                 aria-pressed={on}
-                className={`border px-3 py-4 text-lead tnum transition-colors ${
-                  on ? 'border-gold bg-gold-wash gold' : 'border-stroke t-sub hover:border-gold'
-                }`}
+                className="pill justify-center text-lead tnum !px-3 !py-3.5"
               >
                 ₹{a.toLocaleString('en-IN')}
               </button>

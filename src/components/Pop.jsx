@@ -1,29 +1,39 @@
 import { Link } from 'react-router-dom'
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   NeoPOP primitives.
+   Surface primitives.
 
-   Everything here obeys the four rules that carry the look: radius 0, shadows
-   are offset SOLID blocks with zero blur, one voltage accent per screen, and
+   Everything here obeys the four rules that carry the look: a generous radius,
+   soft elevation tuned to the ink, one voltage accent per screen, and
    hierarchy from the opacity ladder rather than extra colours.
 
-   These sit alongside the existing editorial primitives in Primitives.jsx —
-   Section, Row, Ticks and friends are untouched. Use PopCard where a surface
-   should read as a physical tile, and the plain Section stack where the
-   screen is meant to read as a printed page.
+   These sit alongside the editorial primitives in Primitives.jsx — Section,
+   Row, Ticks and friends are untouched. Use PopCard where a surface should
+   read as a physical tile, and the plain Section stack where the screen is
+   meant to read as a printed page.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** A surface. `raised` adds the offset block; use it for one tile per screen. */
-export function PopCard({ raised = false, className = '', as: As = 'div', ...rest }) {
-  return <As className={`${raised ? 'pop-raised' : 'pop-card'} ${className}`} {...rest} />
+/**
+ * A surface. `raised` lifts it further — one tile per screen, the object the
+ * screen is actually about. `tap` adds the hover-lift/press-settle, and belongs
+ * only on a card that genuinely navigates somewhere.
+ */
+export function PopCard({ raised = false, tap = false, className = '', as: As = 'div', ...rest }) {
+  return (
+    <As
+      className={`${raised ? 'pop-raised' : 'pop-card'} ${tap ? 'pop-tap' : ''} ${className}`}
+      {...rest}
+    />
+  )
 }
 
 /**
  * The elevated button. Renders as <button>, <Link> or <a>.
  *
- * `gold` is the voltage CTA — one per screen. `ghost` drops the block for
- * secondary actions, because three elevated buttons on one screen reads as
- * noise rather than hierarchy.
+ * Default is the ink one — a grey-black fill with white caps, which is where
+ * "black primary" lives on a light canvas. `gold` is the voltage CTA, one per
+ * screen. `ghost` is a white pill for the quiet third, because three loud
+ * buttons on one screen reads as noise rather than hierarchy.
  */
 export function PopButton({
   to,
@@ -42,7 +52,7 @@ export function PopButton({
     // blocky CTAs eat the screen, and the gold ones especially.
     size === 'sm' && 'pop-btn-sm',
     variant === 'gold' && 'pop-btn-gold',
-    variant === 'ghost' && 'shadow-pop-none bg-transparent',
+    variant === 'ghost' && 'pop-btn-ghost',
     full && 'w-full',
     className,
   ]
@@ -92,15 +102,17 @@ export function Kicker({ children, action, onAction, to, className = '' }) {
   )
 }
 
-/** Small square tag. CAPS, 1px stroke, no fill. */
+/** Small rounded tag. CAPS on a tinted fill — legible over artwork. */
 export function PopTag({ children, tone = 'default', className = '' }) {
   const tones = {
-    default: 'border-stroke t-body',
-    gold: 'border-gold gold',
-    live: 'border-live text-live',
+    default: 'bg-surface/90 t-sub',
+    gold: 'bg-gold-fill text-ink',
+    live: 'bg-live text-white',
   }
   return (
-    <span className={`caps-sm inline-block border px-2 py-1 ${tones[tone]} ${className}`}>
+    <span
+      className={`caps-sm inline-block rounded-full px-2.5 py-1 shadow-sm ${tones[tone]} ${className}`}
+    >
       {children}
     </span>
   )
@@ -117,35 +129,32 @@ export function Stat({ label, value, sub, className = '' }) {
   )
 }
 
-/**
- * Progress rail. A 2px bar rather than a rounded pill, filled in the voltage
- * accent, so it belongs to the same geometry as everything else.
- */
+/** Progress rail. Rounded, filled in the voltage accent, and it draws itself in. */
 export function PopBar({ value, className = '' }) {
   return (
-    <span className={`block h-[3px] w-full bg-rule ${className}`}>
+    <span className={`block h-1.5 w-full overflow-hidden rounded-full bg-black/10 ${className}`}>
       <span
-        className="block h-full bg-gold"
+        className="block h-full origin-left animate-grow rounded-full bg-gold-fill"
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </span>
   )
 }
 
-/** Square avatar with a 1px stroke. Initials only — no photographs anywhere. */
+/** Round avatar. Initials only — no photographs anywhere in this layout. */
 export function PopAvatar({ initials, size = 36, online = false, className = '' }) {
   return (
     <span className={`relative inline-block flex-none ${className}`}>
       <span
-        className="inline-flex items-center justify-center border border-stroke bg-surface2 t-sub"
+        className="avatar-face inline-flex items-center justify-center rounded-full border border-stroke bg-surface shadow-sm t-sub"
         style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
       >
         {initials}
       </span>
       {online && (
         <span
-          className="absolute -bottom-0.5 -right-0.5 block bg-ok"
-          style={{ width: 7, height: 7 }}
+          className="absolute -bottom-0.5 -right-0.5 block rounded-full bg-ok ring-2 ring-bg"
+          style={{ width: 9, height: 9 }}
           aria-label="Online"
         />
       )}

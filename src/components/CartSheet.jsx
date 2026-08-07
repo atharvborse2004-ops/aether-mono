@@ -52,7 +52,7 @@ export default function CartSheet() {
                     type="button"
                     onClick={() => setQty(l.id, l.qty - 1)}
                     aria-label={`Fewer ${l.name}`}
-                    className="caps-sm h-7 w-7 border border-stroke t-body"
+                    className="caps-sm h-8 w-8 rounded-full border border-stroke bg-surface shadow-sm t-body transition-transform active:scale-90"
                   >
                     −
                   </button>
@@ -61,7 +61,7 @@ export default function CartSheet() {
                     type="button"
                     onClick={() => setQty(l.id, l.qty + 1)}
                     aria-label={`More ${l.name}`}
-                    className="caps-sm h-7 w-7 border border-stroke t-body"
+                    className="caps-sm h-8 w-8 rounded-full border border-stroke bg-surface shadow-sm t-body transition-transform active:scale-90"
                   >
                     +
                   </button>

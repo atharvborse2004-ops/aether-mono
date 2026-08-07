@@ -10,8 +10,9 @@ import {
   reads,
   user,
 } from '../data/mock.js'
+import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
-import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
+import { Kicker, PopAvatar, PopBar, PopButton, PopTag } from '../components/Pop.jsx'
 import { Acts, firstName } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
@@ -48,7 +49,7 @@ export default function Home() {
     <>
       <Header />
 
-      <div className="divide-y divide-rule">
+      <div className="space-y-3.5 p-4">
         {items.map((item) => {
           switch (item.kind) {
             case 'post':
@@ -85,29 +86,32 @@ function Header() {
   const { openChat, setHoroscopeOpen } = useStore()
 
   return (
-    <header className="sticky top-0 z-20 flex flex-none items-center gap-3 border-b border-stroke bg-bg px-4 py-3">
+    <header className="topbar flex items-center gap-2.5 px-4 py-2">
       <Link to="/profile" aria-label="Your profile" className="transition-opacity hover:opacity-70">
-        <PopAvatar initials={user.initials} size={34} />
+        <PopAvatar initials={user.initials} size={30} />
       </Link>
       <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
       {/* A focused action, not a redirect. This used to navigate to
           Profile > Horoscope, which took you out of the tab you were on. */}
+      {/* Round icon buttons, same material as the pills they replaced — the
+          label moves to aria-label rather than disappearing. */}
       <button
         type="button"
         onClick={() => setHoroscopeOpen(true)}
-        className="caps-sm border border-stroke px-2.5 py-1.5 t-body transition-colors hover:border-gold hover:text-gold"
+        aria-label="Today's horoscope"
+        className="pill knob !h-9 !w-9 justify-center"
       >
-        Horoscope
+        <Icon name="horoscope" size={18} />
       </button>
       {/* Alerts are gone — this opens the chat panel instead. */}
       <button
         type="button"
         onClick={() => openChat('live')}
         aria-label="Messages"
-        className="caps-sm relative border border-stroke px-2.5 py-1.5 t-body transition-colors hover:border-gold hover:text-gold"
+        className="pill knob relative !h-9 !w-9 justify-center"
       >
-        Chat
-        <span className="absolute -right-1 -top-1 block h-2 w-2 bg-gold" />
+        <Icon name="chat" size={18} />
+        <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-live ring-2 ring-ink" />
       </button>
     </header>
   )
@@ -140,7 +144,7 @@ function PostCard({ post: p }) {
   const liked = hasFlag(`like:${p.id}`)
 
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Byline
         initials={p.initials}
         name={p.consultant}
@@ -181,22 +185,22 @@ function PostCard({ post: p }) {
 
 function ReelCard({ reel: r }) {
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <div className="mb-4 flex items-center justify-between gap-3">
         <Byline initials={r.initials} name={r.consultant} to={`/consult/${r.consultantId}`} />
         <PopTag>Reel</PopTag>
       </div>
 
-      <Link to={`/reels/${r.id}`} className="block transition-opacity hover:opacity-80">
+      <Link to={`/reels/${r.id}`} className="group block">
         <Plate seed={r.id} className="aspect-[4/5] w-full">
           <span className="absolute inset-0 flex items-center justify-center">
             <span
-              className="is-round flex h-12 w-12 items-center justify-center border border-gold bg-bg gold"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-white shadow-lg transition-transform duration-200 group-hover:scale-105"
             >
               <span className="caps-sm leading-none">▶</span>
             </span>
           </span>
-          <span className="caps-sm absolute bottom-3 left-3 border border-stroke bg-bg px-2 py-1 t-sub tnum">
+          <span className="caps-sm absolute bottom-3 left-3 rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub tnum">
             {r.views} · {r.duration}
           </span>
         </Plate>
@@ -211,11 +215,11 @@ function ReelCard({ reel: r }) {
 function ReadingCard({ day }) {
   const { setHoroscopeOpen: setOpen } = useStore()
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Kicker action="Read all" onAction={() => setOpen(true)}>
         Today&apos;s reading
       </Kicker>
-      <PopCard raised className="mt-4 p-5">
+      <div className="pop-inset mt-4 p-4">
         <p className="caps-sm gold">{day.date}</p>
         <h2 className="mt-3 font-display text-title leading-tight t-heading">{day.headline}</h2>
         <p className="mt-3 text-body t-body">{day.body}</p>
@@ -232,7 +236,7 @@ function ReadingCard({ day }) {
             </div>
           ))}
         </dl>
-      </PopCard>
+      </div>
     </article>
   )
 }
@@ -241,7 +245,7 @@ function ArticleCard({ read: b }) {
   const { hasFlag, toggleFlag } = useStore()
 
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Byline
         initials={b.initials}
         name={b.consultant}
@@ -251,7 +255,7 @@ function ArticleCard({ read: b }) {
       />
 
       <Link to={`/read/${b.id}`} className="mt-4 block transition-opacity hover:opacity-80">
-        <PopCard className="flex gap-4 p-3">
+        <div className="pop-inset flex gap-4 p-3">
           <Plate seed={b.id} className="h-[72px] w-[72px] flex-none" />
           <span className="min-w-0 flex-1">
             <span className="caps-sm gold">{b.tag}</span>
@@ -260,7 +264,7 @@ function ArticleCard({ read: b }) {
               {b.readTime} · {b.views} read
             </span>
           </span>
-        </PopCard>
+        </div>
       </Link>
 
       <Acts
@@ -284,18 +288,18 @@ function ArticleCard({ read: b }) {
 
 function LiveCard({ room: l }) {
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Link to={`/live/${l.id}`} className="block transition-opacity hover:opacity-80">
         <Plate seed={l.id} variant="orbit" className="aspect-video w-full">
           <span className="absolute left-3 top-3">
             {l.live ? (
               <span className="badge-live">● Live</span>
             ) : (
-              <span className="caps-sm border border-stroke bg-bg px-2 py-1 t-sub">Soon</span>
+              <span className="caps-sm rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub">Soon</span>
             )}
           </span>
           {l.viewers && (
-            <span className="caps-sm absolute right-3 top-3 border border-stroke bg-bg px-2 py-1 t-sub tnum">
+            <span className="caps-sm absolute right-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub tnum">
               {l.viewers}
             </span>
           )}
@@ -318,11 +322,11 @@ function LiveCard({ room: l }) {
 
 function CourseCard({ course: c }) {
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Kicker action="Academy" to="/academy">
         Continue learning
       </Kicker>
-      <PopCard className="mt-4 p-4">
+      <div className="pop-inset mt-4 p-4">
         <div className="flex items-start gap-3">
           <Plate seed={c.id} className="h-16 w-16 flex-none" />
           <div className="min-w-0 flex-1">
@@ -344,7 +348,7 @@ function CourseCard({ course: c }) {
         <PopButton size="sm" to="/academy" variant="gold" className="mt-4">
           {c.progress > 0 ? 'Resume' : 'Start course'}
         </PopButton>
-      </PopCard>
+      </div>
     </article>
   )
 }
@@ -354,11 +358,11 @@ function ProductCard({ product: p }) {
   const off = p.mrp ? Math.round((1 - p.price / p.mrp) * 100) : null
 
   return (
-    <article className="px-5 py-6">
+    <article className="pop-card p-4">
       <Kicker action="Shop" to="/shop">
         For your chart
       </Kicker>
-      <PopCard className="mt-4 flex gap-4 p-3">
+      <div className="pop-inset mt-4 flex gap-4 p-3">
         <Plate seed={p.id} className="h-24 w-24 flex-none" />
         <div className="flex min-w-0 flex-1 flex-col">
           <p className="text-body t-heading">{p.name}</p>
@@ -371,7 +375,7 @@ function ProductCard({ product: p }) {
             Add
           </PopButton>
         </div>
-      </PopCard>
+      </div>
     </article>
   )
 }

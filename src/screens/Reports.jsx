@@ -45,7 +45,7 @@ export default function Reports() {
                     <PopTag tone={r.popular ? 'gold' : 'default'}>{r.tag}</PopTag>
                   </span>
                   {r.popular && (
-                    <span className="caps-sm absolute right-3 top-3 bg-gold px-2 py-1 text-bg">
+                    <span className="caps-sm absolute right-3 top-3 rounded-full bg-gold-fill px-2.5 py-1 text-ink">
                       Most taken
                     </span>
                   )}

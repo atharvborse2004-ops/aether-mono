@@ -25,7 +25,7 @@ export default function Invite() {
       </section>
 
       <Section label="Your link">
-        <p className="border border-rule px-4 py-5 text-center text-body text-t1 break-all">
+        <p className="pop-inset break-all px-4 py-5 text-center text-body text-t1">
           {LINK}
         </p>
         <Button

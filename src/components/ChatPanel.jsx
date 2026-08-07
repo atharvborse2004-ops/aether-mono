@@ -33,12 +33,12 @@ export default function ChatPanel() {
         type="button"
         aria-label="Close chat"
         onClick={() => setChatOpen(false)}
-        className="absolute inset-0 bg-black opacity-70"
+        className="absolute inset-0 animate-fade bg-ink opacity-40"
       />
 
       {/* The panel itself. Full height, hard left edge, no blur — the sheet
           slides on one axis and stops, per the linear-motion rule. */}
-      <aside className="relative flex h-full w-[88%] max-w-[380px] animate-slide-in flex-col border-l border-stroke bg-bg">
+      <aside className="glass-panel relative flex h-full w-[88%] max-w-[380px] animate-slide-in flex-col border-l border-stroke">
         <header className="flex-none border-b border-stroke">
           <div className="flex items-center justify-between px-4 py-3">
             <p className="caps t-heading">Messages</p>
@@ -113,7 +113,7 @@ function ThreadList({ onOpen }) {
                 <span className="mt-1 block truncate text-meta t-body">{t.last}</span>
               </span>
               {t.unread > 0 && (
-                <span className="caps-sm flex-none bg-gold px-1.5 py-0.5 text-bg tnum">
+                <span className="caps-sm flex-none rounded-full bg-gold-fill px-2 py-0.5 text-ink tnum">
                   {t.unread}
                 </span>
               )}
@@ -264,7 +264,7 @@ function AskAi({ questionsLeft, spendQuestion }) {
               key={s.id}
               type="button"
               onClick={() => send(s.text)}
-              className="caps-sm flex-none border border-stroke px-3 py-2 t-body transition-colors hover:border-gold hover:text-gold"
+              className="pill caps-sm flex-none !px-3.5 !py-2"
             >
               {s.label}
             </button>
@@ -291,7 +291,7 @@ function Bubble({ mine, text, time }) {
       <div className="max-w-[85%]">
         <div
           className={`border px-3 py-2.5 text-meta ${
-            mine ? 'border-gold bg-gold-wash t-heading' : 'border-stroke bg-surface t-sub'
+            mine ? 'rounded-2xl rounded-br-md bg-ink on-ink shadow-sm' : 'rounded-2xl rounded-bl-md bg-surface t-sub shadow-sm'
           }`}
         >
           {text}

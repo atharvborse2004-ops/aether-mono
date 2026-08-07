@@ -17,7 +17,7 @@ export default function Academy() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex-none border-b border-stroke bg-bg px-5 py-4">
+      <header className="topbar px-5 py-2">
         <p className="font-display text-lead leading-none t-heading">Academy</p>
         <p className="mt-1 caps-sm t-faint">Learn to read it yourself</p>
       </header>

@@ -1,8 +1,17 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import Icon from './Icon.jsx'
 import { useStore } from '../store.jsx'
 
 /* App chrome: the top bar, the bottom nav, the sheet and the toast.
-   All four are flat — a hairline separates them from content, nothing else. */
+
+   The two bars are cut from the same ink and round toward each other — the top
+   one at the bottom edge, the bottom one at the top — so content scrolls in the
+   gap between them. That bracket is the whole reason a canvas this pale still
+   reads as a designed screen rather than a document.
+
+   They are not symmetrical, and should not be. The tab bar is taller with a
+   32px radius; the top bar is a slim lid at 18px. Weight belongs at the bottom,
+   where the thumb is and where the raised Live button needs mass to sit in. */
 
 /**
  * Five destinations. Horoscope moves inside Profile as a tab and Ask AI moves
@@ -10,29 +19,42 @@ import { useStore } from '../store.jsx'
  */
 /** Live sits in the middle deliberately — it is the raised one. */
 const LEFT = [
-  { to: '/home', label: 'Home' },
-  { to: '/consult', label: 'Consult' },
+  { to: '/home', label: 'Home', icon: 'home' },
+  { to: '/consult', label: 'Consult', icon: 'consult' },
 ]
 const RIGHT = [
-  { to: '/academy', label: 'Academy' },
-  { to: '/shop', label: 'Shop' },
+  { to: '/academy', label: 'Academy', icon: 'academy' },
+  { to: '/shop', label: 'Shop', icon: 'shop' },
 ]
 
-function Tab({ to, label }) {
+function Tab({ to, label, icon }) {
   return (
     <li className="flex-1">
       <NavLink
         to={to}
         className={({ isActive }) =>
-          `relative block py-4 text-center caps-sm transition-colors ${
-            isActive ? 'gold' : 't-faint'
+          // A thin glass bar cannot hold a bright/dim colour hierarchy — gold
+          // caps on it measure 2.8:1. The active signal is the indicator bar
+          // plus icon weight; both labels stay bright enough to read.
+          `relative flex flex-col items-center gap-1.5 pb-5 pt-4 text-center caps-sm transition-colors duration-200 ${
+            isActive ? 'font-extrabold text-white' : 'font-semibold text-white/55 hover:text-white/80'
           }`
         }
       >
         {({ isActive }) => (
           <>
-            {isActive && <span className="absolute inset-x-0 top-0 h-[2px] bg-gold" />}
-            {label}
+            {/* The indicator grows out from the centre rather than switching
+                on, so moving between tabs reads as one continuous object. */}
+            <span
+              aria-hidden="true"
+              className={`absolute inset-x-5 top-1.5 h-[3px] origin-center rounded-full bg-gold-fill transition-transform duration-300 ease-out ${
+                isActive ? 'scale-x-100' : 'scale-x-0'
+              }`}
+            />
+            {/* The icon thickens rather than recolouring — one line set, two
+                states, and no second filled set to draw and keep in sync. */}
+            <Icon name={icon} size={21} weight={isActive ? 2.1 : 1.6} />
+            <span className="leading-none">{label}</span>
           </>
         )}
       </NavLink>
@@ -41,16 +63,17 @@ function Tab({ to, label }) {
 }
 
 /**
- * Text-only tab bar with a raised centre.
+ * The dark bar. On a light canvas the nav is the one persistent slab of ink —
+ * it anchors the page the way CRED's does, and it is why the canvas can stay
+ * as pale as it is without the screen floating away at the bottom.
  *
- * Live is a circle that breaks the top edge of the bar and sits half above it,
- * the way CRED raises its primary action. It stays part of the bar rather than
- * floating free: the nav keeps a notch of its own background behind the circle
- * so the two read as one object, not a widget parked on top of a strip.
+ * Live is a circle that breaks the top edge and sits half above it. It stays
+ * part of the bar rather than floating free: a ring of the page colour behind
+ * the circle punches it out of the slab, so the two read as one object.
  */
 export function BottomNav() {
   return (
-    <nav className="relative flex-none border-t border-stroke bg-bg">
+    <nav className="navbar">
       <ul className="flex items-stretch">
         {LEFT.map((t) => (
           <Tab key={t.to} {...t} />
@@ -68,20 +91,23 @@ export function BottomNav() {
       <NavLink
         to="/live"
         aria-label="Live"
-        className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
+        className="group absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2"
       >
         {({ isActive }) => (
           <span
-            className={`is-round flex h-16 w-16 flex-col items-center justify-center border-2 transition-colors ${
-              isActive ? 'border-gold bg-gold text-bg' : 'border-gold bg-surface gold'
+            className={`flex h-16 w-16 flex-col items-center justify-center rounded-full transition-transform duration-200 group-active:scale-95 ${
+              isActive ? 'bg-gold-fill text-ink' : 'bg-ink2 text-gold-fill'
             }`}
             style={{
-              // Hard rings, no blur — the halo is drawn, not glowed.
-              boxShadow: '0 0 0 4px var(--bg), 0 0 0 5px rgba(212,162,76,0.35)',
+              // The page-coloured ring is what punches the circle out of the
+              // bar; the soft drop underneath it is what raises it.
+              boxShadow: '0 0 0 5px var(--bg), 0 8px 20px -6px rgba(28,26,25,0.45)',
             }}
           >
-            <span className="caps-sm leading-none">Live</span>
-            <span className="mt-1 block h-1.5 w-1.5 bg-live is-round" />
+            <Icon name="live" size={20} weight={2} />
+            <span className="mt-1 text-[9px] font-extrabold uppercase tracking-[0.1em] leading-none">
+              Live
+            </span>
           </span>
         )}
       </NavLink>
@@ -102,12 +128,7 @@ export function AskAiButton() {
       type="button"
       onClick={() => openChat('ai')}
       aria-label="Ask AI"
-      className="is-round absolute bottom-[76px] right-4 z-30 flex h-14 w-14 items-center justify-center border border-gold bg-bg text-gold transition-transform active:translate-y-[2px]"
-      style={{
-        // Zero-blur rings rather than a glow — a soft shadow is the one thing
-        // NeoPOP does not allow, so the "glow" is drawn as a hard halo.
-        boxShadow: '0 0 0 1px rgba(212,162,76,0.35), 0 0 0 6px rgba(212,162,76,0.08)',
-      }}
+      className="absolute bottom-[110px] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gold-fill text-ink shadow-gold transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
     >
       <span className="caps-sm leading-none">AI</span>
     </button>
@@ -149,12 +170,17 @@ export function TopBar({
   }
 
   return (
-    <header className="sticky top-0 z-20 flex-none border-b border-rule bg-bg">
+    <header className="topbar">
       {/* 72px sides, not 56 — a right-slot label like "5 left" wraps at 56. */}
-      <div className="grid h-12 grid-cols-[72px_1fr_72px] items-center">
+      <div className="grid h-11 grid-cols-[72px_1fr_72px] items-center">
         <div className="flex items-center pl-4">
           {back ? (
-            <button type="button" aria-label="Back" onClick={goBack} className="text-body text-t2">
+            <button
+              type="button"
+              aria-label="Back"
+              onClick={goBack}
+              className="text-body text-t2 transition-transform duration-150 hover:-translate-x-0.5 hover:text-t1 active:-translate-x-1"
+            >
               ←
             </button>
           ) : (
@@ -200,8 +226,9 @@ export function BarAction({ to, onClick, children, badge = null, label }) {
 }
 
 /**
- * Bottom sheet. Slides nowhere — it fades up 16px and stops. Full-width, one
- * hairline at the top, black fill.
+ * Bottom sheet. Rises 24px onto a dimmed page and stops. Rounded at the top
+ * only — it is a surface coming up from the bottom edge, so the bottom corners
+ * have nothing to round against.
  */
 export function Sheet({ open, onClose, title, children }) {
   if (!open) return null
@@ -211,27 +238,33 @@ export function Sheet({ open, onClose, title, children }) {
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 bg-black opacity-80"
+        className="absolute inset-0 animate-fade bg-ink opacity-40"
       />
-      <div className="relative animate-sheet-in max-h-[82%] overflow-y-auto border-t border-rule bg-bg no-scrollbar">
-        <div className="flex items-center justify-between border-b border-rule px-6 py-4">
-          <p className="label text-left">{title}</p>
-          <button type="button" onClick={onClose} className="label" aria-label="Close">
-            Close
-          </button>
+      <div className="glass-panel no-scrollbar relative max-h-[82%] animate-sheet-in overflow-y-auto rounded-t-3xl shadow-xl">
+        {/* The grab handle. It does nothing — it says which edge this came
+            from, which is the only thing a sheet has to communicate. */}
+        <div className="glass-panel sticky top-0 z-10 pt-3">
+          <span className="mx-auto block h-1 w-9 rounded-full bg-black/15" aria-hidden="true" />
+          <div className="mt-3 flex items-center justify-between border-b border-rule px-6 pb-4">
+            <p className="caps t-body">{title}</p>
+            <button type="button" onClick={onClose} className="caps-sm gold" aria-label="Close">
+              Close
+            </button>
+          </div>
         </div>
-        <div className="px-6 py-8">{children}</div>
+        <div className="px-6 py-7">{children}</div>
       </div>
     </div>
   )
 }
 
-/** Toast. One line, hairline box, fades. */
+/** Toast. One dark pill, rises in, fades. */
 export function Toast({ message }) {
   if (!message) return null
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-20 z-50 flex justify-center px-6">
-      <p className="animate-fade border border-rule bg-bg px-4 py-3 text-label uppercase tracking-label text-t1">
+    <div className="pointer-events-none absolute inset-x-0 bottom-28 z-50 flex justify-center px-6">
+      <p className="animate-pop-in inline-flex items-center gap-2 rounded-full bg-ink px-4 py-3 shadow-lg caps-sm on-ink">
+        <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-gold-fill" />
         {message}
       </p>
     </div>

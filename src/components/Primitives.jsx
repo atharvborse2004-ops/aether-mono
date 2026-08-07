@@ -43,12 +43,18 @@ export function Stub({ className = '' }) {
   return <div className={`rule-stub ${className}`} />
 }
 
-/** Affordance 1 — commits. Renders as <button>, <Link> or <a> as needed. */
+/**
+ * Affordance 1 — commits. Renders as <button>, <Link> or <a> as needed.
+ *
+ * This is the full-width block form of the same object as PopButton, so it
+ * borrows those classes rather than keeping a parallel `.act-btn` set alive.
+ * One button look in the app, two layouts of it.
+ */
 export function Button({ to, href, onClick, variant = 'default', className = '', children, ...rest }) {
   const cls = [
-    'act-btn',
-    variant === 'solid' && 'act-btn-solid',
-    variant === 'quiet' && 'act-btn-quiet',
+    'pop-btn caps w-full',
+    variant !== 'solid' && 'pop-btn-ghost',
+    variant === 'quiet' && 't-faint',
     className,
   ]
     .filter(Boolean)
@@ -161,7 +167,11 @@ export function Ticks({ value, total = 5, className = '' }) {
   )
 }
 
-/** A 0–100 reading rendered as a 40-tick ruler. Used for day intensity. */
+/**
+ * A 0–100 reading rendered as a 40-tick ruler. Used for day intensity. The
+ * filled ticks rise left to right, 12ms apart, so the reading draws itself
+ * rather than arriving already finished.
+ */
 export function Ruler({ value, className = '' }) {
   const filled = Math.round((value / 100) * 40)
   return (
@@ -170,10 +180,11 @@ export function Ruler({ value, className = '' }) {
         {Array.from({ length: 40 }, (_, i) => (
           <span
             key={i}
-            className="flex-1"
+            className={`flex-1 origin-bottom rounded-full ${i < filled ? 'animate-grow-y' : ''}`}
             style={{
               height: i % 5 === 0 ? '12px' : '7px',
-              background: i < filled ? 'var(--text)' : 'var(--text-4)',
+              background: i < filled ? 'var(--gold-fill)' : 'rgba(28,26,25,0.12)',
+              animationDelay: i < filled ? `${i * 12}ms` : undefined,
             }}
           />
         ))}
@@ -182,11 +193,11 @@ export function Ruler({ value, className = '' }) {
   )
 }
 
-/** Square avatar. Initials only — no photographs anywhere in this layout. */
+/** Round avatar. Initials only — no photographs anywhere in this layout. */
 export function Avatar({ initials, size = 36, className = '' }) {
   return (
     <span
-      className={`inline-flex flex-none items-center justify-center border border-rule text-t2 ${className}`}
+      className={`avatar-face inline-flex flex-none items-center justify-center rounded-full border border-stroke bg-surface shadow-sm t-sub ${className}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
     >
       {initials}
@@ -232,31 +243,34 @@ export function Acts({ items, className = '' }) {
 }
 
 /**
- * Search field. A hairline and a caret, nothing else — a filled rounded box
- * would be the only soft shape in the app.
+ * Search field. A white rounded box floating on the canvas — the same object
+ * as a card, just short. It gains a gold ring on focus rather than an outline,
+ * so the field itself reports focus instead of the browser drawing over it.
  */
 export function Search({ value, onChange, placeholder, label = 'Search' }) {
   return (
-    <div className="flex items-center gap-3 border-b border-rule px-6 py-4">
-      <span aria-hidden="true" className="flex-none text-label text-t3">
-        ⌕
-      </span>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        aria-label={label}
-        className="min-w-0 flex-1 bg-transparent text-body text-t1 outline-none placeholder:text-t4"
-      />
-      {value && (
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="flex-none text-micro uppercase tracking-caps text-t3 hover:text-t1"
-        >
-          Clear
-        </button>
-      )}
+    <div className="px-4 pt-4">
+      <div className="pop-inset flex items-center gap-3 border border-stroke px-4 py-3 transition-colors focus-within:border-gold">
+        <span aria-hidden="true" className="flex-none text-body t-faint">
+          ⌕
+        </span>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          aria-label={label}
+          className="min-w-0 flex-1 bg-transparent text-body text-t1 outline-none placeholder:text-t4"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="flex-none caps-sm t-faint transition-colors hover:text-t1"
+          >
+            Clear
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -274,7 +288,7 @@ export function firstName(full = '') {
 /** Non-interactive tag. Deliberately not a chip — chips read as tappable. */
 export function Tag({ children }) {
   return (
-    <span className="border border-rule px-2 py-1 text-micro uppercase tracking-caps text-t3">
+    <span className="rounded-full bg-black/[0.06] px-2.5 py-1 text-micro uppercase tracking-caps text-t3">
       {children}
     </span>
   )

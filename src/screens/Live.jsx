@@ -22,7 +22,7 @@ export default function Live() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex flex-none items-center justify-between gap-3 border-b border-stroke bg-bg px-5 py-4">
+      <header className="topbar flex items-center justify-between gap-3 px-5 py-2">
         <div>
           <p className="font-display text-lead leading-none t-heading">Live</p>
           <p className="mt-1 caps-sm t-faint tnum">{liveNow.length} rooms open now</p>

@@ -43,7 +43,7 @@ function TabLayout() {
   const { pathname } = useLocation()
   return (
     <>
-      <main key={pathname} className="no-scrollbar min-h-0 flex-1 animate-fade overflow-y-auto">
+      <main key={pathname} className="deal no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
       <AskAiButton />
@@ -56,7 +56,7 @@ function TabLayout() {
 function PlainLayout() {
   const { pathname } = useLocation()
   return (
-    <main key={pathname} className="no-scrollbar min-h-0 flex-1 animate-fade overflow-y-auto">
+    <main key={pathname} className="deal no-scrollbar min-h-0 flex-1 overflow-y-auto">
       <Outlet />
     </main>
   )
@@ -66,8 +66,8 @@ function Frame() {
   const { toast } = useStore()
 
   return (
-    <div className="flex min-h-[100dvh] w-full justify-center bg-black">
-      <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden border-x border-stroke bg-bg text-t1">
+    <div className="flex min-h-[100dvh] w-full justify-center bg-ink">
+      <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden bg-bg text-t1">
         <Routes>
           <Route path="/" element={<Navigate to="/onboarding" replace />} />
 

@@ -372,11 +372,7 @@ function SettingsTab() {
               type="button"
               aria-pressed={contrast === c.key}
               onClick={() => setContrast(c.key)}
-              className={`caps-sm flex-1 border px-3 py-3 transition-colors ${
-                contrast === c.key
-                  ? 'border-gold bg-gold-wash gold'
-                  : 'border-stroke t-faint hover:border-gold'
-              }`}
+              className="pill caps-sm flex-1 justify-center !px-3 !py-3"
             >
               {c.label}
             </button>

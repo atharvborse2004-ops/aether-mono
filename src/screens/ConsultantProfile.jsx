@@ -258,9 +258,7 @@ function About({ c, shown, priceFor, onPick }) {
               type="button"
               aria-pressed={shown === s}
               onClick={() => onPick(s)}
-              className={`flex-1 border px-2 py-4 text-center transition-colors ${
-                shown === s ? 'border-t1 bg-t1 text-bg' : 'border-rule text-t2 hover:border-t1'
-              }`}
+              className="pill caps-sm flex-1 flex-col !px-2 !py-3 text-center"
             >
               <span className="block text-label uppercase tracking-label">{s}</span>
               <span className="mt-1.5 block text-meta tnum">

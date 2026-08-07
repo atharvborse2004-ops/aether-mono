@@ -44,7 +44,7 @@ export default function Consult() {
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex-none border-b border-stroke bg-bg px-5 py-4">
+      <header className="topbar px-5 py-2">
         <p className="font-display text-lead leading-none t-heading">Consult</p>
         <p className="mt-1 caps-sm t-faint tnum">
           {consultants.filter((c) => c.online).length} of {consultants.length} online now
@@ -56,16 +56,14 @@ export default function Consult() {
       {/* Filters use the same tracked-caps + underline language as every other
           selector in the app. Nothing here is a pill or a chip — a chip in this
           layout reads as a button, and these do not commit to anything. */}
-      <div className="no-scrollbar flex gap-5 overflow-x-auto border-b border-rule px-5 py-4">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-4">
         {filters.map((f) => (
           <button
             key={f}
             type="button"
             aria-pressed={cat === f}
             onClick={() => setCat(f)}
-            className={`caps-sm flex-none border-b-2 pb-1 transition-colors ${
-              cat === f ? 'border-gold gold' : 'border-transparent t-faint'
-            }`}
+            className="pill caps-sm"
           >
             {f}
           </button>

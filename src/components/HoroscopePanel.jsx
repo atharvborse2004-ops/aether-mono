@@ -38,10 +38,10 @@ export default function HoroscopePanel() {
         type="button"
         aria-label="Close horoscope"
         onClick={close}
-        className="absolute inset-0 bg-black opacity-70"
+        className="absolute inset-0 animate-fade bg-ink opacity-40"
       />
 
-      <aside className="relative flex h-full w-[88%] max-w-[380px] animate-slide-in flex-col border-l border-stroke bg-bg">
+      <aside className="glass-panel relative flex h-full w-[88%] max-w-[380px] animate-slide-in flex-col border-l border-stroke">
         <header className="flex-none border-b border-stroke">
           <div className="flex items-center justify-between px-4 py-3">
             <div className="min-w-0">

@@ -128,9 +128,7 @@ function ReelFrame({ reel: c, paused, onTogglePlay, isLast }) {
                 off: `Unfollowed ${firstName(c.consultant)}`,
               })
             }
-            className={`flex-none border px-3 py-1.5 text-micro uppercase tracking-caps transition-colors ${
-              following ? 'border-t1 bg-t1 text-bg' : 'border-rule text-t2 hover:border-t1'
-            }`}
+            className="pill caps-sm flex-none !px-3.5 !py-1.5"
           >
             {following ? 'Following' : 'Follow'}
           </button>
