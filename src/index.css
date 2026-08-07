@@ -63,18 +63,6 @@
   --sp: 8px;
 }
 
-/* Accessibility fix for the grey-on-light failure. Toggled from
-   Profile → Display. Every grey moves down toward the ink; nothing else about
-   the layout changes. */
-:root[data-contrast='high'] {
-  --text-2: #34302c;
-  --text-3: #4a4540;
-  --text-4: #6e6862;
-  --rule: #c9c3bb;
-  --stroke: rgba(15, 14, 14, 0.2);
-  --gold: #7a5410;
-}
-
 @layer base {
   html,
   body,

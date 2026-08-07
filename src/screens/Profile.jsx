@@ -349,37 +349,10 @@ function WalletTab() {
 /* ── Settings tab ────────────────────────────────────────────────────────── */
 
 function SettingsTab() {
-  const { contrast, setContrast, showToast } = useStore()
+  const { showToast } = useStore()
 
   return (
     <>
-      {/* Contrast is a two-way setting with a real 'normal' state to return
-          to. The old control could only ever be switched on. High is the
-          default, since the raised greys are the accessible ones. */}
-      <section className="border-b border-rule px-5 py-6">
-        <Kicker>Display</Kicker>
-        <p className="mt-3 text-meta t-body">
-          Raises or lowers every grey in the app. Nothing else moves.
-        </p>
-
-        <div className="mt-4 flex" role="group" aria-label="Contrast">
-          {[
-            { key: 'normal', label: 'Normal' },
-            { key: 'high', label: 'Increased' },
-          ].map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              aria-pressed={contrast === c.key}
-              onClick={() => setContrast(c.key)}
-              className="pill caps-sm flex-1 justify-center !px-3 !py-3"
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      </section>
-
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Preferences</Kicker>
         <div className="mt-2">

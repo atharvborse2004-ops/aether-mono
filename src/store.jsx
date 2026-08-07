@@ -10,7 +10,7 @@ import {
 
 /**
  * Tiny in-memory store for prototype-only state: the birth details typed
- * during onboarding, cart count, remaining AI questions, contrast mode and
+ * during onboarding, cart count, remaining AI questions and
  * toast messages. Nothing is persisted, nothing is fetched.
  */
 const AppStore = createContext(null)
@@ -22,12 +22,6 @@ export function AppProvider({ children }) {
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
-
-  /* Contrast is a two-way setting, not a one-shot switch. It starts HIGH —
-     the raised greys are the accessible default — and can be stepped back
-     down to normal. The old control could only ever be turned on. */
-  const [contrast, setContrast] = useState('high')
-  const highContrast = contrast === 'high'
 
   /* Wallet. The opening balance matches the `user` record so Profile and the
      wallet never disagree on load; every spend and top-up moves this one
@@ -76,14 +70,6 @@ export function AppProvider({ children }) {
     }
     return next
   }, [])
-
-  // Re-points CSS variables on <html>; nothing re-renders. Driven off the
-  // string so 'normal' is a real state you can return to, not just "not high".
-  useEffect(() => {
-    const root = document.documentElement
-    if (contrast === 'high') root.setAttribute('data-contrast', 'high')
-    else root.removeAttribute('data-contrast')
-  }, [contrast])
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
@@ -206,9 +192,6 @@ export function AppProvider({ children }) {
       questionsLeft,
       spendQuestion,
       addQuestions,
-      contrast,
-      setContrast,
-      highContrast,
       hasFlag,
       toggleFlag,
       balance,
@@ -240,8 +223,6 @@ export function AppProvider({ children }) {
       questionsLeft,
       spendQuestion,
       addQuestions,
-      contrast,
-      highContrast,
       hasFlag,
       toggleFlag,
       balance,
