@@ -10,6 +10,7 @@ import {
   reads,
   user,
 } from '../data/mock.js'
+import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopTag } from '../components/Pop.jsx'
@@ -83,37 +84,23 @@ export default function Home() {
 }
 
 function Header() {
-  const { openChat, setHoroscopeOpen } = useStore()
+  const { setHoroscopeOpen } = useStore()
 
   return (
-    <header className="topbar flex items-center gap-2.5 px-4 py-2">
-      <Link to="/profile" aria-label="Your profile" className="transition-opacity hover:opacity-70">
-        <PopAvatar initials={user.initials} size={30} />
-      </Link>
-      <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
-      {/* A focused action, not a redirect. This used to navigate to
-          Profile > Horoscope, which took you out of the tab you were on. */}
-      {/* Round icon buttons, same material as the pills they replaced — the
-          label moves to aria-label rather than disappearing. */}
-      <button
-        type="button"
-        onClick={() => setHoroscopeOpen(true)}
-        aria-label="Today's horoscope"
-        className="pill knob !h-9 !w-9 justify-center"
-      >
-        <Icon name="horoscope" size={18} />
-      </button>
-      {/* Alerts are gone — this opens the chat panel instead. */}
-      <button
-        type="button"
-        onClick={() => openChat('live')}
-        aria-label="Messages"
-        className="pill knob relative !h-9 !w-9 justify-center"
-      >
-        <Icon name="chat" size={18} />
-        <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-live ring-2 ring-ink" />
-      </button>
-    </header>
+    <TabHeader
+      action={
+        /* A focused action, not a redirect. This used to navigate to
+           Profile > Horoscope, which took you out of the tab you were on. */
+        <button
+          type="button"
+          onClick={() => setHoroscopeOpen(true)}
+          aria-label="Today's horoscope"
+          className="pill knob !h-9 !w-9 justify-center"
+        >
+          <Icon name="horoscope" size={18} />
+        </button>
+      }
+    />
   )
 }
 

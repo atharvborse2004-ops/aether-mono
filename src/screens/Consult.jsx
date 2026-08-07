@@ -4,6 +4,7 @@ import { categories, consultants, timeSlots } from '../data/mock.js'
 import { Sheet } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Button, Field, firstName, Search, Ticks } from '../components/Primitives.jsx'
+import { TabHeader } from '../components/Chrome.jsx'
 import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { useStore } from '../store.jsx'
 
@@ -44,12 +45,7 @@ export default function Consult() {
 
   return (
     <>
-      <header className="topbar px-5 py-2">
-        <p className="font-display text-lead leading-none t-heading">Consult</p>
-        <p className="mt-1 caps-sm t-faint tnum">
-          {consultants.filter((c) => c.online).length} of {consultants.length} online now
-        </p>
-      </header>
+      <TabHeader />
 
       <Search value={query} onChange={setQuery} placeholder="Search by name, concern or language" />
 
@@ -92,7 +88,9 @@ export default function Consult() {
       </section>
 
       <section className="px-5 py-6">
-        <Kicker>{`${list.length} ${list.length === 1 ? 'person' : 'people'}`}</Kicker>
+        <Kicker>{`${list.length} ${list.length === 1 ? 'person' : 'people'} · ${
+          consultants.filter((c) => c.online).length
+        } online`}</Kicker>
         <ul className="mt-4 space-y-3">
           {list.map((c) => (
             <li key={c.id} className="pop-card p-4">

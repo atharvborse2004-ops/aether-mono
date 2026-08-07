@@ -1,5 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { user } from '../data/mock.js'
 import Icon from './Icon.jsx'
+import { PopAvatar } from './Pop.jsx'
 import { useStore } from '../store.jsx'
 
 /* App chrome: the top bar, the bottom nav, the sheet and the toast.
@@ -112,6 +114,41 @@ export function BottomNav() {
         )}
       </NavLink>
     </nav>
+  )
+}
+
+/**
+ * The header every tab screen shares: profile on the left, the wordmark, then
+ * the screen's own action (if it has one) and messages on the right.
+ *
+ * Screens used to print their own name and tagline up here — "Academy /
+ * Learn to read it yourself" sitting directly above a tab bar already
+ * labelled ACADEMY. The bar names the screen; the header does not need to say
+ * it a second time, and the row is worth more as a constant.
+ *
+ * `action` is the one slot that varies: Home puts the horoscope there, Shop
+ * the cart, Live its on-air badge. Everything else passes nothing.
+ */
+export function TabHeader({ action = null }) {
+  const { openChat } = useStore()
+
+  return (
+    <header className="topbar flex items-center gap-2.5 px-4 py-2">
+      <Link to="/profile" aria-label="Your profile" className="transition-opacity hover:opacity-70">
+        <PopAvatar initials={user.initials} size={30} />
+      </Link>
+      <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
+      {action}
+      <button
+        type="button"
+        onClick={() => openChat('live')}
+        aria-label="Messages"
+        className="pill knob relative !h-9 !w-9 justify-center"
+      >
+        <Icon name="chat" size={18} />
+        <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-live ring-2 ring-ink" />
+      </button>
+    </header>
   )
 }
 

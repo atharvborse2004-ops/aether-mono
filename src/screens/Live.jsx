@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { consultants, liveSessions } from '../data/mock.js'
+import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
 import { firstName } from '../components/Primitives.jsx'
@@ -22,13 +23,7 @@ export default function Live() {
 
   return (
     <>
-      <header className="topbar flex items-center justify-between gap-3 px-5 py-2">
-        <div>
-          <p className="font-display text-lead leading-none t-heading">Live</p>
-          <p className="mt-1 caps-sm t-faint tnum">{liveNow.length} rooms open now</p>
-        </div>
-        <PopTag tone="live">● On air</PopTag>
-      </header>
+      <TabHeader action={<PopTag tone="live">● {liveNow.length} on air</PopTag>} />
 
       {/* ── The circular CTA ──────────────────────────────────────────────
           One object, centred, with a hard halo instead of a blurred glow —

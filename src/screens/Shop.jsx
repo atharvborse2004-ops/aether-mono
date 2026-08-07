@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { products, shopCategories, user } from '../data/mock.js'
+import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
@@ -94,27 +95,23 @@ export default function Shop() {
 
   return (
     <>
-      <header className="topbar flex items-center justify-between gap-3 px-4 py-2">
-        <div className="min-w-0">
-          <p className="font-display text-lead leading-none t-heading">Shop</p>
-          <p className="mt-0.5 caps-sm t-faint">Stones, rituals and reports</p>
-        </div>
-        {/* The cart opens the sheet. It used to only fire a toast, which is
-            why the badge counted up all demo with nowhere to go. */}
-        <button
-          type="button"
-          onClick={() => setCartOpen(true)}
-          aria-label={`Cart, ${cartCount} items`}
-          className="pill knob relative !h-9 !w-9 flex-none justify-center"
-        >
-          <Icon name="cart" size={18} />
-          {cartCount > 0 && (
-            <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-fill px-1 text-[10px] font-bold tnum text-ink ring-2 ring-ink">
-              {cartCount}
-            </span>
-          )}
-        </button>
-      </header>
+      <TabHeader
+        action={
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
+            aria-label={`Cart, ${cartCount} items`}
+            className="pill knob relative !h-9 !w-9 flex-none justify-center"
+          >
+            <Icon name="cart" size={18} />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-fill px-1 text-[10px] font-bold tnum text-ink ring-2 ring-ink">
+                {cartCount}
+              </span>
+            )}
+          </button>
+        }
+      />
 
       <Search value={query} onChange={setQuery} placeholder="Search stones, maalas and kits" />
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { academyEvents, courses, downloads } from '../data/mock.js'
+import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
 import { Segmented } from '../components/Primitives.jsx'
@@ -17,10 +18,7 @@ export default function Academy() {
 
   return (
     <>
-      <header className="topbar px-5 py-2">
-        <p className="font-display text-lead leading-none t-heading">Academy</p>
-        <p className="mt-1 caps-sm t-faint">Learn to read it yourself</p>
-      </header>
+      <TabHeader />
 
       <Segmented items={TABS} value={tab} onChange={setTab} />
 
