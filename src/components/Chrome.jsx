@@ -146,7 +146,7 @@ export function TabHeader({ action = null }) {
         className="pill knob relative !h-9 !w-9 justify-center"
       >
         <Icon name="chat" size={18} />
-        <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-live ring-2 ring-ink" />
+        <span className="absolute -right-0.5 -top-0.5 block h-2.5 w-2.5 rounded-full bg-live ring-2 ring-surface" />
       </button>
     </header>
   )

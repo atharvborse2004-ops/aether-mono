@@ -351,19 +351,25 @@
      off at the top. That bracket is what makes the layout read as finished
      rather than as a feed that happens to stop. */
 
-  /* The two bars are deliberately unequal. The tab bar is the heavier of the
-     pair — it is the one you touch, it holds the raised Live button, and it
-     needs the mass to anchor a canvas this pale. The top bar is a lid: same
-     ink, but slimmer, a smaller radius and a shadow you have to look for.
-     Matching them made the screen top-heavy and the header shout. */
+  /* The two bars are no longer the same material, and that is the point. The
+     tab bar is the slab of ink that anchors the screen; the top bar is a white
+     surface continuous with the page — the same card stock as everything
+     scrolling under it, just fixed. Only the bottom carries weight now.
+
+     Because it is a light surface it needs NO scoped text overrides: the
+     normal ink ladder, the normal pills and the normal avatar all read
+     correctly on it, which is a whole block of CSS that stops existing. */
   .topbar {
     position: sticky;
     top: 0;
     z-index: 20;
     flex: none;
+    background: linear-gradient(180deg, #ffffff 0%, #faf8f5 100%);
+    border-bottom: 1px solid var(--rule);
     border-bottom-left-radius: 18px;
     border-bottom-right-radius: 18px;
-    box-shadow: 0 1px 3px rgba(15, 14, 14, 0.05), 0 6px 16px -12px rgba(15, 14, 14, 0.18);
+    box-shadow: inset 0 1px 0 var(--hi), 0 1px 3px rgba(15, 14, 14, 0.04),
+      0 8px 20px -14px rgba(15, 14, 14, 0.16);
   }
 
   /* ── Glass ────────────────────────────────────────────────────────────────
@@ -397,11 +403,11 @@
     .navbar {
       border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
-    /* Each bar takes its highlight on the edge that faces the content, which
-       is the only edge of it you can actually see. */
     .topbar {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 1px 3px rgba(15, 14, 14, 0.06), 0 8px 20px -12px rgba(15, 14, 14, 0.24);
+      background-color: rgba(255, 255, 255, 0.82);
+      background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 248, 245, 0.7) 100%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
+      backdrop-filter: blur(30px) saturate(190%);
     }
   }
 
@@ -422,13 +428,11 @@
      translucent. Same intent, opposite results, and the top bar washed out to
      grey while the bottom stayed near-black. One declaration, no ordering to
      get wrong again. */
-  .topbar,
   .navbar {
     background: linear-gradient(180deg, var(--ink-lit) 0%, var(--ink) 100%);
   }
 
   @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .topbar,
     .navbar {
       /* 0.9, not 0.72. The bars have to read as near-black slabs first and
          glass second — at 0.72 a bar with nothing dark behind it composites
@@ -448,97 +452,21 @@
 
   /* Controls inside the ink adapt automatically — a white pill up there would
      shout louder than anything on the page below it. */
-  .topbar .pill {
-    padding-block: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: rgba(255, 255, 255, 0.9);
-    box-shadow: none;
-  }
-  .topbar .pill:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.22);
-  }
-  .topbar .pill[aria-pressed='true'] {
-    background: #fff;
-    border-color: #fff;
-    color: var(--ink);
-  }
-
-  /* The ladder, re-pointed for anything sitting on the bar. */
-  .topbar .t-heading {
-    color: rgba(255, 255, 255, 0.95);
-  }
-  .topbar .t-sub {
-    color: rgba(255, 255, 255, 0.74);
-  }
-  .topbar .t-body {
-    color: rgba(255, 255, 255, 0.6);
-  }
-  .topbar .t-faint {
-    color: rgba(255, 255, 255, 0.45);
-  }
-  /* ── Glyphs on ink ────────────────────────────────────────────────────────
-     Icons sit in the bar rather than on it. A hard 1px black drop under the
-     stroke is what does it — the glyph casts onto the slab behind it, which
-     is the same trick as the engraved numerals on a physical remote. Grey,
-     not white, so the set recedes and only the active one steps forward. */
-
-  .topbar svg,
+  /* Glyphs on the tab bar sit IN the ink: a hard black drop under the stroke,
+     the same trick as engraved markings on a physical remote. On the white
+     top bar the equivalent is a soft drop that lifts the glyph off the
+     surface instead — same intent, opposite direction of light. */
   .navbar svg {
     filter: drop-shadow(0 1px 0.5px rgba(0, 0, 0, 0.75));
   }
+  .topbar svg {
+    filter: drop-shadow(0 1px 1px rgba(15, 14, 14, 0.16));
+  }
 
-  /* Round icon knobs in the top bar. Same skeuomorphic grammar as everything
-     else — lit along the top edge, shaded at the bottom, dropping onto the
-     bar; and inverted on press. */
-  .topbar .pill.knob {
+  /* A knob is a pill with no text in it. It needs no colours of its own —
+     it inherits the light pill treatment wherever it sits. */
+  .pill.knob {
     padding: 0;
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);
-    background-color: transparent;
-    border-color: rgba(255, 255, 255, 0.16);
-    color: rgba(255, 255, 255, 0.62);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(0, 0, 0, 0.45);
-  }
-  .topbar .pill.knob:hover {
-    color: rgba(255, 255, 255, 0.95);
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.07) 100%);
-  }
-  .topbar .pill.knob:active {
-    transform: translateY(1px);
-    background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(255, 255, 255, 0.06) 100%);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-  }
-
-  /* An avatar carries its own white disc, so the ladder overrides above would
-     paint white initials onto it. It gets the ink treatment instead. */
-  .topbar .avatar-face {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
-    box-shadow: none;
-  }
-
-  .topbar .text-t1 {
-    color: #ffffff;
-  }
-  .topbar .label,
-  .topbar .text-t2 {
-    color: rgba(255, 255, 255, 0.7);
-  }
-  .topbar .text-t3 {
-    color: rgba(255, 255, 255, 0.45);
-  }
-  .topbar .text-t4 {
-    color: rgba(255, 255, 255, 0.3);
-  }
-  .topbar .border-stroke {
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-  /* With the bar back to a near-black composite the real accent tone clears
-     AA comfortably, so the washed-out gold is no longer needed. */
-  .topbar .gold {
-    color: var(--gold-fill); /* 7.1:1 on the bar */
   }
 
   /* ── Pills ────────────────────────────────────────────────────────────────
@@ -810,9 +738,13 @@
    — usually because translucency makes text harder to hold on to. Honour that
    and go back to the solid fills. */
 @media (prefers-reduced-transparency: reduce) {
-  .topbar,
   .navbar {
     background: linear-gradient(180deg, var(--ink-lit) 0%, var(--ink) 100%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .topbar {
+    background: linear-gradient(180deg, #ffffff 0%, #faf8f5 100%);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

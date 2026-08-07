@@ -105,7 +105,7 @@ export default function Shop() {
           >
             <Icon name="cart" size={18} />
             {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-fill px-1 text-[10px] font-bold tnum text-ink ring-2 ring-ink">
+              <span className="absolute -right-1 -top-1 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold-fill px-1 text-[10px] font-bold tnum text-ink ring-2 ring-surface">
                 {cartCount}
               </span>
             )}
