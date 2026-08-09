@@ -469,6 +469,42 @@
     padding: 0;
   }
 
+  /* ── Sub-nav ──────────────────────────────────────────────────────────────
+     A second bar, for a section that has modes rather than pages. It sticks to
+     the bottom of the SCROLLER, which puts it directly above the tab bar —
+     rendering it in the shell instead would mean the shell knowing which
+     screens have modes.
+
+     Lighter than `.navbar` on purpose: this is a level below the tab bar and
+     must not compete with it. Surface, not ink. */
+  .subnav {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    gap: 4px;
+    padding: 6px;
+    margin: 0 12px 10px;
+    border-radius: 9999px;
+    border: 1px solid var(--stroke);
+    background: linear-gradient(180deg, #ffffff 0%, #f5f2ef 100%);
+    box-shadow: inset 0 1px 0 var(--hi), 0 2px 6px rgba(15, 14, 14, 0.06),
+      0 12px 24px -10px rgba(15, 14, 14, 0.22);
+  }
+  .subnav-item {
+    @apply flex flex-1 flex-col items-center justify-center gap-1 caps-sm;
+    padding: 8px 0 7px;
+    border-radius: 9999px;
+    color: var(--text-3);
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* Selected is the raised thumb, the same grammar as `.seg-item`. */
+  .subnav-item[aria-selected='true'] {
+    background: linear-gradient(180deg, var(--ink-lit) 0%, var(--ink) 100%);
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 0 1px 0 var(--hi-ink), 0 1px 3px rgba(15, 14, 14, 0.3);
+  }
+
   /* ── Pills ────────────────────────────────────────────────────────────────
      The filter row, the category chips, the "explore" row. Fully rounded,
      white on the canvas, and they carry the same soft lift as a card. */
@@ -718,7 +754,8 @@
   }
   /* A transform on a sticky element makes it a containing block and the bar
      comes unstuck, so the header fades only. */
-  .deal > header {
+  .deal > header,
+  .deal > .subnav {
     animation: fade 0.3s ease-out both;
   }
 }

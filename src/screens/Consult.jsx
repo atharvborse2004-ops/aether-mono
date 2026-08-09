@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories, consultants, timeSlots } from '../data/mock.js'
 import { Sheet } from '../components/Chrome.jsx'
+import { LiveBody } from './Live.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, Field, firstName, Search, Ticks } from '../components/Primitives.jsx'
 import { TabHeader } from '../components/Chrome.jsx'
@@ -12,28 +13,23 @@ import { useStore } from '../store.jsx'
 const TAKEN = ['13:30', '18:30']
 
 /**
- * The four entry points across the top. Each is either a route or an action on
- * this screen — nothing here opens a dead end.
+ * Consulting has modes, not pages: the same roster reached four ways. Talk now
+ * (call or chat), watch now (live), or arrange it for later (booking).
+ *
+ * These live in a sub-nav pinned above the tab bar rather than as routes,
+ * because /consult/:id is already the consultant profile — /consult/call would
+ * be read as a consultant with the id "call".
  */
-const FEATURES = [
-  { key: 'reports', label: 'Reports', icon: 'reports', to: '/reports' },
-  {
-    key: 'pooja',
-    label: 'Pooja',
-    icon: 'pooja',
-    act: ({ showToast }) => showToast('Pooja booking — prototype only'),
-  },
-  { key: 'tarot', label: 'Tarot', icon: 'tarot', act: ({ setCat }) => setCat('Tarot') },
-  {
-    key: 'horoscope',
-    label: 'Horoscope',
-    icon: 'horoscope',
-    act: ({ setHoroscopeOpen }) => setHoroscopeOpen(true),
-  },
+const MODES = [
+  { key: 'call', label: 'Call', icon: 'phone' },
+  { key: 'chat', label: 'Chat', icon: 'chat' },
+  { key: 'live', label: 'Live', icon: 'live' },
+  { key: 'booking', label: 'Booking', icon: 'calendar' },
 ]
 
 export default function Consult() {
-  const { showToast, openChat, setHoroscopeOpen } = useStore()
+  const { showToast, openChat } = useStore()
+  const [mode, setMode] = useState('call')
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
 
@@ -68,11 +64,16 @@ export default function Consult() {
     <>
       <TabHeader />
 
-      <Search value={query} onChange={setQuery} placeholder="Search by name, concern or language" />
+      {mode === 'live' ? (
+        <LiveBody />
+      ) : (
+        <>
+          <Search
+            value={query}
+            onChange={setQuery}
+            placeholder="Search by name, concern or language"
+          />
 
-      {/* Filters use the same tracked-caps + underline language as every other
-          selector in the app. Nothing here is a pill or a chip — a chip in this
-          layout reads as a button, and these do not commit to anything. */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-4">
         {filters.map((f) => (
           <button
@@ -87,37 +88,14 @@ export default function Consult() {
         ))}
       </div>
 
-      {/* Four ways in, as circles across the top. Reports used to be a wide
-          card below the filters; as one of four peers it takes a quarter of
-          the room and reads as a choice rather than an advert. */}
-      <section className="px-2 pb-1 pt-1">
-        <ul className="flex items-start justify-around">
-          {FEATURES.map((f) => (
-            <li key={f.key}>
-              {f.to ? (
-                <Link to={f.to} className="tile w-[76px]">
-                  <span className="tile-face">
-                    <Icon name={f.icon} size={23} />
-                  </span>
-                  <span className="caps-sm leading-tight t-body">{f.label}</span>
-                </Link>
-              ) : (
-                <button type="button" onClick={() => f.act({ setCat, setHoroscopeOpen, showToast })} className="tile w-[76px]">
-                  <span className="tile-face">
-                    <Icon name={f.icon} size={23} />
-                  </span>
-                  <span className="caps-sm leading-tight t-body">{f.label}</span>
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
-
       <section className="px-5 py-6">
-        <Kicker>{`${list.length} ${list.length === 1 ? 'person' : 'people'} · ${
-          consultants.filter((c) => c.online).length
-        } online`}</Kicker>
+        <Kicker>
+          {mode === 'booking'
+            ? `${list.length} available to book`
+            : `${list.length} ${list.length === 1 ? 'person' : 'people'} · ${
+                consultants.filter((c) => c.online).length
+              } online`}
+        </Kicker>
         <ul className="mt-4 space-y-3">
           {list.map((c) => (
             <li key={c.id} className="pop-card p-4">
@@ -154,26 +132,65 @@ export default function Consult() {
               {/* Message, call and book. The first two are glyphs so the
                   booking CTA keeps the width — three labelled buttons on a
                   card this size wrap onto two lines. */}
+              {/* The mode decides which action gets the width. In Call and
+                  Chat the point is to start now, so booking steps back to a
+                  glyph; in Booking it is the other way round. */}
               <div className="mt-4 flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label={`Message ${firstName(c.name)}`}
-                  onClick={() => openChat('live')}
-                  className="pill knob !h-10 !w-10 flex-none justify-center"
-                >
-                  <Icon name="chat" size={18} />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Call ${firstName(c.name)}`}
-                  onClick={() => showToast(`Calling ${firstName(c.name)} — prototype only`)}
-                  className="pill knob !h-10 !w-10 flex-none justify-center"
-                >
-                  <Icon name="phone" size={18} />
-                </button>
-                <PopButton variant="gold" className="flex-1" full={false} onClick={() => openBooking(c)}>
-                  Book a slot
-                </PopButton>
+                {mode === 'booking' ? (
+                  <>
+                    <button
+                      type="button"
+                      aria-label={`Message ${firstName(c.name)}`}
+                      onClick={() => openChat('live')}
+                      className="pill knob !h-10 !w-10 flex-none justify-center"
+                    >
+                      <Icon name="chat" size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Call ${firstName(c.name)}`}
+                      onClick={() => showToast(`Calling ${firstName(c.name)} — prototype only`)}
+                      className="pill knob !h-10 !w-10 flex-none justify-center"
+                    >
+                      <Icon name="phone" size={18} />
+                    </button>
+                    <PopButton
+                      variant="gold"
+                      className="flex-1"
+                      full={false}
+                      onClick={() => openBooking(c)}
+                    >
+                      Book a slot
+                    </PopButton>
+                  </>
+                ) : (
+                  <>
+                    <PopButton
+                      variant="gold"
+                      className="flex-1"
+                      full={false}
+                      disabled={!c.online}
+                      onClick={() =>
+                        mode === 'call'
+                          ? showToast(`Calling ${firstName(c.name)} — prototype only`)
+                          : openChat('live')
+                      }
+                    >
+                      <Icon name={mode === 'call' ? 'phone' : 'chat'} size={15} weight={2} />
+                      <span className="ml-1.5">
+                        {c.online ? (mode === 'call' ? 'Call now' : 'Chat now') : 'Offline'}
+                      </span>
+                    </PopButton>
+                    <button
+                      type="button"
+                      aria-label={`Book ${firstName(c.name)}`}
+                      onClick={() => openBooking(c)}
+                      className="pill knob !h-10 !w-10 flex-none justify-center"
+                    >
+                      <Icon name="calendar" size={18} />
+                    </button>
+                  </>
+                )}
               </div>
             </li>
           ))}
@@ -187,6 +204,26 @@ export default function Consult() {
       </section>
 
       <div className="h-24" />
+        </>
+      )}
+
+      {/* Sticky to the bottom of the scroller, which puts it directly above
+          the tab bar without the shell having to know this screen has modes. */}
+      <nav className="subnav" role="tablist" aria-label="Consulting">
+        {MODES.map((m) => (
+          <button
+            key={m.key}
+            role="tab"
+            type="button"
+            aria-selected={mode === m.key}
+            onClick={() => setMode(m.key)}
+            className="subnav-item"
+          >
+            <Icon name={m.icon} size={17} weight={mode === m.key ? 2.1 : 1.7} />
+            {m.label}
+          </button>
+        ))}
+      </nav>
 
       <Sheet open={!!booking} onClose={() => setBooking(null)} title="Book a slot">
         {booking && (

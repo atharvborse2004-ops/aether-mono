@@ -16,9 +16,10 @@ import Computing from './screens/onboarding/Computing.jsx'
 
 import Home from './screens/Home.jsx'
 import Consult from './screens/Consult.jsx'
-import Live from './screens/Live.jsx'
 import Academy from './screens/Academy.jsx'
+import Pooja from './screens/Pooja.jsx'
 import Shop from './screens/Shop.jsx'
+import Tarot from './screens/Tarot.jsx'
 
 import ProFeed from './pro/ProFeed.jsx'
 import ProSessions from './pro/ProSessions.jsx'
@@ -125,13 +126,14 @@ function Frame() {
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/premium" element={<Premium />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/tarot" element={<Tarot />} />
           </Route>
 
           {/* The five destinations. */}
           <Route element={<TabLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/consult" element={<Consult />} />
-            <Route path="/live" element={<Live />} />
+            <Route path="/pooja" element={<Pooja />} />
             <Route path="/academy" element={<Academy />} />
             <Route path="/shop" element={<Shop />} />
           </Route>
@@ -148,6 +150,10 @@ function Frame() {
               path falls through to `*` and teleports the consultant into the
               seeker app with no error — the most confusing failure available
               here. */}
+          {/* Live is a Consult mode now; the old path still resolves rather
+              than falling through to the catch-all. */}
+          <Route path="/live" element={<Navigate to="/consult" replace />} />
+
           <Route path="/pro/*" element={<Navigate to="/pro/feed" replace />} />
 
           <Route path="*" element={<Navigate to="/home" replace />} />

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { consultants, liveSessions } from '../data/mock.js'
-import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
@@ -8,14 +7,13 @@ import { firstName } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 /**
- * Live — astrologers and sessions.
+ * Live — rooms on air now, and who is around.
  *
- * The centrepiece is a round CTA, borrowed from CRED's circular payment
- * accent. It is the one curved shape on the screen (the floating AI button is
- * the other in the app), which is precisely why it reads as the action rather
- * than as decoration.
+ * Consult absorbed Live as one of its four modes, so this is a body rather
+ * than a screen: no TabHeader of its own, because Consult already drew one.
+ * /live redirects to /consult; /live/:id (a room) is untouched.
  */
-export default function Live() {
+export function LiveBody() {
   const { showToast, hasFlag, toggleFlag, openChat } = useStore()
 
   const liveNow = liveSessions.filter((l) => l.live)
@@ -26,8 +24,6 @@ export default function Live() {
 
   return (
     <>
-      <TabHeader action={<PopTag tone="live">● {liveNow.length} on air</PopTag>} />
-
       {/* ── The featured stream ────────────────────────────────────────
           A tab about video should open with video. This was a 160px circle
           reading "Join Live" above a paragraph — an ad for the content rather
@@ -193,3 +189,4 @@ export default function Live() {
     </>
   )
 }
+

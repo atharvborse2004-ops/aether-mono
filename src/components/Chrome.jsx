@@ -15,14 +15,14 @@ import { useStore } from '../store.jsx'
    where the thumb is and where the raised Live button needs mass to sit in. */
 
 /**
- * Five destinations, all equal. Horoscope moves inside Profile as a tab and
- * Ask AI moves into the chat panel, which frees the two slots Live and
- * Academy need.
+ * Five destinations. Live is no longer one of them — Consult absorbed it as a
+ * mode, since calling, chatting, watching and booking are four ways at the
+ * same roster rather than two separate places. The freed slot went to Pooja.
  */
 const TABS = [
   { to: '/home', label: 'Home', icon: 'home' },
   { to: '/consult', label: 'Consult', icon: 'consult' },
-  { to: '/live', label: 'Live', icon: 'live' },
+  { to: '/pooja', label: 'Pooja', icon: 'pooja' },
   { to: '/academy', label: 'Academy', icon: 'academy' },
   { to: '/shop', label: 'Shop', icon: 'shop' },
 ]

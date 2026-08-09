@@ -17,6 +17,27 @@ import { Kicker, PopAvatar, PopBar, PopButton, PopTag } from '../components/Pop.
 import { Acts, firstName } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
+/**
+ * The free tools, as circles across the top of the feed.
+ *
+ * They were on Consult, mixed in with paid things — which is the wrong place
+ * for the parts of the app that cost nothing. Free belongs at the top of the
+ * first screen, where a new user meets it before being asked for money.
+ *
+ * Each is a route or an action on this screen; none of them opens a dead end.
+ */
+const FREE_TOOLS = [
+  { key: 'kundli', label: 'Kundli', icon: 'kundli', to: '/chart' },
+  { key: 'ai', label: 'Ask AI', icon: 'ai', act: ({ openChat }) => openChat('ai') },
+  { key: 'tarot', label: 'Tarot', icon: 'tarot', to: '/tarot' },
+  {
+    key: 'horoscope',
+    label: 'Horoscope',
+    icon: 'horoscope',
+    act: ({ setHoroscopeOpen }) => setHoroscopeOpen(true),
+  },
+]
+
 /** Every feed record resolves against one of these by `refId`. */
 const SOURCES = {
   post: posts,
@@ -49,6 +70,8 @@ export default function Home({ action }) {
   return (
     <>
       <Header action={action} />
+
+      <FreeTools />
 
       <div className="space-y-3.5 p-4">
         {items.map((item) => {
@@ -88,6 +111,40 @@ export default function Home({ action }) {
  * card types, one different button. Undefined means the seeker's horoscope
  * button, so /home is unchanged.
  */
+/** The free row. Circles, because a circle reads as a tool and a card reads as
+    content — and everything below this line is content. */
+function FreeTools() {
+  const { openChat, setHoroscopeOpen } = useStore()
+  const bag = { openChat, setHoroscopeOpen }
+
+  return (
+    <section className="px-2 pb-1 pt-3">
+      <ul className="flex items-start justify-around">
+        {FREE_TOOLS.map((f) => (
+          <li key={f.key}>
+            {f.to ? (
+              <Link to={f.to} className="tile w-[76px]">
+                <span className="tile-face">
+                  <Icon name={f.icon} size={23} />
+                </span>
+                <span className="caps-sm leading-tight t-body">{f.label}</span>
+              </Link>
+            ) : (
+              <button type="button" onClick={() => f.act(bag)} className="tile w-[76px]">
+                <span className="tile-face">
+                  <Icon name={f.icon} size={23} />
+                </span>
+                <span className="caps-sm leading-tight t-body">{f.label}</span>
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-center caps-sm t-faint">Free · no session needed</p>
+    </section>
+  )
+}
+
 function Header({ action }) {
   const { setHoroscopeOpen } = useStore()
 
