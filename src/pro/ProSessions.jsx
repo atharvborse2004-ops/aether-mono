@@ -1,4 +1,6 @@
-import { bookedSlots, bookings, timeSlots } from '../data/mock.js'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { bookedSlots, bookings, timeSlots, weekDays } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { Kicker, PopAvatar, PopButton, PopTag } from '../components/Pop.jsx'
@@ -15,8 +17,29 @@ import { useStore } from '../store.jsx'
  * ponytail: two booleans standing in for a four-state lifecycle. If a third
  * action appears (reschedule), this wants a real status map in the store.
  */
+
+/**
+ * How each channel is actually delivered. The consultant's whole job runs
+ * through these, so each start button goes somewhere real rather than firing
+ * the same toast three times.
+ */
+const CHANNELS = {
+  Chat: { icon: 'chat', verb: 'Open chat' },
+  Call: { icon: 'phone', verb: 'Start call' },
+  Live: { icon: 'live', verb: 'Go live' },
+}
+
 export default function ProSessions() {
-  const { hasFlag, toggleFlag, showToast } = useStore()
+  const { hasFlag, toggleFlag, showToast, openChat } = useStore()
+  const navigate = useNavigate()
+  const [day, setDay] = useState('Thu')
+
+  /** Chat opens the panel, live opens the room, a call is the one stub. */
+  const start = (b) => {
+    if (b.kind === 'Chat') return openChat('live')
+    if (b.kind === 'Live') return navigate('/live/l1')
+    return showToast(`Calling ${firstName(b.client)} — prototype only`)
+  }
 
   const decided = (b) => (hasFlag(`accept:${b.id}`) ? 'confirmed' : hasFlag(`decline:${b.id}`) ? 'declined' : b.status)
 
@@ -118,11 +141,11 @@ export default function ProSessions() {
               )}
               <button
                 type="button"
-                aria-label={`Call ${firstName(b.client)}`}
-                onClick={() => showToast(`Calling ${firstName(b.client)} — prototype only`)}
+                aria-label={`${CHANNELS[b.kind].verb} with ${firstName(b.client)}`}
+                onClick={() => start(b)}
                 className="pill knob !h-9 !w-9 flex-none justify-center"
               >
-                <Icon name="phone" size={16} />
+                <Icon name={CHANNELS[b.kind].icon} size={16} />
               </button>
             </li>
           ))}
@@ -130,17 +153,34 @@ export default function ProSessions() {
       </section>
 
       {/* ── Availability ───────────────────────────────────────────────────
-          The taken slots come from the same `bookedSlots` the seeker's booking
-          sheet reads, so the two views cannot disagree. */}
+          A week rather than a single day. Sold slots come from the same
+          `bookedSlots` the seeker's booking sheet reads, so the two views
+          cannot disagree about what is gone. */}
       <section className="border-b border-rule px-5 py-6">
-        <Kicker>Open for</Kicker>
+        <Kicker>Availability</Kicker>
         <p className="mt-2 text-meta t-body">
-          Tap a slot to close it. Struck-through slots are already sold.
+          Tap to close a slot. Struck-through slots are already sold and cannot be pulled.
         </p>
+
+        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
+          {weekDays.map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={day === d}
+              onClick={() => setDay(d)}
+              className="pill caps-sm flex-none"
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+
         <div className="mt-4 grid grid-cols-3 gap-2">
           {timeSlots.map((t) => {
-            const sold = bookedSlots.includes(t)
-            const closed = hasFlag(`closed:${t}`)
+            // Only today's sales are known; other days are all open.
+            const sold = day === 'Thu' && bookedSlots.includes(t)
+            const closed = hasFlag(`closed:${day}:${t}`)
             return (
               <button
                 key={t}
@@ -148,7 +188,10 @@ export default function ProSessions() {
                 disabled={sold}
                 aria-pressed={!sold && !closed}
                 onClick={() =>
-                  toggleFlag(`closed:${t}`, { on: `${t} closed`, off: `${t} open again` })
+                  toggleFlag(`closed:${day}:${t}`, {
+                    on: `${day} ${t} closed`,
+                    off: `${day} ${t} open again`,
+                  })
                 }
                 className="pill caps-sm justify-center tnum"
               >
@@ -157,6 +200,11 @@ export default function ProSessions() {
             )
           })}
         </div>
+
+        <p className="mt-4 caps-sm t-faint">
+          {timeSlots.filter((t) => !hasFlag(`closed:${day}:${t}`) && !(day === 'Thu' && bookedSlots.includes(t))).length}{' '}
+          open on {day}
+        </p>
       </section>
 
       {/* ── Done ───────────────────────────────────────────────────────── */}

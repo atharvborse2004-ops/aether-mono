@@ -844,16 +844,16 @@ export const mine = (list) => list.filter((x) => x.consultantId === pro.id)
  * in seed data; it is only ever produced by tapping Decline.
  */
 export const bookings = [
-  { id: 'bk1', client: 'Kabir S.', initials: 'KS', kind: 'Video', duration: '30 min', when: 'Today · 13:30', at: '13:30', startsIn: '2h 10m', price: 2998, status: 'pending',
+  { id: 'bk1', client: 'Kabir S.', initials: 'KS', kind: 'Call', duration: '30 min', when: 'Today · 13:30', at: '13:30', startsIn: '2h 10m', price: 2998, status: 'pending',
     note: 'Offer letter from a new company. I need timing, not encouragement.' },
   { id: 'bk2', client: 'Priya M.', initials: 'PM', kind: 'Chat', duration: '15 min', when: 'Today · 16:00', at: '16:00', startsIn: '4h 40m', price: 1499, status: 'pending',
     note: 'Second session. Same relocation question, new dates.' },
-  { id: 'bk3', client: 'Anonymous', initials: 'AN', kind: 'Video', duration: '10 min', when: 'Tomorrow · 09:30', at: '09:30', startsIn: '19h', price: 999, status: 'pending',
+  { id: 'bk3', client: 'Anonymous', initials: 'AN', kind: 'Live', duration: '10 min', when: 'Tomorrow · 09:30', at: '09:30', startsIn: '19h', price: 999, status: 'pending',
     note: 'I would rather not say in advance.' },
-  { id: 'bk4', client: 'Rhea D.', initials: 'RD', kind: 'Video', duration: '30 min', when: 'Today · 11:00', at: '11:00', startsIn: 'Now', price: 2998, status: 'confirmed' },
+  { id: 'bk4', client: 'Rhea D.', initials: 'RD', kind: 'Call', duration: '30 min', when: 'Today · 11:00', at: '11:00', startsIn: 'Now', price: 2998, status: 'confirmed' },
   { id: 'bk5', client: 'Imran Q.', initials: 'IQ', kind: 'Chat', duration: '15 min', when: 'Today · 18:30', at: '18:30', startsIn: '7h 10m', price: 1499, status: 'confirmed' },
-  { id: 'bk6', client: 'Sana B.', initials: 'SB', kind: 'Video', duration: '15 min', when: 'Today · 09:30', at: '09:30', startsIn: null, price: 1499, status: 'done' },
-  { id: 'bk7', client: 'Vikram T.', initials: 'VT', kind: 'Video', duration: '30 min', when: 'Yesterday · 20:00', at: '20:00', startsIn: null, price: 2998, status: 'done' },
+  { id: 'bk6', client: 'Sana B.', initials: 'SB', kind: 'Call', duration: '15 min', when: 'Today · 09:30', at: '09:30', startsIn: null, price: 1499, status: 'done' },
+  { id: 'bk7', client: 'Vikram T.', initials: 'VT', kind: 'Call', duration: '30 min', when: 'Yesterday · 20:00', at: '20:00', startsIn: null, price: 2998, status: 'done' },
 ]
 
 /**
@@ -903,6 +903,67 @@ export const proLedger = [
   { id: 'pl5', label: 'Live room · tips', date: '5 Aug', gross: 860, fee: 155, net: 705 },
   { id: 'pl6', label: 'Arjun P. · 10 min', date: '4 Aug', gross: 999, fee: 180, net: 819 },
 ]
+
+/**
+ * Reach, and what it is doing. Every figure here is a NUMBER — `followers:
+ * '84.2k'` and `views: '312k'` elsewhere in this file are display strings and
+ * cannot be charted or compared without parsing them back, which is a trap.
+ */
+export const insights = {
+  reach: 12400,
+  reachDeltaPct: 18,
+  profileViews: 2140,
+  profileViewsDeltaPct: -6,
+  followersGained: 312,
+  saves: 486,
+
+  /** Who actually watched. Not a guess — the consultant asks this constantly. */
+  viewers: [
+    { label: 'Returning', pct: 41 },
+    { label: 'New', pct: 38 },
+    { label: 'From search', pct: 21 },
+  ],
+  topCities: ['Mumbai', 'Pune', 'Bengaluru', 'Dubai'],
+
+  /** Share of the audience online, by hour. Twelve two-hour buckets. */
+  byHour: [3, 2, 2, 6, 11, 14, 12, 9, 16, 24, 19, 8],
+  bestWindow: '8–10 pm',
+
+  /** Per-piece performance, so "below your average" is a claim you can check. */
+  topContent: [
+    { id: 'r1', title: 'Your Saturn return is not a punishment', kind: 'Reel', views: 312000, vsAvgPct: 46 },
+    { id: 'b1', title: 'When to sign a contract', kind: 'Article', views: 11200, vsAvgPct: 8 },
+    { id: 'r3', title: 'Relocation and the 4th house', kind: 'Reel', views: 7800, vsAvgPct: -31 },
+  ],
+}
+
+/**
+ * Things slipping. Kept separate from `insights` because these are the only
+ * items on the screen that ask for an action rather than describing the past.
+ */
+export const warnings = [
+  { id: 'w1', tone: 'bad', title: 'Response rate is 68%', line: 'It was 94% last month. Two requests have sat unanswered for six hours.', to: '/pro/sessions' },
+  { id: 'w2', tone: 'warn', title: '3 slots unfilled tomorrow', line: 'Morning is empty. Opening an evening slot fills faster on a Thursday.', to: '/pro/sessions' },
+  { id: 'w3', tone: 'warn', title: '“Relocation and the 4th house” is 31% below your average', line: 'Reels you post before 6 pm consistently underperform. Yours went out at 2 pm.', to: '/pro/studio' },
+]
+
+/** Referrals. Another consultant you bring pays you a cut of their first month. */
+export const referrals = {
+  code: 'RITU-VEDA',
+  invited: 14,
+  joined: 6,
+  earned: 18400,
+  perJoin: 2000,
+  list: [
+    { id: 'rf1', name: 'Aarav N.', initials: 'AN', joined: '2 Aug 2026', status: 'Active', earned: 2000 },
+    { id: 'rf2', name: 'Simran K.', initials: 'SK', joined: '24 Jul 2026', status: 'Active', earned: 2000 },
+    { id: 'rf3', name: 'Meher B.', initials: 'MB', joined: '11 Jul 2026', status: 'Active', earned: 2000 },
+    { id: 'rf4', name: 'Tanvi R.', initials: 'TR', joined: '3 Jul 2026', status: 'Pending', earned: 0 },
+  ],
+}
+
+/** Availability, a week at a time rather than one day of six slots. */
+export const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export const timeSlots = ['09:30', '11:00', '13:30', '16:00', '18:30', '20:00']
 

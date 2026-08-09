@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { earnings, earningsSeries, payouts, proLedger, topUpAmounts } from '../data/mock.js'
+import { earnings, earningsSeries, payouts, proLedger, referrals, topUpAmounts } from '../data/mock.js'
 import { Sheet, TabHeader } from '../components/Chrome.jsx'
-import { Kicker, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
+import Icon from '../components/Icon.jsx'
+import { Kicker, PopAvatar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
 import { Field } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
@@ -83,6 +84,64 @@ export default function ProEarnings() {
               <span className="flex-none text-meta tnum text-ok">
                 +₹{r.net.toLocaleString('en-IN')}
               </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* ── Referrals ──────────────────────────────────────────────────────
+          Sits with the money because that is what it is: another line of
+          revenue, not a social feature. */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Referrals</Kicker>
+
+        <PopCard className="mt-4 p-4">
+          <div className="flex items-center gap-3">
+            <span className="min-w-0 flex-1">
+              <span className="caps-sm t-faint">Your code</span>
+              <span className="mt-1 block font-display text-lead tnum t-heading">
+                {referrals.code}
+              </span>
+            </span>
+            <button
+              type="button"
+              aria-label="Share your code"
+              onClick={() => showToast('Code copied')}
+              className="pill knob !h-10 !w-10 flex-none justify-center"
+            >
+              <Icon name="share" size={17} />
+            </button>
+          </div>
+          <p className="mt-3 text-meta t-body">
+            Bring another reader in. You earn ₹{referrals.perJoin.toLocaleString('en-IN')} once
+            they finish their first paid session — not when they sign up.
+          </p>
+        </PopCard>
+
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <Stat label="Invited" value={referrals.invited} />
+          <Stat label="Joined" value={referrals.joined} />
+          <Stat label="Earned" value={`₹${(referrals.earned / 1000).toFixed(1)}k`} />
+        </div>
+
+        <ul className="mt-5">
+          {referrals.list.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center gap-3 border-b border-rule py-3 last:border-b-0"
+            >
+              <PopAvatar initials={r.initials} size={34} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-meta t-heading">{r.name}</span>
+                <span className="mt-0.5 block caps-sm t-faint">Joined {r.joined}</span>
+              </span>
+              {r.earned > 0 ? (
+                <span className="flex-none text-meta tnum text-ok">
+                  +₹{r.earned.toLocaleString('en-IN')}
+                </span>
+              ) : (
+                <PopTag>{r.status}</PopTag>
+              )}
             </li>
           ))}
         </ul>

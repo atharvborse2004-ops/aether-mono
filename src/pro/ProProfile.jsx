@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { clips, liveSessions, mine, posts, pro, reads } from '../data/mock.js'
+import { clips, insights, liveSessions, mine, posts, pro, reads, warnings } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
-import { Kicker, PopTag } from '../components/Pop.jsx'
+import Icon from '../components/Icon.jsx'
+import { Kicker, PopTag, Stat } from '../components/Pop.jsx'
 import { Avatar, Row, Segmented, Tag, Ticks } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 const TABS = [
   { key: 'content', label: 'Content' },
+  { key: 'insights', label: 'Insights' },
   { key: 'reviews', label: 'Reviews' },
   { key: 'settings', label: 'Settings' },
 ]
@@ -72,6 +74,7 @@ export default function ProProfile() {
 
       <div key={tab} className="animate-fade">
         {tab === 'content' && <Content />}
+        {tab === 'insights' && <Insights />}
         {tab === 'reviews' && <Reviews />}
         {tab === 'settings' && <Settings />}
       </div>
@@ -104,6 +107,136 @@ function Content() {
         ))}
       </ul>
     </section>
+  )
+}
+
+/* ── Insights ─────────────────────────────────────────────────────────────
+   Reach, who it reached, when they are awake, and what is slipping. The last
+   of those is the only part that asks for an action, so it is visually
+   separated and every item links to the screen that fixes it. */
+
+function Insights() {
+  return (
+    <>
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Last 7 days</Kicker>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <Stat
+            label="Reach"
+            value={`${(insights.reach / 1000).toFixed(1)}k`}
+            sub={`${insights.reachDeltaPct > 0 ? '↑' : '↓'} ${Math.abs(insights.reachDeltaPct)}%`}
+          />
+          <Stat
+            label="Profile views"
+            value={insights.profileViews.toLocaleString('en-IN')}
+            sub={`${insights.profileViewsDeltaPct > 0 ? '↑' : '↓'} ${Math.abs(insights.profileViewsDeltaPct)}%`}
+          />
+          <Stat label="New followers" value={`+${insights.followersGained}`} sub={`${insights.saves} saves`} />
+        </div>
+      </section>
+
+      {/* ── Who saw it ───────────────────────────────────────────────── */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Who saw your work</Kicker>
+        <ul className="mt-4 space-y-3">
+          {insights.viewers.map((v) => (
+            <li key={v.label} className="flex items-center gap-3">
+              <span className="w-24 flex-none text-meta t-sub">{v.label}</span>
+              <span className="h-2 flex-1 overflow-hidden rounded-full bg-black/10">
+                <span
+                  className="block h-full rounded-full bg-gold-fill"
+                  style={{ width: `${v.pct}%` }}
+                />
+              </span>
+              <span className="w-9 flex-none text-right text-meta tnum t-heading">{v.pct}%</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 caps-sm t-faint">Mostly from {insights.topCities.join(' · ')}</p>
+      </section>
+
+      {/* ── When to post ─────────────────────────────────────────────── */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>When they are awake</Kicker>
+        <div className="mt-4 flex h-20 items-end gap-1" aria-hidden="true">
+          {insights.byHour.map((v, i) => {
+            const max = Math.max(...insights.byHour)
+            const peak = v === max
+            return (
+              <span
+                key={i}
+                className={`flex-1 rounded-t-sm ${peak ? 'bg-gold-fill' : 'bg-black/15'}`}
+                style={{ height: `${Math.max(6, (v / max) * 100)}%` }}
+              />
+            )
+          })}
+        </div>
+        <div className="mt-2 flex justify-between caps-sm t-faint tnum">
+          <span>12a</span>
+          <span>6a</span>
+          <span>12p</span>
+          <span>6p</span>
+          <span>12a</span>
+        </div>
+        <p className="mt-4 text-meta t-body">
+          Your audience is on at <span className="gold">{insights.bestWindow}</span>. Posting
+          before six in the evening costs you roughly a third of the reach.
+        </p>
+      </section>
+
+      {/* ── Per piece ────────────────────────────────────────────────── */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>How each piece did</Kicker>
+        <ul className="mt-3">
+          {insights.topContent.map((c) => (
+            <li
+              key={c.id}
+              className="flex items-center justify-between gap-4 border-b border-rule py-3.5 last:border-b-0"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-meta t-sub">{c.title}</span>
+                <span className="mt-0.5 flex items-center gap-1.5 caps-sm t-faint tnum">
+                  <Icon name="eye" size={13} />
+                  {c.views.toLocaleString('en-IN')} · {c.kind}
+                </span>
+              </span>
+              <span
+                className={`flex-none text-meta tnum ${c.vsAvgPct >= 0 ? 'text-ok' : 'text-live'}`}
+              >
+                {c.vsAvgPct >= 0 ? '+' : ''}
+                {c.vsAvgPct}%
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 caps-sm t-faint">Against your own average, not the platform's.</p>
+      </section>
+
+      {/* ── What is slipping ─────────────────────────────────────────── */}
+      <section className="px-5 py-6">
+        <Kicker>Worth fixing</Kicker>
+        <ul className="mt-4 space-y-3">
+          {warnings.map((w) => (
+            <li key={w.id}>
+              <Link to={w.to} className="pop-card pop-tap block p-4">
+                <span className="flex items-start gap-3">
+                  <span
+                    className={`flex-none ${w.tone === 'bad' ? 'text-live' : 'gold'}`}
+                    aria-hidden="true"
+                  >
+                    <Icon name="alert" size={18} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-meta t-heading">{w.title}</span>
+                    <span className="mt-1 block text-meta t-body">{w.line}</span>
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
   )
 }
 
