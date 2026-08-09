@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    Icons.
 
-   Eight glyphs, drawn here rather than pulled from a library. An icon set is
-   a dependency, a bundle and a house style someone else picked; eight paths
-   is forty lines and they can be tuned to this app's stroke weight.
+   Twenty-one glyphs, drawn here rather than pulled from a library. An icon set
+   is a dependency, a bundle and a house style someone else picked; a path each
+   is cheaper and they can be tuned to this app's stroke weight.
 
    All of them share one geometry so they sit together in a row: a 24 unit
    box, a ~2 unit optical margin, round caps and joins, and colour inherited
@@ -97,6 +97,19 @@ const PATHS = {
       <path d="M6.5 7 4.7 7.6a1.7 1.7 0 0 0-1.1 2.1l3.2 9.5a1.7 1.7 0 0 0 2.1 1.1l1.4-.5" />
     </>
   ),
+  /* The pro side. Five, not the ten first drafted — Studio's go-live uses a
+     badge and a plate, Earnings draws bars rather than a chart glyph, and the
+     settings rows already get their arrow from `.act-row::after`. */
+  calendar: (
+    <>
+      <rect x="3.4" y="5" width="17.2" height="15.6" rx="1.8" />
+      <path d="M8 2.8v4.2M16 2.8v4.2M3.4 9.8h17.2" />
+    </>
+  ),
+  plus: <path d="M12 5.2v13.6M5.2 12h13.6" />,
+  rupee: <path d="M7.6 4.4h8.8M7.6 8.6h8.8M15 4.4a4.2 4.2 0 0 1 0 8.4H7.6l7.4 6.8" />,
+  check: <path d="m4.6 12.6 5 5 9.8-11" />,
+  close: <path d="m6 6 12 12M18 6 6 18" />,
   cart: (
     <>
       <path d="M3.2 4.4h2.3l2.4 10.9a1.5 1.5 0 0 0 1.5 1.2h8a1.5 1.5 0 0 0 1.5-1.15l1.6-6.75H6.4" />

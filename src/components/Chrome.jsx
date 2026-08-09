@@ -1,5 +1,4 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { user } from '../data/mock.js'
 import Icon from './Icon.jsx'
 import { PopAvatar } from './Pop.jsx'
 import { useStore } from '../store.jsx'
@@ -26,6 +25,23 @@ const TABS = [
   { to: '/live', label: 'Live', icon: 'live' },
   { to: '/academy', label: 'Academy', icon: 'academy' },
   { to: '/shop', label: 'Shop', icon: 'shop' },
+]
+
+/**
+ * The consultant's five. Kept next to the seeker's so the two lists stay
+ * visually consistent — they render through the same `Tab`, which is the point
+ * of passing tabs in rather than writing a second nav. That `Tab` carries the
+ * whole active-state language (indicator growing from centre, icon weight 1.6
+ * → 2.1 rather than a colour change, white/55 at rest because gold caps
+ * measure 2.8:1 on this bar). A parallel component would drift from it, and
+ * the drift is invisible in review and obvious on screen.
+ */
+export const PRO_TABS = [
+  { to: '/pro/feed', label: 'Feed', icon: 'home' },
+  { to: '/pro/sessions', label: 'Sessions', icon: 'calendar' },
+  { to: '/pro/studio', label: 'Studio', icon: 'plus' },
+  { to: '/pro/earnings', label: 'Earnings', icon: 'rupee' },
+  { to: '/pro/profile', label: 'Profile', icon: 'consult' },
 ]
 
 function Tab({ to, label, icon }) {
@@ -72,11 +88,11 @@ function Tab({ to, label, icon }) {
  * like the other four, not a mode, and giving it the loudest shape on the
  * screen oversold it — it now sits in the row on the same footing.
  */
-export function BottomNav() {
+export function BottomNav({ tabs = TABS }) {
   return (
     <nav className="navbar">
       <ul className="flex items-stretch">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <Tab key={t.to} {...t} />
         ))}
       </ul>
@@ -97,18 +113,28 @@ export function BottomNav() {
  * the cart, Live its on-air badge. Everything else passes nothing.
  */
 export function TabHeader({ action = null }) {
-  const { openChat } = useStore()
+  const { openChat, me, isPro } = useStore()
 
   return (
     <header className="topbar flex items-center gap-2.5 px-4 py-2">
-      <Link to="/profile" aria-label="Your profile" className="transition-opacity hover:opacity-70">
-        <PopAvatar initials={user.initials} size={30} />
+      {/* Identity comes from the store, not a hardcoded import — the same
+          header serves both sides, and threading avatar/link props through
+          every screen would be more code at ten call sites than one lookup
+          here. */}
+      <Link
+        to={me.profileTo}
+        aria-label="Your profile"
+        className="transition-opacity hover:opacity-70"
+      >
+        <PopAvatar initials={me.initials} size={30} />
       </Link>
       <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
       {action}
       <button
         type="button"
-        onClick={() => openChat('ai')}
+        /* Ask AI is a seeker product. A consultant tapping messages wants his
+           client threads, not a chart oracle. */
+        onClick={() => openChat(isPro ? 'live' : 'ai')}
         aria-label="Messages"
         className="pill knob relative !h-9 !w-9 justify-center"
       >

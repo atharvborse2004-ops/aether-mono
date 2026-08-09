@@ -821,6 +821,89 @@ export const consultants = [
   },
 ]
 
+/**
+ * The consultant using the pro side.
+ *
+ * Pinned to a real record rather than invented, so his profile, reviews,
+ * credentials, price ladder and published content are all populated on day
+ * one — a1 already owns posts, reels, articles, a live room and a chat thread.
+ */
+export const pro = consultants[0]
+
+/** Everything `pro` has published, out of whichever shared list you pass. */
+export const mine = (list) => list.filter((x) => x.consultantId === pro.id)
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRO — the consultant's own side. Bookings he must answer, the money that
+   comes out of them, and the slots he has already sold.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Sessions, across the whole lifecycle the seeker side never needed:
+ * pending → confirmed → done. 'declined' exists as a status but never appears
+ * in seed data; it is only ever produced by tapping Decline.
+ */
+export const bookings = [
+  { id: 'bk1', client: 'Kabir S.', initials: 'KS', kind: 'Video', duration: '30 min', when: 'Today · 13:30', at: '13:30', startsIn: '2h 10m', price: 2998, status: 'pending',
+    note: 'Offer letter from a new company. I need timing, not encouragement.' },
+  { id: 'bk2', client: 'Priya M.', initials: 'PM', kind: 'Chat', duration: '15 min', when: 'Today · 16:00', at: '16:00', startsIn: '4h 40m', price: 1499, status: 'pending',
+    note: 'Second session. Same relocation question, new dates.' },
+  { id: 'bk3', client: 'Anonymous', initials: 'AN', kind: 'Video', duration: '10 min', when: 'Tomorrow · 09:30', at: '09:30', startsIn: '19h', price: 999, status: 'pending',
+    note: 'I would rather not say in advance.' },
+  { id: 'bk4', client: 'Rhea D.', initials: 'RD', kind: 'Video', duration: '30 min', when: 'Today · 11:00', at: '11:00', startsIn: 'Now', price: 2998, status: 'confirmed' },
+  { id: 'bk5', client: 'Imran Q.', initials: 'IQ', kind: 'Chat', duration: '15 min', when: 'Today · 18:30', at: '18:30', startsIn: '7h 10m', price: 1499, status: 'confirmed' },
+  { id: 'bk6', client: 'Sana B.', initials: 'SB', kind: 'Video', duration: '15 min', when: 'Today · 09:30', at: '09:30', startsIn: null, price: 1499, status: 'done' },
+  { id: 'bk7', client: 'Vikram T.', initials: 'VT', kind: 'Video', duration: '30 min', when: 'Yesterday · 20:00', at: '20:00', startsIn: null, price: 2998, status: 'done' },
+]
+
+/**
+ * Slots already sold today. Lives here rather than in a screen so the seeker's
+ * booking sheet and the consultant's own availability grid cannot disagree —
+ * book a slot as a client, switch sides, and it is gone from both.
+ */
+export const bookedSlots = ['11:00', '18:30']
+
+/** Money. Gross, commission and net — a ledger of round credits looks fake. */
+export const earnings = {
+  available: 38420,
+  pending: 11240,
+  thisMonth: 74600,
+  lifetime: 1284000,
+  commissionPct: 18,
+  nextPayoutOn: '12 Aug',
+}
+
+/**
+ * Seven real numbers. `followers: '84.2k'` and `views: '312k'` elsewhere in
+ * this file are display strings — do not parse them back into numbers; add the
+ * figures a chart actually needs and leave the strings alone.
+ */
+export const earningsSeries = [
+  { label: 'Mon', value: 4200 },
+  { label: 'Tue', value: 7480 },
+  { label: 'Wed', value: 2990 },
+  { label: 'Thu', value: 9970 },
+  { label: 'Fri', value: 6480 },
+  { label: 'Sat', value: 12460 },
+  { label: 'Sun', value: 5990 },
+]
+
+export const payouts = [
+  { id: 'py1', amount: 52000, date: '29 Jul 2026', method: 'HDFC ••4412', status: 'Paid' },
+  { id: 'py2', amount: 38400, date: '15 Jul 2026', method: 'HDFC ••4412', status: 'Paid' },
+  { id: 'py3', amount: 44100, date: '1 Jul 2026', method: 'HDFC ••4412', status: 'Paid' },
+]
+
+/** Per-session earnings. Gross, the platform's cut, and what actually lands. */
+export const proLedger = [
+  { id: 'pl1', label: 'Sana B. · 15 min', date: 'Today', gross: 1499, fee: 270, net: 1229 },
+  { id: 'pl2', label: 'Vikram T. · 30 min', date: 'Yesterday', gross: 2998, fee: 540, net: 2458 },
+  { id: 'pl3', label: 'Natal report', date: 'Yesterday', gross: 4041, fee: 727, net: 3314 },
+  { id: 'pl4', label: 'Meera J. · 30 min', date: '6 Aug', gross: 2998, fee: 540, net: 2458 },
+  { id: 'pl5', label: 'Live room · tips', date: '5 Aug', gross: 860, fee: 155, net: 705 },
+  { id: 'pl6', label: 'Arjun P. · 10 min', date: '4 Aug', gross: 999, fee: 180, net: 819 },
+]
+
 export const timeSlots = ['09:30', '11:00', '13:30', '16:00', '18:30', '20:00']
 
 /* ══════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppProvider, useStore } from './store.jsx'
-import { AskAiButton, BottomNav, Toast } from './components/Chrome.jsx'
+import { AskAiButton, BottomNav, PRO_TABS, Toast } from './components/Chrome.jsx'
 import ChatPanel from './components/ChatPanel.jsx'
 import HoroscopePanel from './components/HoroscopePanel.jsx'
 import CartSheet from './components/CartSheet.jsx'
@@ -8,6 +8,7 @@ import Reports from './screens/Reports.jsx'
 
 import Intro from './screens/onboarding/Intro.jsx'
 import AskName from './screens/onboarding/AskName.jsx'
+import AskSide from './screens/onboarding/AskSide.jsx'
 import AskDate from './screens/onboarding/AskDate.jsx'
 import AskTime from './screens/onboarding/AskTime.jsx'
 import AskPlace from './screens/onboarding/AskPlace.jsx'
@@ -18,6 +19,12 @@ import Consult from './screens/Consult.jsx'
 import Live from './screens/Live.jsx'
 import Academy from './screens/Academy.jsx'
 import Shop from './screens/Shop.jsx'
+
+import ProFeed from './pro/ProFeed.jsx'
+import ProSessions from './pro/ProSessions.jsx'
+import ProStudio from './pro/ProStudio.jsx'
+import ProEarnings from './pro/ProEarnings.jsx'
+import ProProfile from './pro/ProProfile.jsx'
 
 import Profile from './screens/Profile.jsx'
 import Wallet from './screens/Wallet.jsx'
@@ -52,6 +59,26 @@ function TabLayout() {
   )
 }
 
+/**
+ * The consultant's shell. Identical to TabLayout minus the floating Ask AI
+ * button — the consultant is not the one asking.
+ *
+ * CartSheet and HoroscopePanel stay mounted in Frame and are simply never
+ * opened from this side; they self-gate on state nothing here sets, so there
+ * is nothing to guard against.
+ */
+function ProLayout() {
+  const { pathname } = useLocation()
+  return (
+    <>
+      <main key={pathname} className="deal no-scrollbar min-h-0 flex-1 overflow-y-auto">
+        <Outlet />
+      </main>
+      <BottomNav tabs={PRO_TABS} />
+    </>
+  )
+}
+
 /** Shell for onboarding and drill-in screens — no bottom nav. */
 function PlainLayout() {
   const { pathname } = useLocation()
@@ -73,6 +100,7 @@ function Frame() {
 
           <Route element={<PlainLayout />}>
             <Route path="/onboarding" element={<Intro />} />
+            <Route path="/onboarding/side" element={<AskSide />} />
             <Route path="/onboarding/name" element={<AskName />} />
             <Route path="/onboarding/date" element={<AskDate />} />
             <Route path="/onboarding/time" element={<AskTime />} />
@@ -107,6 +135,20 @@ function Frame() {
             <Route path="/academy" element={<Academy />} />
             <Route path="/shop" element={<Shop />} />
           </Route>
+
+          <Route element={<ProLayout />}>
+            <Route path="/pro/feed" element={<ProFeed />} />
+            <Route path="/pro/sessions" element={<ProSessions />} />
+            <Route path="/pro/studio" element={<ProStudio />} />
+            <Route path="/pro/earnings" element={<ProEarnings />} />
+            <Route path="/pro/profile" element={<ProProfile />} />
+          </Route>
+
+          {/* Must sit above the global catch-all. Without it a mistyped pro
+              path falls through to `*` and teleports the consultant into the
+              seeker app with no error — the most confusing failure available
+              here. */}
+          <Route path="/pro/*" element={<Navigate to="/pro/feed" replace />} />
 
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

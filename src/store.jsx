@@ -7,17 +7,27 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useLocation } from 'react-router-dom'
+import { pro, user } from './data/mock.js'
 
 /**
  * Tiny in-memory store for prototype-only state: the birth details typed
  * during onboarding, cart count, remaining AI questions and
  * toast messages. Nothing is persisted, nothing is fetched.
+ *
+ * Which side of the app you are on is NOT state. HashRouter is mounted above
+ * AppProvider in main.jsx, so the provider can read the URL — and the URL is
+ * already the single source of truth. Storing a role beside it would only
+ * create something that can disagree with the address bar.
  */
 const AppStore = createContext(null)
 
 const EMPTY_BIRTH = { name: '', date: '', time: '', place: '' }
 
 export function AppProvider({ children }) {
+  // Which side we are on, and therefore who "me" is.
+  const isPro = useLocation().pathname.startsWith('/pro')
+
   const [birth, setBirth] = useState(EMPTY_BIRTH)
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
@@ -176,9 +186,22 @@ export function AppProvider({ children }) {
     [spend, showToast],
   )
 
+  /* `me` is rebuilt only when the side flips, not on every render — it feeds
+     the shared TabHeader, so a fresh object each time would rerender all five
+     tabs for nothing. */
+  const me = useMemo(
+    () =>
+      isPro
+        ? { ...pro, profileTo: '/pro/profile', homeTo: '/pro/feed' }
+        : { ...user, profileTo: '/profile', homeTo: '/home' },
+    [isPro],
+  )
+
   // Hooks must stay unconditional; this list is just the public surface.
   const value = useMemo(
     () => ({
+      isPro,
+      me,
       birth,
       setBirthField,
       cart,
@@ -211,6 +234,8 @@ export function AppProvider({ children }) {
       showToast,
     }),
     [
+      isPro,
+      me,
       birth,
       setBirthField,
       cart,

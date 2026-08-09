@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { consultants, timeSlots } from '../data/mock.js'
+import { bookedSlots, consultants, timeSlots } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
@@ -24,9 +24,6 @@ const TABS = [
   { key: 'work', label: 'Work' },
   { key: 'reviews', label: 'Reviews' },
 ]
-
-/** Slots already taken today. Fixed rather than random so the UI is stable. */
-const TAKEN = ['11:00', '18:30']
 
 /** Star distribution, as a share of all reviews. */
 const DISTRIBUTION = [
@@ -218,7 +215,7 @@ export default function ConsultantProfile() {
         <p className="label text-left mb-4">Available today</p>
         <div className="mb-10 grid grid-cols-3 gap-3">
           {timeSlots.map((t) => {
-            const taken = TAKEN.includes(t)
+            const taken = bookedSlots.includes(t)
             return (
               <Button
                 key={t}

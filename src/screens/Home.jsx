@@ -37,7 +37,7 @@ const SOURCES = {
  * `refId` into the existing collections, so a card always resolves to real
  * data and stays in sync with the screen it links to.
  */
-export default function Home() {
+export default function Home({ action }) {
   const items = feed
     .map((f) => {
       if (f.kind === 'reading') return { ...f, data: days[f.refId] }
@@ -48,7 +48,7 @@ export default function Home() {
 
   return (
     <>
-      <Header />
+      <Header action={action} />
 
       <div className="space-y-3.5 p-4">
         {items.map((item) => {
@@ -83,12 +83,18 @@ export default function Home() {
   )
 }
 
-function Header() {
+/**
+ * `action` lets the pro side reuse this whole screen — same stream, same seven
+ * card types, one different button. Undefined means the seeker's horoscope
+ * button, so /home is unchanged.
+ */
+function Header({ action }) {
   const { setHoroscopeOpen } = useStore()
 
   return (
     <TabHeader
       action={
+        action ?? (
         /* A focused action, not a redirect. This used to navigate to
            Profile > Horoscope, which took you out of the tab you were on. */
         <button
@@ -98,7 +104,8 @@ function Header() {
           className="pill knob !h-9 !w-9 justify-center"
         >
           <Icon name="horoscope" size={18} />
-        </button>
+          </button>
+        )
       }
     />
   )

@@ -354,6 +354,19 @@ function SettingsTab() {
   return (
     <>
       <section className="border-b border-rule px-5 py-6">
+        <Kicker>Consulting</Kicker>
+        <div className="mt-2">
+          {/* Plain navigation — the URL is what decides which side you are on,
+              so there is no role to toggle. */}
+          <Row
+            to="/pro/feed"
+            title="Switch to consultant"
+            note="Your sessions, your earnings, your page"
+          />
+        </div>
+      </section>
+
+      <section className="border-b border-rule px-5 py-6">
         <Kicker>Preferences</Kicker>
         <div className="mt-2">
           {SETTINGS.map((s) => (
