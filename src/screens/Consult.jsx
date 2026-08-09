@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categories, consultants, timeSlots } from '../data/mock.js'
 import { Sheet } from '../components/Chrome.jsx'
-import Plate from '../components/Plate.jsx'
+import Icon from '../components/Icon.jsx'
 import { Button, Field, firstName, Search, Ticks } from '../components/Primitives.jsx'
 import { TabHeader } from '../components/Chrome.jsx'
 import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
@@ -11,8 +11,29 @@ import { useStore } from '../store.jsx'
 /** Slots already taken today. Fixed rather than random so the UI is stable. */
 const TAKEN = ['13:30', '18:30']
 
+/**
+ * The four entry points across the top. Each is either a route or an action on
+ * this screen — nothing here opens a dead end.
+ */
+const FEATURES = [
+  { key: 'reports', label: 'Reports', icon: 'reports', to: '/reports' },
+  {
+    key: 'pooja',
+    label: 'Pooja',
+    icon: 'pooja',
+    act: ({ showToast }) => showToast('Pooja booking — prototype only'),
+  },
+  { key: 'tarot', label: 'Tarot', icon: 'tarot', act: ({ setCat }) => setCat('Tarot') },
+  {
+    key: 'horoscope',
+    label: 'Horoscope',
+    icon: 'horoscope',
+    act: ({ setHoroscopeOpen }) => setHoroscopeOpen(true),
+  },
+]
+
 export default function Consult() {
-  const { showToast, openChat } = useStore()
+  const { showToast, openChat, setHoroscopeOpen } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
 
@@ -66,25 +87,31 @@ export default function Consult() {
         ))}
       </div>
 
-      {/* Reports sit above the roster: a report is the other way to get a
-          reading, and the one that does not need a calendar. */}
-      <section className="border-b border-rule px-5 py-5">
-        <Kicker action="See all" to="/reports">
-          Reports
-        </Kicker>
-        <Link
-          to="/reports"
-          className="pop-card mt-3 flex items-center gap-3 p-3 transition-colors hover:border-gold"
-        >
-          <Plate seed="reports" className="h-14 w-14 flex-none" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-meta t-heading">Written readings, from ₹1,347</span>
-            <span className="mt-1 block caps-sm t-faint">
-              Natal · career · synastry · year ahead
-            </span>
-          </span>
-          <span className="flex-none caps-sm gold">→</span>
-        </Link>
+      {/* Four ways in, as circles across the top. Reports used to be a wide
+          card below the filters; as one of four peers it takes a quarter of
+          the room and reads as a choice rather than an advert. */}
+      <section className="px-2 pb-1 pt-1">
+        <ul className="flex items-start justify-around">
+          {FEATURES.map((f) => (
+            <li key={f.key}>
+              {f.to ? (
+                <Link to={f.to} className="tile w-[76px]">
+                  <span className="tile-face">
+                    <Icon name={f.icon} size={23} />
+                  </span>
+                  <span className="caps-sm leading-tight t-body">{f.label}</span>
+                </Link>
+              ) : (
+                <button type="button" onClick={() => f.act({ setCat, setHoroscopeOpen, showToast })} className="tile w-[76px]">
+                  <span className="tile-face">
+                    <Icon name={f.icon} size={23} />
+                  </span>
+                  <span className="caps-sm leading-tight t-body">{f.label}</span>
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="px-5 py-6">
@@ -124,11 +151,27 @@ export default function Consult() {
                 </span>
               </Link>
 
-              {/* Chat and Book, on the row. Both were on the card in the
-                  previous layout and both are how people actually start. */}
-              <div className="mt-4 flex gap-3">
-                <PopButton onClick={() => openChat('live')}>Chat</PopButton>
-                <PopButton variant="gold" onClick={() => openBooking(c)}>
+              {/* Message, call and book. The first two are glyphs so the
+                  booking CTA keeps the width — three labelled buttons on a
+                  card this size wrap onto two lines. */}
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label={`Message ${firstName(c.name)}`}
+                  onClick={() => openChat('live')}
+                  className="pill knob !h-10 !w-10 flex-none justify-center"
+                >
+                  <Icon name="chat" size={18} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Call ${firstName(c.name)}`}
+                  onClick={() => showToast(`Calling ${firstName(c.name)} — prototype only`)}
+                  className="pill knob !h-10 !w-10 flex-none justify-center"
+                >
+                  <Icon name="phone" size={18} />
+                </button>
+                <PopButton variant="gold" className="flex-1" full={false} onClick={() => openBooking(c)}>
                   Book a slot
                 </PopButton>
               </div>

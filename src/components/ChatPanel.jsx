@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { askSuggestions, chatThreads, consultantReplies } from '../data/mock.js'
+import { askSuggestions, chatThreads, consultantReplies, notifications } from '../data/mock.js'
+import Icon from './Icon.jsx'
 import { PopAvatar, PopButton } from './Pop.jsx'
 import { useStore } from '../store.jsx'
 
@@ -19,8 +20,9 @@ const AI_REPLIES = [
  * opens from any tab and from the floating button without losing the screen
  * underneath — which is the whole point of a side panel over a page.
  *
- * Two tabs: Live Consultant (default) and Ask AI. Both are mock flows; nothing
- * leaves the browser.
+ * Three tabs: Live Consultant, Ask AI and Alerts. Ask AI opens by default —
+ * it is the one that always answers, where a consultant only replies inside a
+ * session window. All three are mock flows; nothing leaves the browser.
  */
 export default function ChatPanel() {
   const { chatOpen, setChatOpen, chatTab, setChatTab, questionsLeft, spendQuestion } = useStore()
@@ -54,8 +56,9 @@ export default function ChatPanel() {
 
           <div className="flex" role="tablist">
             {[
-              { key: 'live', label: 'Live Consultant' },
+              { key: 'live', label: 'Consultant' },
               { key: 'ai', label: 'Ask AI' },
+              { key: 'alerts', label: 'Alerts' },
             ].map((t) => (
               <button
                 key={t.key}
@@ -73,11 +76,11 @@ export default function ChatPanel() {
           </div>
         </header>
 
-        {chatTab === 'live' ? (
-          <LiveConsultant />
-        ) : (
+        {chatTab === 'live' && <LiveConsultant />}
+        {chatTab === 'ai' && (
           <AskAi questionsLeft={questionsLeft} spendQuestion={spendQuestion} />
         )}
+        {chatTab === 'alerts' && <Alerts />}
       </aside>
     </div>
   )
@@ -174,6 +177,7 @@ function Thread({ thread, onBack }) {
           <span className="block truncate text-meta t-heading">{thread.name}</span>
           <span className="block caps-sm t-faint">{thread.online ? 'Online' : 'Offline'}</span>
         </Link>
+        <CallButton name={thread.name} />
       </div>
 
       <div className="no-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
@@ -283,7 +287,50 @@ function AskAi({ questionsLeft, spendQuestion }) {
   )
 }
 
+/* ── Alerts ──────────────────────────────────────────────────────────────── */
+
+/** The old notifications route, folded in as the third tab. */
+function Alerts() {
+  return (
+    <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+      <ul>
+        {notifications.map((n) => (
+          <li key={n.id} className="border-b border-rule px-4 py-4">
+            <p className="caps-sm t-faint tnum">{n.time}</p>
+            <p className="mt-1.5 text-meta t-sub">{n.text}</p>
+          </li>
+        ))}
+      </ul>
+      <p className="px-4 py-6 text-meta t-faint">
+        Readings arrive at 08:00. Everything else is the sky doing something worth interrupting
+        you for.
+      </p>
+    </div>
+  )
+}
+
 /* ── Shared pieces ───────────────────────────────────────────────────────── */
+
+/**
+ * Call, wherever message appears.
+ *
+ * Classes are written out rather than built from props — Tailwind scans source
+ * text, so a name assembled at runtime (`!h-${size}`) is a class it never
+ * generates and a button that silently loses its size.
+ */
+export function CallButton({ name, className = '' }) {
+  const { showToast } = useStore()
+  return (
+    <button
+      type="button"
+      aria-label={`Call ${name}`}
+      onClick={() => showToast(`Calling ${name} — prototype only`)}
+      className={`pill knob !h-9 !w-9 flex-none justify-center ${className}`}
+    >
+      <Icon name="phone" size={16} />
+    </button>
+  )
+}
 
 function Bubble({ mine, text, time }) {
   return (

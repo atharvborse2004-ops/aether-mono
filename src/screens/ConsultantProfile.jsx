@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { consultants, timeSlots } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
+import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
+import { PopButton } from '../components/Pop.jsx'
 import {
   Acts,
   Avatar,
@@ -37,7 +39,7 @@ const DISTRIBUTION = [
 
 export default function ConsultantProfile() {
   const { id } = useParams()
-  const { showToast, hasFlag, toggleFlag } = useStore()
+  const { showToast, hasFlag, toggleFlag, openChat } = useStore()
   const [tab, setTab] = useState('about')
   const [sheet, setSheet] = useState(false)
   const [duration, setDuration] = useState(null)
@@ -78,35 +80,51 @@ export default function ConsultantProfile() {
       />
 
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
-        <Plate seed={c.id} className="h-40 w-full" />
+        {/* No banner. A cover image on a profile this dense pushes the name,
+            the numbers and the description below the fold, and it carried no
+            information — it was a generated plate of the same art as the
+            intro clip. The identity block leads instead. */}
+        <section className="px-5 pb-6 pt-6">
+          <div className="flex items-start gap-4">
+            <Avatar initials={c.initials} size={76} />
+            <div className="min-w-0 flex-1 pt-1">
+              <h1 className="truncate text-lead font-semibold t-heading">{c.name}</h1>
+              <p className="mt-0.5 truncate text-meta t-body">{c.specialization}</p>
 
-        <section className="section pt-8">
-          <div className="flex items-center gap-4">
-            <Avatar initials={c.initials} size={52} />
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lead font-light">{c.name}</h1>
-              <p className="mt-1 truncate text-meta text-t3">{c.specialization}</p>
+              {/* Rating, reviews, experience and followers as one small line
+                  under the name, the way a social profile reads them. They
+                  were a four-column bordered grid taking 90px of height to
+                  say four short numbers. */}
+              <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] t-faint tnum">
+                <span className="font-bold t-sub">{c.rating}</span> rating
+                <span aria-hidden="true">·</span>
+                <span className="font-bold t-sub">{c.reviewCount.toLocaleString('en-IN')}</span>{' '}
+                reviews
+                <span aria-hidden="true">·</span>
+                <span className="font-bold t-sub">{c.experience}</span>
+                <span aria-hidden="true">·</span>
+                <span className="font-bold t-sub">{c.followers}</span> followers
+              </p>
             </div>
           </div>
 
-          {/* Stats strip — left-aligned columns on a real grid, not centered. */}
-          <dl className="mt-8 grid grid-cols-4 border-y border-rule">
-            {[
-              ['Rating', c.rating],
-              ['Reviews', c.reviewCount.toLocaleString('en-IN')],
-              ['Exp', c.experience],
-              ['Follow', c.followers],
-            ].map(([k, v], i) => (
-              <div key={k} className={`py-4 ${i > 0 ? 'border-l border-rule pl-3' : ''}`}>
-                <dt className="text-micro uppercase tracking-caps text-t3">{k}</dt>
-                <dd className="mt-1 text-body text-t1 tnum">{v}</dd>
-              </div>
-            ))}
-          </dl>
+          {/* The description. It was buried in the About tab; on a profile it
+              is the thing you read right after the name. */}
+          <p className="mt-4 text-meta leading-relaxed t-sub">{c.bio}</p>
 
-          <div className="mt-6 flex gap-3">
-            <Button
-              variant={following ? 'solid' : 'quiet'}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {c.credentials.map((cr) => (
+              <Tag key={cr}>{cr}</Tag>
+            ))}
+          </div>
+
+          {/* Follow, message and call. The last two are glyphs — a labelled
+              button for each would take the whole row and say less. */}
+          <div className="mt-5 flex items-center gap-2">
+            <PopButton
+              className="flex-1"
+              full={false}
+              variant={following ? 'ghost' : 'default'}
               onClick={() =>
                 toggleFlag(`follow:${c.id}`, {
                   on: `Following ${firstName(c.name)}`,
@@ -115,25 +133,34 @@ export default function ConsultantProfile() {
               }
             >
               {following ? 'Following' : 'Follow'}
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={() => showToast(`Message sent to ${firstName(c.name)}`)}
+            </PopButton>
+            <button
+              type="button"
+              aria-label={`Message ${firstName(c.name)}`}
+              onClick={() => openChat('live')}
+              className="pill knob !h-10 !w-10 flex-none justify-center"
             >
-              Message
-            </Button>
+              <Icon name="chat" size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label={`Call ${firstName(c.name)}`}
+              onClick={() => showToast(`Calling ${firstName(c.name)} — prototype only`)}
+              className="pill knob !h-10 !w-10 flex-none justify-center"
+            >
+              <Icon name="phone" size={18} />
+            </button>
           </div>
 
-          {/* Intro recording. A plate, a duration and a label — the same
-              placeholder language every other piece of media uses here. */}
+          {/* Intro recording. */}
           <button
             type="button"
             onClick={() => showToast('Intro recording — prototype only')}
-            className="mt-6 block w-full text-left transition-opacity hover:opacity-60"
+            className="mt-5 block w-full text-left transition-opacity hover:opacity-70"
           >
             <Plate seed={`${c.id}-intro`} variant="orbit" className="aspect-video w-full">
               <span className="absolute inset-0 flex items-center justify-center">
-                <span className="border border-t1 bg-bg px-4 py-2 text-label uppercase tracking-label text-t1">
+                <span className="flex items-center gap-2 rounded-full bg-surface/90 px-3.5 py-2 shadow-sm caps-sm t-sub">
                   ▶ Meet {firstName(c.name)} · 1:24
                 </span>
               </span>
@@ -232,15 +259,8 @@ export default function ConsultantProfile() {
 function About({ c, shown, priceFor, onPick }) {
   return (
     <>
-      <Section label="In their words">
-        <p className="text-read text-t2">{c.bio}</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
-          {c.credentials.map((cr) => (
-            <Tag key={cr}>{cr}</Tag>
-          ))}
-        </div>
-      </Section>
-
+      {/* The bio and credentials moved up into the identity block — repeating
+          them here would be the same paragraph twice on one screen. */}
       <Section label="Practical">
         <Field k="Speaks" v={c.languages.join(' · ')} />
         <Field k="Category" v={c.category} />

@@ -32,7 +32,9 @@ export function AppProvider({ children }) {
   /* The chat panel — a right-side overlay rather than a route, so it can be
      opened from any tab and from the floating button without navigating. */
   const [chatOpen, setChatOpen] = useState(false)
-  const [chatTab, setChatTab] = useState('live')
+  // Ask AI is the default surface. It is the one that always answers —
+  // consultants only reply inside a session window.
+  const [chatTab, setChatTab] = useState('ai')
 
   /* The horoscope panel. Also an overlay: the top-right Horoscope control is a
      focused action, so it must not navigate away from whatever tab you are on
@@ -157,7 +159,7 @@ export function AppProvider({ children }) {
     [balance, showToast],
   )
 
-  const openChat = useCallback((tab = 'live') => {
+  const openChat = useCallback((tab = 'ai') => {
     setChatTab(tab)
     setChatOpen(true)
   }, [])

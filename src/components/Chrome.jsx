@@ -108,7 +108,7 @@ export function TabHeader({ action = null }) {
       {action}
       <button
         type="button"
-        onClick={() => openChat('live')}
+        onClick={() => openChat('ai')}
         aria-label="Messages"
         className="pill knob relative !h-9 !w-9 justify-center"
       >
