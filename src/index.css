@@ -51,10 +51,17 @@
      needs two of it: one dark enough to read as text, one bright enough to
      read as a fill. Using the bright one for text is the classic light-theme
      contrast failure. */
-  --gold: #97670f; /* text, borders, active states — 4.9:1 on canvas */
-  --gold-fill: #e3a63c; /* backgrounds only, always with ink on top       */
-  --gold-dim: #7a5410;
-  --gold-wash: rgba(227, 166, 60, 0.18);
+  /* Gold, not yellow. #e3a63c sat close to amber; pulling the hue warmer and
+     dropping the lightness a step reads as metal rather than highlighter.
+
+     Deepening --gold also fixed a contrast bug it did not set out to: the old
+     #97670f was annotated "4.9:1", which was its ratio against a white CARD.
+     Against the canvas it was 4.29:1 — under AA — and gold text appears on
+     both. Measure the tighter surface, and say which one you measured. */
+  --gold: #8f6210; /* text/borders — 4.7:1 on canvas, 5.4:1 on a card */
+  --gold-fill: #d29a2b; /* backgrounds only — ink on it is 7.7:1        */
+  --gold-dim: #6f4a0c;
+  --gold-wash: rgba(210, 154, 43, 0.18);
 
   /* Status, darkened for a light background. */
   --live: #cf3a25;
@@ -302,18 +309,18 @@
   }
 
   .pop-btn-gold {
-    background: linear-gradient(180deg, #f0be5e 0%, #d99a30 100%);
-    border-color: #a9760f;
+    background: linear-gradient(180deg, #e8b64a 0%, #c68c1c 100%);
+    border-color: #96690c;
     color: #1a1204;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 2px rgba(122, 84, 16, 0.24),
-      0 8px 18px -8px rgba(122, 84, 16, 0.5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 2px rgba(111, 74, 12, 0.26),
+      0 8px 18px -8px rgba(111, 74, 12, 0.52);
   }
   .pop-btn-gold:hover {
-    filter: brightness(1.06);
+    filter: brightness(1.07);
   }
   .pop-btn-gold:active {
-    background: linear-gradient(180deg, #cf9026 0%, #e5a740 100%);
-    box-shadow: inset 0 2px 5px rgba(90, 60, 6, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(180deg, #b57d16 0%, #d9a336 100%);
+    box-shadow: inset 0 2px 5px rgba(72, 48, 5, 0.52), inset 0 -1px 0 rgba(255, 255, 255, 0.26);
   }
 
   /* Quiet — a white pill on the canvas. CRED uses this shape for everything
@@ -725,8 +732,8 @@
     transition: background 0.3s ease;
   }
   .tick-on {
-    background: linear-gradient(180deg, #f0be5e 0%, #d99a30 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    background: linear-gradient(180deg, #e8b64a 0%, #c68c1c 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 
   /* ── Entrance ─────────────────────────────────────────────────────────────
