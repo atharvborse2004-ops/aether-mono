@@ -149,26 +149,6 @@ export function TabHeader({ action = null }) {
 }
 
 /**
- * Floating Ask AI button. Sits above the tab bar on every tab, opens the chat
- * panel straight onto the AI tab. Round on purpose — the single curved shape
- * in the app, which is exactly why it reads as the action.
- */
-export function AskAiButton() {
-  const { openChat } = useStore()
-
-  return (
-    <button
-      type="button"
-      onClick={() => openChat('ai')}
-      aria-label="Ask AI"
-      className="absolute bottom-[92px] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gold-fill text-ink shadow-gold transition-transform duration-200 hover:-translate-y-0.5 active:scale-95"
-    >
-      <span className="caps-sm leading-none">AI</span>
-    </button>
-  )
-}
-
-/**
  * Top bar. Left slot is either a back arrow or nothing; the title is the tiny
  * tracked caps label, centered; right slot is one optional action.
  *

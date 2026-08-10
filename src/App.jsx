@@ -1,6 +1,6 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { AppProvider, useStore } from './store.jsx'
-import { AskAiButton, BottomNav, PRO_TABS, Toast } from './components/Chrome.jsx'
+import { BottomNav, PRO_TABS, Toast } from './components/Chrome.jsx'
 import ChatPanel from './components/ChatPanel.jsx'
 import HoroscopePanel from './components/HoroscopePanel.jsx'
 import CartSheet from './components/CartSheet.jsx'
@@ -54,7 +54,6 @@ function TabLayout() {
       <main key={pathname} className="deal no-scrollbar min-h-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
-      <AskAiButton />
       <BottomNav />
     </>
   )
