@@ -605,6 +605,15 @@
     box-shadow: inset 0 2px 5px rgba(15, 14, 14, 0.14);
   }
 
+  /* Selected tile. Pressed in, the same grammar as a selected pill — the
+     circle stays a circle, it just stops being raised. */
+  .tile-face-on {
+    background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+    border-color: #08080a;
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+  }
+
   /* ── Rows ─────────────────────────────────────────────────────────────── */
 
   .act-row {

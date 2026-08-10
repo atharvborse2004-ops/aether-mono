@@ -15,16 +15,19 @@ import { useStore } from '../store.jsx'
    where the thumb is and where the raised Live button needs mass to sit in. */
 
 /**
- * Five destinations. Live is no longer one of them — Consult absorbed it as a
- * mode, since calling, chatting, watching and booking are four ways at the
- * same roster rather than two separate places. The freed slot went to Pooja.
+ * Five destinations, with Consult dead centre — it is the thing the app is
+ * for, and the middle slot is the one a thumb reaches without moving.
+ *
+ * Live is not among them: Consult absorbed it as a mode, since calling,
+ * chatting, watching and booking are four ways at the same roster rather than
+ * separate places.
  */
 const TABS = [
   { to: '/home', label: 'Home', icon: 'home' },
-  { to: '/consult', label: 'Consult', icon: 'consult' },
   { to: '/pooja', label: 'Pooja', icon: 'pooja' },
-  { to: '/academy', label: 'Academy', icon: 'academy' },
+  { to: '/consult', label: 'Consult', icon: 'consult' },
   { to: '/shop', label: 'Shop', icon: 'shop' },
+  { to: '/academy', label: 'Academy', icon: 'academy' },
 ]
 
 /**

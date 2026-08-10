@@ -156,6 +156,49 @@ export default {
           '0%': { transform: 'scaleY(0)' },
           '100%': { transform: 'scaleY(1)' },
         },
+        /* ── E-puja ────────────────────────────────────────────────────
+           A shrine is the one place in this app where motion is the point
+           rather than the polish, so these are livelier than the rest. */
+        // A flame does not pulse evenly — it leans, narrows, and recovers.
+        flicker: {
+          '0%, 100%': { transform: 'scaleY(1) scaleX(1) translateX(0)', opacity: '1' },
+          '25%': { transform: 'scaleY(1.14) scaleX(0.94) translateX(-0.4px)', opacity: '0.92' },
+          '50%': { transform: 'scaleY(0.92) scaleX(1.06) translateX(0.5px)', opacity: '1' },
+          '75%': { transform: 'scaleY(1.08) scaleX(0.97) translateX(0.2px)', opacity: '0.95' },
+        },
+        // Petals do not drop straight down; they slip sideways and turn over.
+        petal: {
+          '0%': { transform: 'translateY(-12%) translateX(0) rotate(0deg)', opacity: '0' },
+          '10%': { opacity: '1' },
+          '100%': { transform: 'translateY(360%) translateX(18px) rotate(220deg)', opacity: '0' },
+        },
+        swing: {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '15%': { transform: 'rotate(13deg)' },
+          '35%': { transform: 'rotate(-10deg)' },
+          '55%': { transform: 'rotate(6deg)' },
+          '75%': { transform: 'rotate(-3deg)' },
+        },
+        // The aarti lamp travels the traditional circle in front of the idol.
+        aarti: {
+          '0%': { transform: 'rotate(0deg) translateX(34px) rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg) translateX(34px) rotate(-360deg)' },
+        },
+        halo: {
+          '0%, 100%': { opacity: '0.25', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(1.06)' },
+        },
+        // One expanding ring when an offering lands.
+        ripple: {
+          '0%': { transform: 'scale(0.6)', opacity: '0.55' },
+          '100%': { transform: 'scale(2.4)', opacity: '0' },
+        },
+        smoke: {
+          '0%': { transform: 'translateY(0) scaleX(1)', opacity: '0' },
+          '20%': { opacity: '0.5' },
+          '100%': { transform: 'translateY(-38px) scaleX(2.2)', opacity: '0' },
+        },
+
         // Slow vertical drift for the decorative art inside banners.
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -175,6 +218,13 @@ export default {
         grow: 'grow 0.7s cubic-bezier(.2,.7,.3,1) both',
         'grow-y': 'grow-y 0.5s cubic-bezier(.2,.7,.3,1) both',
         float: 'float 5s ease-in-out infinite',
+        flicker: 'flicker 1.1s ease-in-out infinite',
+        petal: 'petal 3.4s linear forwards',
+        swing: 'swing 1.4s ease-out',
+        aarti: 'aarti 2.6s linear infinite',
+        halo: 'halo 3s ease-in-out infinite',
+        ripple: 'ripple 0.9s ease-out forwards',
+        smoke: 'smoke 3.6s ease-out infinite',
       },
     },
   },

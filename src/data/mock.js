@@ -679,7 +679,7 @@ export const consultants = [
     followers: '84.2k',
     bio: 'I read charts the way a doctor reads a scan. Pattern first, prescription second. Twelve years, mostly career timing and relocation. I will not tell you what you want to hear, and I will not leave you without a next step.',
     credentials: ['Jyotish Visharad', 'ICAS Certified', '10k+ sessions'],
-    slots: ['10 min', '15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Kabir S.', rating: 5, ago: '2 days ago', text: 'She called the job change window down to the fortnight. Direct, no upselling, no fear talk.' },
       { id: 'r2', name: 'Priya M.', rating: 5, ago: '1 week ago', text: 'Second session. She remembers the chart and the context, which is rarer than it should be.' },
@@ -707,7 +707,7 @@ export const consultants = [
     followers: '31.5k',
     bio: 'KP practitioner working mostly with relationship and family questions. Sessions stay calm and specific. We look at the chart, we look at what you can change, and we stop there.',
     credentials: ['KP Astrology Diploma', '5k+ sessions'],
-    slots: ['10 min', '15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Sneha R.', rating: 5, ago: '4 days ago', text: 'Gentle and clear. Did not push a single remedy on me.' },
       { id: 'r2', name: 'Arjun T.', rating: 4, ago: '2 weeks ago', text: 'Took a while to get to the point but the reading was solid.' },
@@ -733,7 +733,7 @@ export const consultants = [
     followers: '52.0k',
     bio: 'Tarot as a thinking tool, not a fortune machine. Most clients arrive with a decision half-made and leave with it fully made. I take notes so you do not have to.',
     credentials: ['Certified Tarot Reader', 'Somatic Coaching L1', '4k+ sessions'],
-    slots: ['10 min', '15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Tara V.', rating: 5, ago: '1 day ago', text: 'Left with an actual decision instead of more anxiety.' },
       { id: 'r2', name: 'Ishaan G.', rating: 5, ago: '9 days ago', text: 'She asks better questions than the cards do, honestly.' },
@@ -759,7 +759,7 @@ export const consultants = [
     followers: '19.8k',
     bio: 'Licensed clinical psychologist. I work alongside, not instead of, whatever practice supports you. Grief, health anxiety and the long tail of burnout are what I see most.',
     credentials: ['M.Phil Clinical Psych', 'RCI Registered', 'CBT & ACT trained'],
-    slots: ['15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Anonymous', rating: 5, ago: '5 days ago', text: 'First session in years where I did not feel rushed.' },
       { id: 'r2', name: 'Rhea D.', rating: 5, ago: '3 weeks ago', text: 'Steady, kind, extremely practical.' },
@@ -784,7 +784,7 @@ export const consultants = [
     followers: '8.4k',
     bio: 'Two decades of numerology work, mostly with founders deciding on names, launch dates and partnerships.',
     credentials: ['Chaldean & Pythagorean systems', '9k+ sessions'],
-    slots: ['10 min', '15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Manav J.', rating: 5, ago: '1 week ago', text: 'Named my company with him. Practical, quick, fair price.' },
       { id: 'r2', name: 'Anonymous', rating: 4, ago: '1 month ago', text: 'Good value. Call quality could be better.' },
@@ -809,7 +809,7 @@ export const consultants = [
     followers: '26.7k',
     bio: 'I coach people through the messy middle. The year after a resignation, a move, or a breakup. Structured sessions, homework if you want it, accountability if you ask.',
     credentials: ['ICF PCC', 'Positive Psychology Cert.'],
-    slots: ['15 min', '30 min'],
+    slots: ['20 min'],
     reviews: [
       { id: 'r1', name: 'Nikhil B.', rating: 5, ago: '6 days ago', text: 'Turned a vague panic into a three-month plan.' },
       { id: 'r2', name: 'Aditi P.', rating: 4, ago: '2 weeks ago', text: 'Very structured. Bring notes.' },
@@ -1020,6 +1020,130 @@ export const tarotCards = [
   { id: 'tc12', name: 'Wheel of Fortune', line: 'Timing turns this week. Nothing about your effort changes with it.' },
 ]
 
+/**
+ * One session length, and no clock on the questions.
+ *
+ * Consultants used to sell 10 / 15 / 30 minutes, which made the first thing a
+ * client did a pricing decision instead of a choosing-a-person decision. Now
+ * every session is the same twenty minutes and you ask as much as you like
+ * inside it — `price` on a consultant record IS the session price.
+ */
+export const SESSION = { mins: 20, label: '20 min', promise: 'Unlimited questions' }
+
+/**
+ * Today's panchang. The almanac half of the app — the daily reading says what
+ * to do with the day, this says what the day is made of.
+ */
+export const panchang = {
+  date: 'Monday, 10 August 2026',
+  tithi: 'Shukla Tritiya',
+  nakshatra: 'Uttara Phalguni',
+  yoga: 'Siddhi',
+  karana: 'Taitila',
+  paksha: 'Shukla',
+  sunrise: '06:14',
+  sunset: '19:02',
+  moonSign: 'Kanya',
+  rahuKaal: '07:52 - 09:29',
+  abhijit: '12:19 - 13:10',
+  line: 'Siddhi yoga runs until sunset. Start the thing you have been staging, and do not sign it during Rahu kaal.',
+}
+
+/* ==========================================================================
+   MANDIR - e-puja only. Nothing here books a pandit or takes a payment; the
+   ritual happens on the screen.
+   ========================================================================== */
+
+export const deities = [
+  { id: 'd1', name: 'Ganesh', graha: 'Ketu', day: 'Wednesday', aarti: 'Jai Ganesh Deva',
+    forWhat: 'Anything that has not started yet.',
+    line: 'Removed obstacles are not the same as an easy road. He clears the entrance, not the route.' },
+  { id: 'd2', name: 'Shiva', graha: 'Chandra', day: 'Monday', aarti: 'Om Jai Shiv Omkara',
+    forWhat: 'Grief, illness, and what you cannot fix by trying harder.',
+    line: 'Rudrabhishek is the loud version. This is the quiet one, and it counts the same.' },
+  { id: 'd3', name: 'Lakshmi', graha: 'Shukra', day: 'Friday', aarti: 'Om Jai Lakshmi Mata',
+    forWhat: 'Money that arrives and does not stay.',
+    line: 'She is asked for stability more often than for wealth. The second is easier to grant.' },
+  { id: 'd4', name: 'Hanuman', graha: 'Mangal', day: 'Tuesday', aarti: 'Aarti Kije Hanuman Lala Ki',
+    forWhat: 'Fear, court matters, and Mangal sitting badly.',
+    line: 'Tuesdays and Saturdays. Read the Chalisa if you have forty minutes; light a diya if you have four.' },
+  { id: 'd5', name: 'Durga', graha: 'Rahu', day: 'Friday', aarti: 'Jai Ambe Gauri',
+    forWhat: 'A fight you did not pick and cannot leave.',
+    line: 'Navratri is the season. The rest of the year she is still there and considerably less busy.' },
+  { id: 'd6', name: 'Shani', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
+    forWhat: 'Sade sati, dhaiya, and the long grinding years.',
+    line: 'He is not punishing you. He is charging you for what you already did, in instalments.' },
+]
+
+/** What you can do at the shrine. Each one is an animation, not a purchase. */
+export const offerings = [
+  { id: 'o1', key: 'bell', label: 'Bell', says: 'Ghanti rung' },
+  { id: 'o2', key: 'flower', label: 'Flowers', says: 'Pushpanjali offered' },
+  { id: 'o3', key: 'diya', label: 'Diya', says: 'Diya lit' },
+  { id: 'o4', key: 'incense', label: 'Dhoop', says: 'Dhoop lit' },
+]
+
+/* ==========================================================================
+   TAROT - one free pull a week, then priced per card.
+   ========================================================================== */
+
+export const TAROT_PRICE = 11
+
+/**
+ * Decks by tradition rather than one Western pack. The cards differ; the
+ * register does not - a card describes a position, it does not promise one.
+ */
+export const tarotDecks = [
+  {
+    id: 'dk1', name: 'Rider-Waite', tradition: 'Western',
+    line: 'The pack most people picture. Heavy on the majors.',
+    cards: [
+      { id: 'w1', name: 'The Tower', line: 'The thing you are bracing for has already happened. You are bracing for the admission.' },
+      { id: 'w2', name: 'The Hermit', line: 'Withdrawing is working. It stops working the day it becomes the point.' },
+      { id: 'w3', name: 'The Star', line: 'You are being given time, not a guarantee. Use it on the boring part.' },
+      { id: 'w4', name: 'Wheel of Fortune', line: 'Timing turns this week. Nothing about your effort changes with it.' },
+      { id: 'w5', name: 'The Moon', line: 'You have the facts. What you do not have is a version of them you can live with.' },
+      { id: 'w6', name: 'Justice', line: 'The fair outcome and the outcome you want are not the same shape this month.' },
+    ],
+  },
+  {
+    id: 'dk2', name: 'Vedic Kipper', tradition: 'Hindu',
+    line: 'Read against the chart rather than alone. Each card names a house.',
+    cards: [
+      { id: 'v1', name: 'Dashami, the Tenth', line: 'Career asks first this month. The house you keep postponing is the one moving.' },
+      { id: 'v2', name: 'Chandra, the Moon', line: 'Your mood is weather, not evidence. Wait four days before deciding it is a pattern.' },
+      { id: 'v3', name: 'Ketu, the Tail', line: 'Something is ending without drama. Let it end without drama.' },
+      { id: 'v4', name: 'Guru, the Teacher', line: 'Advice is arriving. The useful kind will not be the flattering kind.' },
+      { id: 'v5', name: 'Shukra, the Bright', line: 'Ease is available. You are allowed to take it without earning it first.' },
+      { id: 'v6', name: 'Shani, the Slow', line: 'On schedule, not late. You are measuring against a calendar nobody agreed to.' },
+    ],
+  },
+  {
+    id: 'dk3', name: 'Sufi Path', tradition: 'Islamic',
+    line: 'Stations rather than events. What the card names is a state you are in.',
+    cards: [
+      { id: 's1', name: 'Sabr, Patience', line: 'Waiting is the work here. Not the waiting where you refresh the page.' },
+      { id: 's2', name: 'Tawakkul, Trust', line: 'You have done the part that was yours. The rest was never yours.' },
+      { id: 's3', name: 'Fana, Dissolving', line: 'The version of you that wanted this is not the one who will have it.' },
+      { id: 's4', name: 'Shukr, Gratitude', line: 'Count it before it changes. It will change.' },
+      { id: 's5', name: 'Qabd, Contraction', line: 'The closing-in is a season, not a verdict. Do less and do it properly.' },
+      { id: 's6', name: 'Bast, Expansion', line: 'Room has opened. Fill it deliberately or it will fill itself.' },
+    ],
+  },
+  {
+    id: 'dk4', name: 'Lotus Path', tradition: 'Buddhist',
+    line: 'Attachment, aversion and the middle. Blunter than it sounds.',
+    cards: [
+      { id: 'b1', name: 'Anicca, Impermanence', line: 'It is already leaving. Holding tighter changes the grip, not the going.' },
+      { id: 'b2', name: 'Dukkha, Friction', line: 'The discomfort is information. It is telling you where you are gripping.' },
+      { id: 'b3', name: 'Metta, Kindness', line: 'Start with the person you are hardest on. It is not who you think.' },
+      { id: 'b4', name: 'Upekkha, Equanimity', line: 'Caring less is not the goal. Caring without flinching is.' },
+      { id: 'b5', name: 'Sunyata, Emptiness', line: 'The thing you fear losing was never a fixed object. Neither are you.' },
+      { id: 'b6', name: 'Sila, Conduct', line: 'You know the right action. The question was only ever whether you would take it.' },
+    ],
+  },
+]
+
 export const timeSlots = ['09:30', '11:00', '13:30', '16:00', '18:30', '20:00']
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1096,6 +1220,14 @@ export const premiumTiers = [
 /* ══════════════════════════════════════════════════════════════════════════
    SHOP
    ══════════════════════════════════════════════════════════════════════════ */
+
+/** What sits inside each shop category, revealed once one is chosen. */
+export const shopSubcategories = {
+  Gemstones: ['Blue Sapphire', 'Yellow Sapphire', 'Emerald', 'Ruby', 'Pearl'],
+  Maalas: ['Sphatik', 'Tulsi', 'Sandalwood', 'Lotus seed'],
+  Rudraksha: ['1 Mukhi', '5 Mukhi', '7 Mukhi', 'Gauri Shankar'],
+  Remedies: ['Yantras', 'Ritual kits', 'Oils', 'Camphor & loban'],
+}
 
 export const shopCategories = ['Gemstones', 'Maalas', 'Rudraksha', 'Remedies']
 

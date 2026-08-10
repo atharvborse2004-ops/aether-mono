@@ -5,6 +5,7 @@ import {
   days,
   feed,
   liveSessions,
+  panchang,
   posts,
   products,
   reads,
@@ -27,15 +28,15 @@ import { useStore } from '../store.jsx'
  * Each is a route or an action on this screen; none of them opens a dead end.
  */
 const FREE_TOOLS = [
-  { key: 'kundli', label: 'Kundli', icon: 'kundli', to: '/chart' },
-  { key: 'ai', label: 'Ask AI', icon: 'ai', act: ({ openChat }) => openChat('ai') },
-  { key: 'tarot', label: 'Tarot', icon: 'tarot', to: '/tarot' },
   {
     key: 'horoscope',
     label: 'Horoscope',
     icon: 'horoscope',
     act: ({ setHoroscopeOpen }) => setHoroscopeOpen(true),
   },
+  { key: 'ai', label: 'Ask AI', icon: 'ai', act: ({ openChat }) => openChat('ai') },
+  { key: 'tarot', label: 'Tarot', icon: 'tarot', to: '/tarot' },
+  { key: 'match', label: 'Matching', icon: 'consult', to: '/people' },
 ]
 
 /** Every feed record resolves against one of these by `refId`. */
@@ -59,13 +60,23 @@ const SOURCES = {
  * data and stays in sync with the screen it links to.
  */
 export default function Home({ action }) {
-  const items = feed
+  /* The reading leads and the panchang follows it, ahead of anything social.
+     Both are the product; a consultant's note is content about the product.
+     They are hoisted here rather than reordered in `feed` so the pointer list
+     stays a list of content and does not have to carry the two fixed cards. */
+  const rest = feed
+    .filter((f) => f.kind !== 'reading')
     .map((f) => {
-      if (f.kind === 'reading') return { ...f, data: days[f.refId] }
       const found = SOURCES[f.kind]?.find((x) => x.id === f.refId)
       return found ? { ...f, data: found } : null
     })
     .filter(Boolean)
+
+  const items = [
+    { id: 'f-reading', kind: 'reading', data: days.today },
+    { id: 'f-panchang', kind: 'panchang' },
+    ...rest,
+  ]
 
   return (
     <>
@@ -82,6 +93,8 @@ export default function Home({ action }) {
               return <ReelCard key={item.id} reel={item.data} />
             case 'reading':
               return <ReadingCard key={item.id} day={item.data} />
+            case 'panchang':
+              return <PanchangCard key={item.id} />
             case 'article':
               return <ArticleCard key={item.id} read={item.data} />
             case 'live':
@@ -288,6 +301,59 @@ function ReadingCard({ day }) {
           ))}
         </dl>
       </div>
+    </article>
+  )
+}
+
+/**
+ * Today's panchang, as the second card.
+ *
+ * Six figures in a grid and the two windows anyone actually checks. Rahu kaal
+ * gets the warning colour because it is the only line here that tells you not
+ * to do something.
+ */
+function PanchangCard() {
+  return (
+    <article className="pop-card p-4">
+      <Kicker action="Full chart" to="/chart">
+        Today&apos;s panchang
+      </Kicker>
+      <p className="mt-2 caps-sm t-faint tnum">{panchang.date}</p>
+
+      <dl className="mt-4 grid grid-cols-3 gap-y-4">
+        {[
+          ['Tithi', panchang.tithi],
+          ['Nakshatra', panchang.nakshatra],
+          ['Yoga', panchang.yoga],
+          ['Karana', panchang.karana],
+          ['Moon', panchang.moonSign],
+          ['Paksha', panchang.paksha],
+        ].map(([k, v]) => (
+          <div key={k}>
+            <dt className="caps-sm t-faint">{k}</dt>
+            <dd className="mt-1 text-meta t-heading">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-4 flex gap-2">
+        <div className="pop-inset flex-1 p-3">
+          <p className="caps-sm text-live">Rahu kaal</p>
+          <p className="mt-1 text-meta tnum t-heading">{panchang.rahuKaal}</p>
+        </div>
+        <div className="pop-inset flex-1 p-3">
+          <p className="caps-sm gold">Abhijit</p>
+          <p className="mt-1 text-meta tnum t-heading">{panchang.abhijit}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center gap-3 caps-sm t-faint tnum">
+        <span>Sunrise {panchang.sunrise}</span>
+        <span aria-hidden="true">·</span>
+        <span>Sunset {panchang.sunset}</span>
+      </div>
+
+      <p className="mt-4 text-meta t-body">{panchang.line}</p>
     </article>
   )
 }

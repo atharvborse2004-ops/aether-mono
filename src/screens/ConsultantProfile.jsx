@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { bookedSlots, consultants, timeSlots } from '../data/mock.js'
+import { bookedSlots, consultants, SESSION, timeSlots } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
@@ -39,7 +39,6 @@ export default function ConsultantProfile() {
   const { showToast, hasFlag, toggleFlag, openChat } = useStore()
   const [tab, setTab] = useState('about')
   const [sheet, setSheet] = useState(false)
-  const [duration, setDuration] = useState(null)
   const [slot, setSlot] = useState(null)
 
   const c = consultants.find((x) => x.id === id)
@@ -47,13 +46,9 @@ export default function ConsultantProfile() {
 
   const following = hasFlag(`follow:${c.id}`)
 
-  // Priced per session against the 15-minute base, rounded to the nearest ten,
-  // so the number under each length is the number you actually pay.
-  const priceFor = (mins) => Math.round((c.price * (parseInt(mins, 10) / 15)) / 10) * 10
-  const shown = duration || c.slots[0]
+  /* One length now, so `price` is the whole story. */
 
   const openSheet = () => {
-    setDuration((d) => d || c.slots[0])
     setSlot(null)
     setSheet(true)
   }
@@ -168,7 +163,7 @@ export default function ConsultantProfile() {
         <Segmented items={TABS} value={tab} onChange={setTab} />
 
         <div key={tab} className="animate-fade">
-          {tab === 'about' && <About c={c} shown={shown} priceFor={priceFor} onPick={setDuration} />}
+          {tab === 'about' && <About c={c} />}
           {tab === 'work' && <Work c={c} />}
           {tab === 'reviews' && <Reviews c={c} />}
         </div>
@@ -179,7 +174,7 @@ export default function ConsultantProfile() {
             Bring the question you have been rewriting in your head. Not the polite version of it.
           </p>
           <Button onClick={openSheet} variant="solid">
-            Book a session · ₹{priceFor(shown).toLocaleString('en-IN')}
+            Book a session · ₹{c.price.toLocaleString('en-IN')}
           </Button>
         </Section>
 
@@ -190,8 +185,10 @@ export default function ConsultantProfile() {
           which is the difference between a profile and a brochure. */}
       <div className="flex flex-none items-center gap-4 border-t border-rule bg-bg px-6 py-4">
         <div className="min-w-0">
-          <p className="text-lead font-light tnum">₹{priceFor(shown).toLocaleString('en-IN')}</p>
-          <p className="mt-0.5 text-micro uppercase tracking-caps text-t3">Per session · {shown}</p>
+          <p className="text-lead font-light tnum">₹{c.price.toLocaleString('en-IN')}</p>
+          <p className="mt-0.5 text-micro uppercase tracking-caps text-t3">
+            {SESSION.label} · {SESSION.promise}
+          </p>
         </div>
         <Button onClick={openSheet} variant="solid" className="flex-1">
           Book a call
@@ -199,19 +196,6 @@ export default function ConsultantProfile() {
       </div>
 
       <Sheet open={sheet} onClose={() => setSheet(false)} title={`Book ${firstName(c.name)}`}>
-        <p className="label text-left mb-4">Length</p>
-        <div className="mb-10 flex gap-3">
-          {c.slots.map((s) => (
-            <Button
-              key={s}
-              variant={shown === s ? 'solid' : 'quiet'}
-              onClick={() => setDuration(s)}
-            >
-              {s}
-            </Button>
-          ))}
-        </div>
-
         <p className="label text-left mb-4">Available today</p>
         <div className="mb-10 grid grid-cols-3 gap-3">
           {timeSlots.map((t) => {
@@ -231,8 +215,9 @@ export default function ConsultantProfile() {
 
         <Field k="Consultant" v={c.name} />
         <Field k="When" v={slot ? `Today, ${slot}` : 'Not picked yet'} />
-        <Field k="Length" v={shown} />
-        <Field k="Total" v={`₹${priceFor(shown).toLocaleString('en-IN')}`} />
+        <Field k="Length" v={SESSION.label} />
+        <Field k="Questions" v={SESSION.promise} />
+        <Field k="Total" v={`₹${c.price.toLocaleString('en-IN')}`} />
 
         <Button
           className="mt-10"
@@ -253,7 +238,7 @@ export default function ConsultantProfile() {
   )
 }
 
-function About({ c, shown, priceFor, onPick }) {
+function About({ c }) {
   return (
     <>
       {/* The bio and credentials moved up into the identity block — repeating
@@ -265,27 +250,13 @@ function About({ c, shown, priceFor, onPick }) {
         <Field k="Status" v={c.online ? 'Online now' : 'Offline'} />
       </Section>
 
-      {/* Length picker, with the real price under each option rather than one
-          headline rate that turns out to be the shortest call. */}
-      <Section label="Choose a session">
-        <div className="flex gap-3">
-          {c.slots.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-pressed={shown === s}
-              onClick={() => onPick(s)}
-              className="pill caps-sm flex-1 flex-col !px-2 !py-3 text-center"
-            >
-              <span className="block text-label uppercase tracking-label">{s}</span>
-              <span className="mt-1.5 block text-meta tnum">
-                ₹{priceFor(s).toLocaleString('en-IN')}
-              </span>
-            </button>
-          ))}
-        </div>
+      <Section label="What a session is">
+        <Field k="Length" v={SESSION.label} />
+        <Field k="Questions" v={SESSION.promise} />
+        <Field k="Price" v={`₹${c.price.toLocaleString('en-IN')}`} />
         <p className="mt-6 text-center text-meta text-t3">
-          Priced per session, not per minute. If the call runs over, it runs over.
+          One length, one price. Ask as much as you like inside it — if the call runs over, it
+          runs over.
         </p>
       </Section>
     </>

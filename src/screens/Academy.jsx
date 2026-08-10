@@ -139,13 +139,25 @@ function Events() {
 
           return (
             <li key={e.id}>
-              <PopCard className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+              <PopCard className="overflow-hidden">
+                {/* A cover, so an event reads as the same kind of object as a
+                    course. Without one these were settings rows sitting next
+                    to cards. */}
+                <Plate seed={`${e.id}-cover`} variant="orbit" className="aspect-[21/9] w-full">
+                  <span className="absolute left-3 top-3">
                     <PopTag tone={e.price === 0 ? 'gold' : 'default'}>
                       {e.price === 0 ? 'Free' : e.kind}
                     </PopTag>
-                    <p className="mt-3 text-body t-heading">{e.title}</p>
+                  </span>
+                  <span className="caps-sm absolute bottom-3 left-3 rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub tnum">
+                    {e.date} · {e.time}
+                  </span>
+                </Plate>
+
+                <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-body t-heading">{e.title}</p>
                   </div>
                   <div className="flex-none text-right">
                     <p className="caps-sm t-faint tnum">{e.date}</p>
@@ -185,6 +197,7 @@ function Events() {
                     {full && !joined ? 'Sold out' : joined ? 'Enrolled' : 'Enrol'}
                   </PopButton>
                 </div>
+                </div>
               </PopCard>
             </li>
           )
@@ -200,24 +213,32 @@ function Downloads() {
   return (
     <section className="px-5 py-6">
       <Kicker>Saved to this device</Kicker>
-      <ul className="mt-4 space-y-3">
+      <ul className="mt-4 space-y-4">
         {downloads.map((d) => (
           <li key={d.id}>
-            <PopCard className="flex items-center gap-3 p-3">
-              <Plate seed={d.id} className="h-14 w-14 flex-none" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-meta t-heading">{d.title}</p>
-                <p className="mt-1 caps-sm t-faint tnum">
-                  {d.kind} · {d.size} · {d.saved}
-                </p>
+            <PopCard className="overflow-hidden">
+              <Plate seed={`${d.id}-cover`} variant="contour" className="aspect-[21/9] w-full">
+                <span className="absolute left-3 top-3">
+                  <PopTag>{d.kind}</PopTag>
+                </span>
+                <span className="caps-sm absolute bottom-3 left-3 rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub tnum">
+                  {d.size} · {d.saved}
+                </span>
+              </Plate>
+
+              <div className="flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-meta t-heading">{d.title}</p>
+                  <p className="mt-1 caps-sm t-faint">From {d.course}</p>
+                </div>
+                <PopButton
+                  onClick={() => showToast(`Opening ${d.kind.toLowerCase()}`)}
+                  full={false}
+                  className="flex-none px-4"
+                >
+                  {d.kind === 'Video' ? 'Play' : 'Open'}
+                </PopButton>
               </div>
-              <PopButton
-                onClick={() => showToast(`Opening ${d.kind.toLowerCase()}`)}
-                full={false}
-                className="flex-none px-3 py-1.5"
-              >
-                {d.kind === 'Video' ? 'Play' : 'Open'}
-              </PopButton>
             </PopCard>
           </li>
         ))}

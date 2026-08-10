@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { products, shopCategories, user } from '../data/mock.js'
+import { products, shopCategories, shopSubcategories, user } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
@@ -58,11 +58,27 @@ const BANNERS = [
  * a two-up grid for everything else. A single uniform grid reads as a
  * catalogue; the break gives the screen a front page.
  */
+/** One gradient and one line per category, for the banner above its grid. */
+const CAT_GRADIENT = {
+  Gemstones: 'linear-gradient(135deg, #5b2bc4 0%, #9d5cf0 100%)',
+  Maalas: 'linear-gradient(135deg, #0f4c38 0%, #2f8f66 100%)',
+  Rudraksha: 'linear-gradient(135deg, #6b3410 0%, #b5722c 100%)',
+  Remedies: 'linear-gradient(135deg, #8a2d3d 0%, #cf5f72 100%)',
+}
+
+const CAT_LINE = {
+  Gemstones: 'Certified, or we do not list it',
+  Maalas: 'Counted by hand, knotted one at a time',
+  Rudraksha: 'Nepali and Java origin, lab checked',
+  Remedies: 'Everything the ritual needs, in one box',
+}
+
 export default function Shop() {
   const { cartCount, addToCart, buyNow, setCartOpen, showToast } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
   const [slide, setSlide] = useState(0)
+  const [sub, setSub] = useState(null)
   const rail = useRef(null)
 
   // One banner's worth of scroll, measured off the DOM rather than derived
@@ -85,8 +101,11 @@ export default function Shop() {
   const q = query.trim().toLowerCase()
   const list = products.filter((p) => {
     const inCat = cat === 'All' || p.category === cat
+    // Products carry no subcategory field; matching on the name is the cheap
+    // honest join for mock data, and it fails open rather than showing zero.
+    const inSub = !sub || `${p.name} ${p.subtitle}`.toLowerCase().includes(sub.toLowerCase())
     const inQuery = !q || [p.name, p.subtitle, p.category].some((f) => f.toLowerCase().includes(q))
-    return inCat && inQuery
+    return inCat && inSub && inQuery
   })
 
   // The chart-matched pick leads the page when no filter is narrowing things.
@@ -177,13 +196,54 @@ export default function Shop() {
             key={f}
             type="button"
             aria-pressed={cat === f}
-            onClick={() => setCat(f)}
+            onClick={() => {
+              setCat(f)
+              setSub(null)
+            }}
             className="pill caps-sm"
           >
             {f}
           </button>
         ))}
       </div>
+
+      {/* A banner for the category you are in, then what sits inside it.
+          Both only exist once you have chosen — on All they would be noise on
+          top of the promo rail that is already there. */}
+      {cat !== 'All' && (
+        <>
+          <section className="px-4 pb-1">
+            <div className="banner p-4" style={{ backgroundImage: CAT_GRADIENT[cat] }}>
+              <Plate
+                seed={`cat-${cat}`}
+                variant="halftone"
+                className="pointer-events-none absolute -right-6 -top-4 h-[150%] w-1/2 bg-transparent opacity-25 mix-blend-overlay"
+              />
+              <span className="sheen animate-sweep" />
+              <span className="relative block">
+                <span className="caps-sm text-white/70">{cat}</span>
+                <span className="mt-1.5 block text-lead font-medium leading-tight text-white">
+                  {CAT_LINE[cat]}
+                </span>
+              </span>
+            </div>
+          </section>
+
+          <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
+            {(shopSubcategories[cat] || []).map((sc) => (
+              <button
+                key={sc}
+                type="button"
+                aria-pressed={sub === sc}
+                onClick={() => setSub(sub === sc ? null : sc)}
+                className="pill caps-sm"
+              >
+                {sc}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* ── Chart-matched hero ────────────────────────────────────────── */}
       {hero && (
@@ -225,7 +285,7 @@ export default function Shop() {
 
         {rest.length === 0 ? (
           <p className="py-12 text-center text-meta t-faint">
-            Nothing matches that. Clear the search or pick another category.
+            Nothing matches that. Clear the search, or drop the subcategory.
           </p>
         ) : (
           <ul className="mt-3 grid grid-cols-2 gap-3">
