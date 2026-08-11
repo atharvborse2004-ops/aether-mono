@@ -965,69 +965,6 @@ export const referrals = {
 /** Availability, a week at a time rather than one day of six slots. */
 export const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-/**
- * Pooja. Booked like a session but delivered by a pandit, and the thing being
- * sold is the ritual rather than the hour — so these carry a purpose and a
- * duration in hours, not a per-minute rate.
- */
-export const poojaCategories = ['All', 'Graha', 'Prosperity', 'Protection', 'Ancestral']
-
-export const poojas = [
-  { id: 'pj1', name: 'Navagraha Shanti', category: 'Graha', pandits: 12, duration: '2 hrs', price: 5100,
-    forWhat: 'A hard transit you can name. Saturn, usually.',
-    line: 'Nine planets, nine offerings. Booked most often in the fortnight before a Saturn return.' },
-  { id: 'pj2', name: 'Rudrabhishek', category: 'Protection', pandits: 18, duration: '90 min', price: 3100,
-    forWhat: 'Illness in the house, or a run of bad luck nobody can explain.',
-    line: 'Performed at a Shiva temple or at home. Ask for the temple version if you want witnesses.' },
-  { id: 'pj3', name: 'Satyanarayan Katha', category: 'Prosperity', pandits: 24, duration: '3 hrs', price: 4100,
-    forWhat: 'A new house, a new business, a promise you made and kept.',
-    line: 'A thanksgiving, not a request. Doing it before the thing has happened is the common mistake.' },
-  { id: 'pj4', name: 'Mangal Dosha Nivaran', category: 'Graha', pandits: 9, duration: '2 hrs', price: 6100,
-    forWhat: 'A match held up by Mars in the 7th.',
-    line: 'Get the chart read first. Half the people who book this do not have the dosha.' },
-  { id: 'pj5', name: 'Pitru Paksha Shraddha', category: 'Ancestral', pandits: 15, duration: '2 hrs', price: 2100,
-    forWhat: 'The fortnight itself, or a death anniversary.',
-    line: 'Timed to the lunar date, not the calendar one. We will tell you which day is yours.' },
-  { id: 'pj6', name: 'Lakshmi Kubera Homam', category: 'Prosperity', pandits: 11, duration: '2.5 hrs', price: 7100,
-    forWhat: 'Money that arrives and does not stay.',
-    line: 'A fire ritual. Needs an outdoor space or a temple booking — we arrange it.' },
-]
-
-/** What a pooja booking actually includes, so the price is not a mystery. */
-export const poojaIncludes = [
-  'A pandit matched to the ritual and your language',
-  'Samagri — every item, sourced and brought',
-  'A live video link for anyone who cannot attend',
-  'The recording, and a written sankalp afterwards',
-]
-
-/**
- * A free single-card pull. Twelve of the majors, written in the same register
- * as the readings — a card is a description, not a fortune.
- */
-export const tarotCards = [
-  { id: 'tc1', name: 'The Tower', line: 'The thing you are bracing for has already happened. You are bracing for the admission.' },
-  { id: 'tc2', name: 'The Hermit', line: 'Withdrawing is working. It stops working the day it becomes the point.' },
-  { id: 'tc3', name: 'The Star', line: 'You are being given time, not a guarantee. Use it on the boring part.' },
-  { id: 'tc4', name: 'The Chariot', line: 'You can force this. Ask whether forcing it is the same as wanting it.' },
-  { id: 'tc5', name: 'Justice', line: 'The fair outcome and the outcome you want are not the same shape this month.' },
-  { id: 'tc6', name: 'The Moon', line: 'You have the facts. What you do not have is a version of them you can live with.' },
-  { id: 'tc7', name: 'Strength', line: 'The restraint is the strength. Saying it louder is not the upgrade.' },
-  { id: 'tc8', name: 'The Fool', line: 'Beginning badly beats the fourth month of research. Start on Tuesday.' },
-  { id: 'tc9', name: 'Death', line: 'Something is finished and you are still paying rent on it.' },
-  { id: 'tc10', name: 'The Lovers', line: 'A choice, not a romance. The chart does not care which one you pick, only that you do.' },
-  { id: 'tc11', name: 'The Hanged Man', line: 'The delay is not happening to you. You arranged it, quite carefully.' },
-  { id: 'tc12', name: 'Wheel of Fortune', line: 'Timing turns this week. Nothing about your effort changes with it.' },
-]
-
-/**
- * One session length, and no clock on the questions.
- *
- * Consultants used to sell 10 / 15 / 30 minutes, which made the first thing a
- * client did a pricing decision instead of a choosing-a-person decision. Now
- * every session is the same twenty minutes and you ask as much as you like
- * inside it — `price` on a consultant record IS the session price.
- */
 export const SESSION = { mins: 20, label: '20 min', promise: 'Unlimited questions' }
 
 /**
