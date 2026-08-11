@@ -43,6 +43,7 @@ in-flight work. Recent commits, newest first:
 
 | Commit | What |
 |---|---|
+| `0c77167` | Mandir: full-bleed shrine, real brass props, no scroll |
 | `412dd61` | Bhaktamar deck (48 cards) + real murtis in the mandir |
 | `f64dda4` | Handoff update; dropped four dead mock exports |
 | `4b79a84` | Removed the floating Ask AI button |
