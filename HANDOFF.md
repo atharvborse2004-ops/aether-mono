@@ -43,7 +43,7 @@ in-flight work. Recent commits, newest first:
 
 | Commit | What |
 |---|---|
-| _pending_ | Bhaktamar deck (48 cards) + real murtis in the mandir |
+| `412dd61` | Bhaktamar deck (48 cards) + real murtis in the mandir |
 | `f64dda4` | Handoff update; dropped four dead mock exports |
 | `4b79a84` | Removed the floating Ask AI button |
 | `4d8770a` | Warmer gold + a contrast bug it uncovered |
