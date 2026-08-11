@@ -63,10 +63,11 @@ Sans, skeuomorphic surfaces, frosted ink tab bar.
   then the feed. The feed leads with **today's reading**, then the
   **panchang**, then content. Those two are hoisted in the component rather
   than reordered in `feed`, so the pointer list stays a list of content.
-- **Pooja** — an animated **mandir**, e-puja only. Six deities, each with
-  three or four real murtis the seeker picks between, offerings (bell /
-  flowers / diya / dhoop), aarti and sangeet. Nothing books a pandit and
-  nothing is charged.
+- **Pooja** — an animated **mandir**, e-puja only, and **the one screen that
+  does not scroll**. The shrine takes every pixel between the deity row and
+  the tab bar; the ghantis, the offering rail, the altar and the thali all sit
+  on the painting. Six deities, three or four murtis each behind the knob in
+  the bottom-left. Nothing books a pandit and nothing is charged.
 - **Consult** — four modes as circles under the wordmark: Call · Chat · Live ·
   Booking. Live is a mode here, not a tab. **One session length**: 20 minutes,
   unlimited questions, so `price` on a consultant record *is* the session
@@ -143,7 +144,15 @@ reverting is a markup change. Do not "clean it up" without asking.
 Components: `Pop.jsx` (`PopCard`, `PopButton`, `Kicker`, `PopTag`, `Stat`,
 `PopBar`, `PopAvatar`), `Primitives.jsx` (`Section`, `Button`, `Row`,
 `Segmented`, `Ticks`, `Ruler`, `Avatar`, `Field`, `Acts`, `Search`, `Tag`,
-`firstName`), `Icon.jsx`, `Plate.jsx`, `ChartWheel.jsx`, `ReelFeed.jsx`.
+`firstName`), `Icon.jsx`, `Plate.jsx`, `PujaProps.jsx`, `ChartWheel.jsx`,
+`ReelFeed.jsx`.
+
+`PujaProps.jsx` is the mandir's brass — `Ghanti`, `Thali`, `Marigold`, `Diya`,
+`Dhoop`, drawn as objects rather than icons because a line glyph on a shrine
+reads as a toolbar. They share one `BRASS` ramp and one light direction; a bell
+lit from the left beside a thali lit from above is what makes drawn props look
+pasted on. Every gradient id goes through `useId` — these render two and three
+at a time and duplicate ids mean the second instance borrows the first's fill.
 
 **Visual language:** warm canvas `#f1efec`, white cards, near-black ink
 `#0e0e10`, one gold accent. Skeuomorphic — every raised surface is a ~3%
@@ -174,7 +183,9 @@ muted and warmed by `tools/deity-art-process.py` — rerun that rather than
 editing a webp; `tools/deity-art-search.py` is how the candidates were found in
 the first place, and prints contact sheets to pick from. Some of it is
 **share-alike**, which is why `credit` is a field on every image and why the
-line under the murti picker is not decoration. Do not delete it.
+line in the murti sheet is not decoration. The shrine itself carries no text,
+so that sheet is the only place the attribution lives — if it goes, the images
+have to go with it.
 
 ### Screen anatomy
 
@@ -221,6 +232,12 @@ on a sticky element makes it a containing block and un-sticks the bar.
 
 7. **`.deal` caps its stagger at 8 children.** Anything past the eighth
    top-level section lands together.
+
+8. **Tailwind's opacity modifier silently does nothing on this palette.**
+   Every colour resolves through a CSS variable, so `bg-ink/70` cannot be
+   computed and Tailwind emits no background at all rather than failing.
+   It cost a white label on a cream wall in the mandir. Anything translucent
+   goes in an inline `style` with a literal `rgba()`.
 
 ---
 

@@ -6,7 +6,7 @@ is missing, and re-pick the indices in PICKS from its contact sheets, because
 Commons search results are not stable over time.
 """
 import json, os, re, urllib.request
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageFilter
 
 UA = 'aether-mono-dev/1.0 (prototype; contact administrator@sleepycat.in)'
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -46,7 +46,15 @@ PICKS = [
     ('shani',   'shani3',   9, 0.40, None),
 ]
 
-W, H = 600, 750  # 4:5, the shrine's aspect
+# 2:3. The shrine is full-bleed between the deity chips and the tab bar now,
+# which is a much taller box than the old 4:5 card.
+W, H = 600, 900
+
+# How much of the frame the painting itself is allowed to fill. Below 1 the
+# murti is not cropped at all — it sits inside the frame with shrine wall
+# around it, which is the "zoomed out" look. Raise toward 1.0 to tighten.
+FIT_W, FIT_H = 0.90, 0.82
+LIFT = 0.44  # figure's vertical centre; under .5 leaves floor for the thali
 
 
 def fetch(url, path):
@@ -74,31 +82,38 @@ def treat(im):
     return Image.merge('RGB', (r, g, b))
 
 
-def crop_fill(im, bias, zoom):
-    """Fit to 4:5, keeping `bias` of the trimmed height above the frame."""
-    target = W / H
+def mount(im, bias, zoom):
+    """Sit the whole painting inside the frame, on a wall made from itself.
 
-    if zoom is None:                            # cut-out — letterbox on cream
-        im = im.copy()
-        im.thumbnail((int(W * 0.92), int(H * 0.92)), Image.LANCZOS)
-        pad = Image.new('RGB', (W, H), (247, 245, 242))
-        pad.paste(im, ((W - im.width) // 2, (H - im.height) // 2))
-        return pad
+    Nothing is cropped. Every source here is a different shape — tall
+    oleographs, near-square miniatures, a cut-out on white — and cover-cropping
+    them to one aspect either beheaded the figure or zoomed past the
+    composition. Containing them instead means the murti is always whole, and
+    the leftover frame is the shrine wall.
 
-    if zoom > 1:                                # tighten onto the centre first
+    That wall is the painting again: blown up, blurred flat and pulled toward
+    the canvas cream. It costs four lines, always harmonises with whatever it
+    is framing, and beats a fixed gradient that fights half the palette.
+    """
+    if zoom and zoom > 1:                       # tighten onto the centre first
         w, h = int(im.width / zoom), int(im.height / zoom)
         im = im.crop(((im.width - w) // 2, int((im.height - h) * bias),
                       (im.width - w) // 2 + w, int((im.height - h) * bias) + h))
 
-    if im.width / im.height > target:           # too wide — trim the sides
-        w = int(im.height * target)
-        x = (im.width - w) // 2
-        im = im.crop((x, 0, x + w, im.height))
-    else:                                       # too tall — trim top and bottom
-        h = int(im.width / target)
-        y = int((im.height - h) * bias)
-        im = im.crop((0, y, im.width, y + h))
-    return im.resize((W, H), Image.LANCZOS)
+    wall = im.resize((W, H), Image.LANCZOS).filter(ImageFilter.GaussianBlur(48))
+    wall = Image.blend(wall, Image.new('RGB', (W, H), (238, 233, 224)), 0.42)
+    wall = ImageEnhance.Brightness(wall).enhance(0.94)
+
+    art = im.copy()
+    art.thumbnail((int(W * FIT_W), int(H * FIT_H)), Image.LANCZOS)
+    x = (W - art.width) // 2
+    y = max(0, min(H - art.height, int(H * LIFT - art.height / 2)))
+
+    # A hairline keeps the painting from dissolving into its own blur.
+    frame = Image.new('RGB', (art.width + 2, art.height + 2), (60, 52, 40))
+    wall.paste(frame, (x - 1, y - 1))
+    wall.paste(art, (x, y))
+    return wall
 
 
 meta, by_key = {}, {}
@@ -115,7 +130,7 @@ for key, sheet, idx, bias, zoom in PICKS:
     except Exception:
         fetch(rec['full'], src)
 
-    im = treat(crop_fill(Image.open(src).convert('RGB'), bias, zoom))
+    im = treat(mount(Image.open(src).convert('RGB'), bias, zoom))
     out = f'{key}-{n}.webp'
     im.save(os.path.join(DEST, out), 'WEBP', quality=80, method=6)
 
@@ -134,10 +149,10 @@ json.dump(meta, open(os.path.join(HERE, 'deity-meta.json'), 'w', encoding='utf-8
 # Preview: every processed image in deity order, so one look catches a bad crop.
 COLS = 6
 rows = (len(PICKS) + COLS - 1) // COLS
-sheet = Image.new('RGB', (COLS * 210, rows * 268), (241, 239, 236))
+sheet = Image.new('RGB', (COLS * 200, rows * 302), (241, 239, 236))
 for i, (key, *_) in enumerate(PICKS):
     n = sum(1 for k, *_ in PICKS[:i + 1] if k == key)
-    im = Image.open(os.path.join(DEST, f'{key}-{n}.webp')).resize((196, 245), Image.LANCZOS)
-    sheet.paste(im, ((i % COLS) * 210 + 7, (i // COLS) * 268 + 12))
+    im = Image.open(os.path.join(DEST, f'{key}-{n}.webp')).resize((186, 279), Image.LANCZOS)
+    sheet.paste(im, ((i % COLS) * 200 + 7, (i // COLS) * 302 + 12))
 sheet.save(os.path.join(HERE, 'preview-deities.jpg'), quality=88)
 print('preview written')
