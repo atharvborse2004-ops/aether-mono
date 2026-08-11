@@ -9,9 +9,14 @@ import { useStore } from '../store.jsx'
 /**
  * Tarot — one free card a week, then priced per pull.
  *
- * Four decks by tradition rather than one Western pack. The cards differ; the
+ * Five decks by tradition rather than one Western pack. The cards differ; the
  * register does not, because a card here describes a position you are already
  * in rather than promising an outcome.
+ *
+ * Bhaktamar is the odd one and leads the row: 48 real painted faces out of
+ * `public/cards/`, plus a shloka, a question and a remedy per card. The other
+ * four are six cards of drawn artwork each. Everything optional on a card is
+ * gated on the field being there, so the two shapes share one renderer.
  *
  * The free pull is tracked on the store's `flags` Set (`tarot:usedFree`), so it
  * survives navigation without a new state slice. Paid pulls go through
@@ -84,21 +89,44 @@ export default function Tarot() {
         {card ? (
           <>
             <PopCard raised className="overflow-hidden">
-              <Plate
-                seed={card.id}
-                variant="engraving"
-                className="!rounded-none aspect-[3/4] w-full !shadow-none"
-              >
-                <span className="absolute left-3 top-3">
-                  <PopTag>{deck.tradition}</PopTag>
-                </span>
-              </Plate>
+              {card.img ? (
+                /* A painted deck. Only the Bhaktamar cards have faces; the
+                   file sits in public/ so BASE_URL, not the bundler, resolves
+                   it — GitHub Pages serves this app from a sub-path. */
+                <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#e8e2d8]">
+                  <img
+                    src={`${import.meta.env.BASE_URL}cards/${card.img}`}
+                    alt={card.name}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute left-3 top-3">
+                    <PopTag>{deck.tradition}</PopTag>
+                  </span>
+                  <span className="absolute right-3 top-3">
+                    <PopTag tone="gold">{card.no}</PopTag>
+                  </span>
+                </div>
+              ) : (
+                <Plate
+                  seed={card.id}
+                  variant="engraving"
+                  className="!rounded-none aspect-[3/4] w-full !shadow-none"
+                >
+                  <span className="absolute left-3 top-3">
+                    <PopTag>{deck.tradition}</PopTag>
+                  </span>
+                </Plate>
+              )}
               <div className="p-5 text-center">
                 <p className="caps-sm gold">{card.name}</p>
+                {card.sub && <p className="mt-1.5 text-meta t-faint">{card.sub}</p>}
                 <Stub className="my-4" />
                 <p className="text-read t-heading">{card.line}</p>
+                {card.virtue && <p className="mt-4 caps-sm t-faint">{card.virtue}</p>}
               </div>
             </PopCard>
+
+            {card.ask && <CardDetail card={card} />}
 
             <div className="mt-6 flex items-center gap-2">
               <PopButton
@@ -155,5 +183,38 @@ export default function Tarot() {
 
       <div className="h-8" />
     </>
+  )
+}
+
+/**
+ * The long half of a Bhaktamar card.
+ *
+ * Only this deck carries a shloka, a question and a remedy, so the block gates
+ * on the fields rather than on the deck id — a second scripture deck will get
+ * it for free.
+ *
+ * The Devanagari is set in whatever the system has; Plus Jakarta Sans covers
+ * no Indic script, so pinning a family here would only pick a worse fallback
+ * than the one the platform already chose.
+ */
+function CardDetail({ card }) {
+  return (
+    <div className="pop-inset mt-4 p-4">
+      <p className="caps-sm t-faint">Ask yourself</p>
+      <p className="mt-1.5 text-meta t-heading">{card.ask}</p>
+
+      <Stub className="my-4" />
+
+      <p className="caps-sm t-faint">Shloka {card.no}</p>
+      <p lang="sa" className="mt-1.5 text-read leading-relaxed t-body">
+        {card.sa}
+      </p>
+      <p className="mt-2 text-meta italic t-faint">{card.iast}</p>
+
+      <Stub className="my-4" />
+
+      <p className="caps-sm t-faint">Remedy</p>
+      <p className="mt-1.5 text-meta t-body">{card.remedy}</p>
+    </div>
   )
 }

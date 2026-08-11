@@ -8,8 +8,9 @@ clean and everything below is committed and deployed.
 ## 1. What this is
 
 A front-end prototype of an astrology app. **No backend, no persistence, no
-auth** — every string and number lives in `src/data/mock.js` (~1,400 lines) and
-nothing survives a page reload. That is deliberate, not a gap.
+auth** — every string and number lives in `src/data/mock.js` (~1,450 lines) and
+`src/data/bhaktamar.js` (the 48-card deck, generated from the supplied master
+sheet), and nothing survives a page reload. That is deliberate, not a gap.
 
 Two sides in one codebase:
 
@@ -42,6 +43,8 @@ in-flight work. Recent commits, newest first:
 
 | Commit | What |
 |---|---|
+| _pending_ | Bhaktamar deck (48 cards) + real murtis in the mandir |
+| `f64dda4` | Handoff update; dropped four dead mock exports |
 | `4b79a84` | Removed the floating Ask AI button |
 | `4d8770a` | Warmer gold + a contrast bug it uncovered |
 | `99e932e` | Panchang card, mandir, tarot by tradition, one session length |
@@ -60,9 +63,10 @@ Sans, skeuomorphic surfaces, frosted ink tab bar.
   then the feed. The feed leads with **today's reading**, then the
   **panchang**, then content. Those two are hoisted in the component rather
   than reordered in `feed`, so the pointer list stays a list of content.
-- **Pooja** — an animated **mandir**, e-puja only. Six deities, offerings
-  (bell / flowers / diya / dhoop), aarti and sangeet. Nothing books a pandit
-  and nothing is charged.
+- **Pooja** — an animated **mandir**, e-puja only. Six deities, each with
+  three or four real murtis the seeker picks between, offerings (bell /
+  flowers / diya / dhoop), aarti and sangeet. Nothing books a pandit and
+  nothing is charged.
 - **Consult** — four modes as circles under the wordmark: Call · Chat · Live ·
   Booking. Live is a mode here, not a tab. **One session length**: 20 minutes,
   unlimited questions, so `price` on a consultant record *is* the session
@@ -70,8 +74,11 @@ Sans, skeuomorphic surfaces, frosted ink tab bar.
 - **Shop** — promo banner rail; choosing a category reveals a banner for it and
   its subcategories.
 - **Academy** — Courses / Events / Downloads, all three with cover art.
-- **Tarot** — four decks by tradition (Western, Hindu, Islamic, Buddhist), one
-  free pull a week then ₹11, charged through the wallet.
+- **Tarot** — five decks by tradition. **Bhaktamar** leads and is the odd one:
+  48 painted faces, one per shloka of the stotra, each carrying a Sanskrit
+  verse, a transliteration, a question and a remedy. The other four (Western,
+  Hindu, Islamic, Buddhist) are six drawn cards each. One free pull a week then
+  ₹11, charged through the wallet.
 
 ---
 
@@ -148,9 +155,26 @@ gradient rather than just darkening.
 not wanted. An unknown name renders `null` — a missing glyph is a silent blank,
 not a crash.
 
-**There are no images anywhere.** `Plate.jsx` generates greyscale SVG artwork
-procedurally from a seed string. The mandir shrine is drawn in SVG for the same
-reason. Do not reach for an image URL; there is nowhere for one to come from.
+**Images exist in exactly two places**, both shipped from `public/` and
+referenced through `import.meta.env.BASE_URL` — never imported, so they stay
+out of the bundle graph and only the one on screen is fetched:
+
+| Where | What | Weight |
+|---|---|---|
+| `public/cards/` | 48 Bhaktamar deck faces, 600×900 | 5.8 MB |
+| `public/deities/` | 23 murtis, 3–4 per deity, 600×750 | 2.0 MB |
+
+Everywhere else is still drawn. `Plate.jsx` generates greyscale SVG artwork
+procedurally from a seed string and the other four tarot decks use it. Do not
+reach for an image URL for anything new; there is still nowhere for one to come
+from.
+
+The deity art is public-domain or CC devotional painting off Wikimedia Commons,
+muted and warmed by `tools/deity-art-process.py` — rerun that rather than
+editing a webp; `tools/deity-art-search.py` is how the candidates were found in
+the first place, and prints contact sheets to pick from. Some of it is
+**share-alike**, which is why `credit` is a field on every image and why the
+line under the murti picker is not decoration. Do not delete it.
 
 ### Screen anatomy
 
@@ -214,33 +238,33 @@ on a sticky element makes it a containing block and un-sticks the bar.
   the other party. ~6 lines to flip on `isPro`. Not done.
 - **Sangeet in the mandir plays nothing** — there is no audio anywhere in the
   app. The button toasts and says so.
+- **The chosen murti does not survive leaving the tab.** `pic` is local state
+  in `Pooja` and resets to 0 on a deity switch. Making it stick is a `flags`
+  entry (`murti:d1:2`), not a store slice — but it still dies on reload like
+  everything else, so it buys little.
+- **Bhaktamar is the only deck with faces**, and it is Jain only. The other
+  traditions were always meant to get their own; the card shape already
+  supports it — `img`, `sub`, `virtue`, `ask`, `remedy`, `sa`, `iast` are all
+  optional and `Tarot.jsx` gates on the field, not the deck.
+- **Shani has three murtis, the rest have four.** Pre-modern devotional art of
+  Shani as a single figure is thin on Commons; the fourth would have been a
+  temple photograph with signage in it.
 
 ---
 
 ## 6. Verification status — read this
 
-The browser tooling degraded across the last two sessions and, at the end,
-Chrome could not reach `localhost` at all (the dev server answered `curl` from
-the shell but the browser got "site can't be reached"). Screenshots have been
-broken for longer.
+Chrome reaches `localhost` again, so this session's work **was looked at**, not
+just queried: the mandir with every deity, the murti picker, the offerings and
+their toasts, and a Bhaktamar pull with its shloka block. Screenshots still
+break intermittently — `Page.captureScreenshot` times out for a while after you
+scroll a page holding a large image. `read_page` never fails; use it when the
+camera does.
 
-Consequently:
-
-- Everything through commit `99e932e` was verified by **walking the routes and
-  querying the DOM** — structure, computed styles, click behaviour, contrast
-  ratios — but almost none of it has been **looked at**.
-- The last two commits (`4d8770a` gold, `4b79a84` AI button) were verified in
-  the browser before the tooling failed.
-- The final change in this session — deleting four dead `mock.js` exports
-  (`poojas`, `poojaCategories`, `poojaIncludes`, `tarotCards`, superseded by
-  `deities`/`offerings`/`tarotDecks`) — was verified **statically only**: the
-  build passes, and a script confirmed all 52 mock exports resolve and no
-  `.jsx` imports anything that was removed. Low risk, but not eyeballed.
-
-**First thing next session: open the app and look at it**, particularly the
-mandir, the Consult mode circles, the panchang card, and the five pro screens.
-
----
+Everything through commit `99e932e` was verified by **walking the routes and
+querying the DOM** — structure, computed styles, click behaviour, contrast
+ratios — but almost none of it has been **looked at**. That backlog is still
+open for the five pro screens, the Consult mode circles and the panchang card.
 
 ## 7. House style for copy
 

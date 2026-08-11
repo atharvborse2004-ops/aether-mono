@@ -14,14 +14,19 @@ import { useStore } from '../store.jsx'
  * run the aarti. That is the whole product, so the shrine gets the screen and
  * the copy stays out of its way.
  *
- * Everything is drawn. There are no images anywhere in this app — `Plate`
- * generates its artwork procedurally — so a photoreal idol was never an
- * option, and an engraved niche in the register the rest of the app already
- * uses beats a bad attempt at one.
+ * The murti is a real painting — the shrine is the one place in this app that
+ * carries photographs, because a drawn idol was always the weakest thing on
+ * the screen. Each deity ships three or four, the seeker picks, and the
+ * arch that used to stand in for one is gone rather than layered on top of
+ * art that already has its own architecture.
+ *
+ * Everything that moves is still drawn over it: halo, diyas, dhoop, bell,
+ * petals, the aarti lamp on its circle.
  */
 export default function Pooja() {
   const { showToast } = useStore()
   const [deity, setDeity] = useState(deities[0])
+  const [pic, setPic] = useState(0)
   const [lit, setLit] = useState({ diya: false, incense: false })
   const [aarti, setAarti] = useState(false)
   const [ringing, setRinging] = useState(false)
@@ -86,11 +91,24 @@ export default function Pooja() {
               <button
                 type="button"
                 aria-pressed={deity.id === d.id}
-                onClick={() => setDeity(d)}
+                onClick={() => {
+                  setDeity(d)
+                  setPic(0)
+                }}
                 className="tile w-[72px]"
               >
-                <span className={`tile-face ${deity.id === d.id ? 'tile-face-on' : ''}`}>
-                  <span className="text-[11px] font-bold">{d.name.slice(0, 2)}</span>
+                {/* The face is the murti, so the pressed-in "on" state cannot
+                    show through it. Selection reads as full colour against
+                    faded neighbours instead. */}
+                <span className="tile-face overflow-hidden">
+                  <img
+                    src={`${import.meta.env.BASE_URL}deities/${d.images[0].f}`}
+                    alt=""
+                    loading="lazy"
+                    className={`h-full w-full object-cover transition duration-200 ${
+                      deity.id === d.id ? '' : 'opacity-50 saturate-50'
+                    }`}
+                  />
                 </span>
                 <span
                   className={`caps-sm leading-tight ${deity.id === d.id ? 't-heading' : 't-body'}`}
@@ -106,7 +124,7 @@ export default function Pooja() {
       {/* ── The shrine ─────────────────────────────────────────────────── */}
       <section className="px-4 pt-2">
         <PopCard raised className="relative overflow-hidden">
-          <Shrine deity={deity} lit={lit} aarti={aarti} ringing={ringing} />
+          <Shrine deity={deity} pic={pic} lit={lit} aarti={aarti} ringing={ringing} />
 
           {/* Petals fall over the whole niche. */}
           <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -138,6 +156,35 @@ export default function Pooja() {
             <p className="mt-1.5 text-meta t-sub">{deity.line}</p>
           </div>
         </PopCard>
+      </section>
+
+      {/* ── Which murti ────────────────────────────────────────────────── */}
+      <section className="px-4 pt-3">
+        <ul className="no-scrollbar flex gap-2 overflow-x-auto">
+          {deity.images.map((im, i) => (
+            <li key={im.f}>
+              <button
+                type="button"
+                aria-pressed={pic === i}
+                aria-label={im.label}
+                onClick={() => setPic(i)}
+                className={`block h-16 w-[52px] overflow-hidden rounded-md border transition ${
+                  pic === i ? 'border-ink shadow-md' : 'border-stroke opacity-60'
+                }`}
+              >
+                <img
+                  src={`${import.meta.env.BASE_URL}deities/${im.f}`}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] leading-snug t-faint">
+          {deity.images[pic].label} · {deity.images[pic].credit} · Wikimedia Commons
+        </p>
       </section>
 
       {/* ── Offerings ──────────────────────────────────────────────────── */}
@@ -217,58 +264,51 @@ export default function Pooja() {
 }
 
 /**
- * The shrine, drawn.
+ * The shrine.
  *
- * An arched niche, a lamp either side, and an abstract murti — deliberately
- * abstract, because a literal idol rendered in SVG lands somewhere between
- * clip art and disrespect. The halo, the flame and the aarti lamp are the
- * moving parts.
+ * A real painting fills the niche and everything ritual is drawn on top of it.
+ * The bottom scrim is not decoration — the diyas and the dhoop have to sit on
+ * something, and every painting has a different floor.
+ *
+ * Nothing here masks the art into an arch. Most of these murtis were painted
+ * inside their own throne or temple already, and a second arch over the top
+ * cropped the composition to nothing.
  */
-function Shrine({ deity, lit, aarti, ringing }) {
+function Shrine({ deity, pic, lit, aarti, ringing }) {
+  const image = deity.images[pic]
+
   return (
     <div className="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-b from-[#efe9df] to-[#e2dbd0]">
-      <svg viewBox="0 0 200 250" className="absolute inset-0 h-full w-full" aria-hidden="true">
-        {/* Temple arch */}
-        <path
-          d="M40 240V110a60 60 0 0 1 120 0v130"
-          fill="#f7f3ec"
-          stroke="rgba(28,26,25,.22)"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M52 240V112a48 48 0 0 1 96 0v128"
-          fill="none"
-          stroke="rgba(28,26,25,.14)"
-          strokeWidth="1"
-        />
-        {/* Finial */}
-        <path d="M100 34v16M92 50h16l-8 12-8-12Z" fill="none" stroke="rgba(28,26,25,.3)" strokeWidth="1.4" />
-        {/* Steps */}
-        <path d="M34 240h132M28 232h144" stroke="rgba(28,26,25,.18)" strokeWidth="1.4" fill="none" />
-      </svg>
-
-      {/* Halo behind the murti, always breathing. */}
-      <span
-        aria-hidden="true"
-        className="animate-halo absolute left-1/2 top-[42%] block h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(227,166,60,.75) 0%, rgba(227,166,60,0) 70%)' }}
+      <img
+        key={image.f}
+        src={`${import.meta.env.BASE_URL}deities/${image.f}`}
+        alt={`${deity.name} — ${image.label}`}
+        className="animate-fade absolute inset-0 h-full w-full object-cover"
       />
 
-      {/* The murti: a lotus seat and a seated silhouette, kept abstract. */}
+      {/* Lamp light over the murti, always breathing. */}
+      <span
+        aria-hidden="true"
+        className="animate-halo absolute left-1/2 top-[38%] block h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full mix-blend-screen"
+        style={{ background: 'radial-gradient(circle, rgba(227,166,60,.55) 0%, rgba(227,166,60,0) 70%)' }}
+      />
+
+      {/* The step. Gives the diyas a floor and settles the painting into the card. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 block h-[22%]"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(233,227,217,0) 0%, rgba(233,227,217,.5) 52%, rgba(226,219,208,.86) 100%)',
+        }}
+      />
       <svg
-        viewBox="0 0 120 140"
-        className="absolute left-1/2 top-[40%] h-36 w-32 -translate-x-1/2 -translate-y-1/2"
+        viewBox="0 0 200 250"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <g fill="none" stroke="rgba(28,26,25,.55)" strokeWidth="2" strokeLinecap="round">
-          <circle cx="60" cy="42" r="17" />
-          <path d="M60 59c-16 0-27 12-30 27h60c-3-15-14-27-30-27Z" />
-          <path d="M30 86c-7 4-11 9-13 15M90 86c7 4 11 9 13 15" />
-          {/* Lotus seat */}
-          <path d="M22 108c8-9 18-13 38-13s30 4 38 13" />
-          <path d="M22 108c-6 6-8 12-8 18h92c0-6-2-12-8-18" />
-        </g>
-        <circle cx="60" cy="38" r="2.6" fill="var(--live)" />
+        <path d="M34 240h132M28 232h144" stroke="rgba(28,26,25,.18)" strokeWidth="1.4" fill="none" />
       </svg>
 
       {/* Two diyas on the step. The flame only exists when lit. */}

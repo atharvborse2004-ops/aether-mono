@@ -6,6 +6,11 @@
 //   ("reach out to the person you have been avoiding") to cryptic
 //   ("be the absence of want"). Blunt, occasionally unkind.
 // Warm supportive copy over this layout would make it read as a template.
+//
+// The one exception is `bhaktamar.js`: scripture, transliteration and remedies
+// carried over verbatim. Those are not ours to rewrite.
+
+import { bhaktamarCards } from './bhaktamar.js'
 
 export const user = {
   name: 'Ananya',
@@ -991,25 +996,73 @@ export const panchang = {
    ritual happens on the screen.
    ========================================================================== */
 
+/**
+ * Each deity carries the murtis you can install in the shrine.
+ *
+ * These are the only photographs in the app. Every one is a public-domain or
+ * openly licensed devotional painting off Wikimedia Commons — Ravi Varma press
+ * oleographs, Rodrigues lithographs, Wellcome gouaches, a Basohli miniature —
+ * muted and warmed at build time so they sit on the canvas instead of shouting
+ * over it. `credit` is not decoration: some of these are share-alike and the
+ * line under the picker is the attribution.
+ *
+ * Files live in `public/deities/`. Reprocess with the script in the scratchpad
+ * rather than editing a webp by hand.
+ */
 export const deities = [
   { id: 'd1', name: 'Ganesh', graha: 'Ketu', day: 'Wednesday', aarti: 'Jai Ganesh Deva',
     forWhat: 'Anything that has not started yet.',
-    line: 'Removed obstacles are not the same as an easy road. He clears the entrance, not the route.' },
+    line: 'Removed obstacles are not the same as an easy road. He clears the entrance, not the route.',
+    images: [
+      { f: 'ganesh-1.webp', label: 'Seated with attendants', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'ganesh-2.webp', label: 'Basohli miniature, c.1730', credit: 'Anonymous · Public domain' },
+      { f: 'ganesh-3.webp', label: 'Rodrigues lithograph', credit: 'E. A. Rodrigues · Public domain' },
+      { f: 'ganesh-4.webp', label: 'Rajput miniature', credit: 'Unknown artist · Public domain' },
+    ] },
   { id: 'd2', name: 'Shiva', graha: 'Chandra', day: 'Monday', aarti: 'Om Jai Shiv Omkara',
     forWhat: 'Grief, illness, and what you cannot fix by trying harder.',
-    line: 'Rudrabhishek is the loud version. This is the quiet one, and it counts the same.' },
+    line: 'Rudrabhishek is the loud version. This is the quiet one, and it counts the same.',
+    images: [
+      { f: 'shiva-1.webp', label: 'Shankar', credit: 'Ravi Varma Press · Public domain' },
+      { f: 'shiva-2.webp', label: 'With Parvati and Nandi', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'shiva-3.webp', label: 'Drinking the poison, 1913', credit: 'Nivedita & Coomaraswamy · Public domain' },
+      { f: 'shiva-4.webp', label: 'Ganga Visarjana', credit: 'E. A. Rodrigues · Public domain' },
+    ] },
   { id: 'd3', name: 'Lakshmi', graha: 'Shukra', day: 'Friday', aarti: 'Om Jai Lakshmi Mata',
     forWhat: 'Money that arrives and does not stay.',
-    line: 'She is asked for stability more often than for wealth. The second is easier to grant.' },
+    line: 'She is asked for stability more often than for wealth. The second is easier to grant.',
+    images: [
+      { f: 'lakshmi-1.webp', label: 'On the lotus', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'lakshmi-2.webp', label: 'Press oleograph, 1930s', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'lakshmi-3.webp', label: 'With Saraswati', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'lakshmi-4.webp', label: 'Painted 1896', credit: 'Raja Ravi Varma · Public domain' },
+    ] },
   { id: 'd4', name: 'Hanuman', graha: 'Mangal', day: 'Tuesday', aarti: 'Aarti Kije Hanuman Lala Ki',
     forWhat: 'Fear, court matters, and Mangal sitting badly.',
-    line: 'Tuesdays and Saturdays. Read the Chalisa if you have forty minutes; light a diya if you have four.' },
+    line: 'Tuesdays and Saturdays. Read the Chalisa if you have forty minutes; light a diya if you have four.',
+    images: [
+      { f: 'hanuman-1.webp', label: 'With two worshippers', credit: 'Wellcome Collection · CC BY 4.0' },
+      { f: 'hanuman-2.webp', label: 'Gouache study', credit: 'Wellcome Collection · CC BY 4.0' },
+      { f: 'hanuman-3.webp', label: 'Carrying Rama and Lakshman', credit: 'Wellcome Collection · CC BY 4.0' },
+      { f: 'hanuman-4.webp', label: 'With the mountain', credit: 'Wellcome Collection · CC BY 4.0' },
+    ] },
   { id: 'd5', name: 'Durga', graha: 'Rahu', day: 'Friday', aarti: 'Jai Ambe Gauri',
     forWhat: 'A fight you did not pick and cannot leave.',
-    line: 'Navratri is the season. The rest of the year she is still there and considerably less busy.' },
+    line: 'Navratri is the season. The rest of the year she is still there and considerably less busy.',
+    images: [
+      { f: 'durga-1.webp', label: 'With the lions', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'durga-2.webp', label: 'Mahishasuramardini', credit: 'Raja Ravi Varma · Public domain' },
+      { f: 'durga-3.webp', label: 'Slaying Mahishasura', credit: 'Dswaroop100 · CC BY-SA 3.0' },
+      { f: 'durga-4.webp', label: 'On the tiger', credit: 'Sujit Kumar · CC BY-SA 4.0' },
+    ] },
   { id: 'd6', name: 'Shani', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
     forWhat: 'Sade sati, dhaiya, and the long grinding years.',
-    line: 'He is not punishing you. He is charging you for what you already did, in instalments.' },
+    line: 'He is not punishing you. He is charging you for what you already did, in instalments.',
+    images: [
+      { f: 'shani-1.webp', label: 'On the crow chariot', credit: 'Ravi Varma Press · Public domain' },
+      { f: 'shani-2.webp', label: 'With the crow', credit: 'Indian Poet · CC BY-SA 3.0' },
+      { f: 'shani-3.webp', label: 'Rodrigues lithograph', credit: 'E. A. Rodrigues · Public domain' },
+    ] },
 ]
 
 /** What you can do at the shrine. Each one is an animation, not a purchase. */
@@ -1031,6 +1084,11 @@ export const TAROT_PRICE = 11
  * register does not - a card describes a position, it does not promise one.
  */
 export const tarotDecks = [
+  {
+    id: 'dk5', name: 'Bhaktamar', tradition: 'Jain',
+    line: 'Forty-eight cards, one for each shloka of the stotra. The only deck here with a painted face.',
+    cards: bhaktamarCards,
+  },
   {
     id: 'dk1', name: 'Rider-Waite', tradition: 'Western',
     line: 'The pack most people picture. Heavy on the majors.',
