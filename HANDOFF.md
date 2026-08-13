@@ -67,8 +67,9 @@ Sans, skeuomorphic surfaces, frosted ink tab bar.
 - **Pooja** — an animated **mandir**, e-puja only, and **the one screen that
   does not scroll**. The shrine takes every pixel between the deity row and
   the tab bar; the ghantis, the offering rail, the altar and the thali all sit
-  on the painting. Six deities, three or four murtis each behind the knob in
-  the bottom-left. Nothing books a pandit and nothing is charged.
+  on the painting. Seven deities, three or four murtis each. Swipe down for
+  the next deity, right for the next murti, or use the knob bottom-left. The
+  thali turns under your finger. Nothing books a pandit, nothing is charged.
 - **Consult** — four modes as circles under the wordmark: Call · Chat · Live ·
   Booking. Live is a mode here, not a tab. **One session length**: 20 minutes,
   unlimited questions, so `price` on a consultant record *is* the session
@@ -172,7 +173,16 @@ out of the bundle graph and only the one on screen is fetched:
 | Where | What | Weight |
 |---|---|---|
 | `public/cards/` | 48 Bhaktamar deck faces, 600×900 | 5.8 MB |
-| `public/deities/` | 23 murtis, 3–4 per deity, 600×750 | 2.0 MB |
+| `public/deities/` | 26 murtis, 3–4 per deity, up to 840×1260 | 3.6 MB |
+
+**The shrine box is 420 × (device height − 200).** That overhead — header,
+deity row, tab bar — is measured, not estimated, and it puts the box between
+0.574 on a tall Android and 0.899 on an SE. No single image aspect fits all
+of them, so the murti is `object-cover` with `object-position: 50% 32%`:
+fills exactly, never bars, and the trim comes off marble floor rather than
+off the crown. **2:3 is the aspect to supply** — it lands mid-range and costs
+2–13% on any current phone. Keep the figure inside the middle 74% of the
+width and between 8% and 80% of the height and it survives every device.
 
 Everywhere else is still drawn. `Plate.jsx` generates greyscale SVG artwork
 procedurally from a seed string and the other four tarot decks use it. Do not
@@ -234,7 +244,14 @@ on a sticky element makes it a containing block and un-sticks the bar.
 7. **`.deal` caps its stagger at 8 children.** Anything past the eighth
    top-level section lands together.
 
-8. **Tailwind's opacity modifier silently does nothing on this palette.**
+8. **`setPointerCapture` throws `NotFoundError` when the pointer is not
+   active, and it takes the whole gesture with it.** Both mandir gestures had
+   the capture call ahead of the state they depended on, so one throw left the
+   swipe with no origin and the thali unable to turn — silently, no error on
+   screen. Record first, capture second, and wrap it. Anything new that
+   captures a pointer follows the same order.
+
+9. **Tailwind's opacity modifier silently does nothing on this palette.**
    Every colour resolves through a CSS variable, so `bg-ink/70` cannot be
    computed and Tailwind emits no background at all rather than failing.
    It cost a white label on a cream wall in the mandir. Anything translucent

@@ -9,4 +9,4 @@ raw/
 cand/*.jpg
 cand/*.png
 deity-meta.json
-preview-deities.jpg
+preview-*.jpg

@@ -56,7 +56,10 @@ function Tab({ to, label, icon }) {
           // A thin glass bar cannot hold a bright/dim colour hierarchy — gold
           // caps on it measure 2.8:1. The active signal is the indicator bar
           // plus icon weight; both labels stay bright enough to read.
-          `relative flex flex-col items-center gap-1.5 pb-5 pt-4 text-center caps-sm transition-colors duration-200 ${
+          // Padding is the whole height budget here — 5/4 made a 74px bar,
+          // which is a lot of near-black under a shrine. 3.5/2.5 brings it to
+          // ~57px and the row is still a 44px-plus tap target.
+          `relative flex flex-col items-center gap-1 pb-3.5 pt-2.5 text-center caps-sm transition-colors duration-200 ${
             isActive ? 'font-extrabold text-white' : 'font-semibold text-white/55 hover:text-white/80'
           }`
         }
@@ -67,13 +70,13 @@ function Tab({ to, label, icon }) {
                 on, so moving between tabs reads as one continuous object. */}
             <span
               aria-hidden="true"
-              className={`absolute inset-x-5 top-1.5 h-[3px] origin-center rounded-full bg-gold-fill transition-transform duration-300 ease-out ${
+              className={`absolute inset-x-5 top-1 h-[3px] origin-center rounded-full bg-gold-fill transition-transform duration-300 ease-out ${
                 isActive ? 'scale-x-100' : 'scale-x-0'
               }`}
             />
             {/* The icon thickens rather than recolouring — one line set, two
                 states, and no second filled set to draw and keep in sync. */}
-            <Icon name={icon} size={21} weight={isActive ? 2.1 : 1.6} />
+            <Icon name={icon} size={19} weight={isActive ? 2.1 : 1.6} />
             <span className="leading-none">{label}</span>
           </>
         )}

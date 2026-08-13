@@ -6,7 +6,7 @@ is missing, and re-pick the indices in PICKS from its contact sheets, because
 Commons search results are not stable over time.
 """
 import json, os, re, urllib.request
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageEnhance
 
 UA = 'aether-mono-dev/1.0 (prototype; contact administrator@sleepycat.in)'
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -46,15 +46,11 @@ PICKS = [
     ('shani',   'shani3',   9, 0.40, None),
 ]
 
-# 2:3. The shrine is full-bleed between the deity chips and the tab bar now,
-# which is a much taller box than the old 4:5 card.
-W, H = 600, 900
-
-# How much of the frame the painting itself is allowed to fill. Below 1 the
-# murti is not cropped at all — it sits inside the frame with shrine wall
-# around it, which is the "zoomed out" look. Raise toward 1.0 to tighten.
-FIT_W, FIT_H = 0.90, 0.82
-LIFT = 0.44  # figure's vertical centre; under .5 leaves floor for the thali
+# The shrine fits the whole picture in — `object-contain` — so nothing here
+# crops or pads. This is the cap, roughly 2x the 420px-wide shrine box, and
+# `thumbnail` never enlarges, which matters because seven of these sources are
+# under 900px on the short edge and blowing them up only makes bigger blur.
+MAX_W, MAX_H = 840, 1260
 
 
 def fetch(url, path):
@@ -82,38 +78,24 @@ def treat(im):
     return Image.merge('RGB', (r, g, b))
 
 
-def mount(im, bias, zoom):
-    """Sit the whole painting inside the frame, on a wall made from itself.
+def fit(im, bias, zoom):
+    """Cap the size, optionally tightening onto the centre first.
 
-    Nothing is cropped. Every source here is a different shape — tall
-    oleographs, near-square miniatures, a cut-out on white — and cover-cropping
-    them to one aspect either beheaded the figure or zoomed past the
-    composition. Containing them instead means the murti is always whole, and
-    the leftover frame is the shrine wall.
+    There used to be a `mount` here that contained the painting on a wall
+    blurred out of itself, because the shrine cover-cropped to a fixed aspect
+    and every source is a different shape. The shrine contains now, so the
+    wall has nothing to fill and the painting keeps its own proportions.
 
-    That wall is the painting again: blown up, blurred flat and pulled toward
-    the canvas cream. It costs four lines, always harmonises with whatever it
-    is framing, and beats a fixed gradient that fights half the palette.
+    `zoom` survives for the few sources that carry a wide mount or margin of
+    their own; it is a crop of the artwork, not a reframe of the shrine.
     """
-    if zoom and zoom > 1:                       # tighten onto the centre first
+    if zoom and zoom > 1:
         w, h = int(im.width / zoom), int(im.height / zoom)
-        im = im.crop(((im.width - w) // 2, int((im.height - h) * bias),
-                      (im.width - w) // 2 + w, int((im.height - h) * bias) + h))
-
-    wall = im.resize((W, H), Image.LANCZOS).filter(ImageFilter.GaussianBlur(48))
-    wall = Image.blend(wall, Image.new('RGB', (W, H), (238, 233, 224)), 0.42)
-    wall = ImageEnhance.Brightness(wall).enhance(0.94)
-
-    art = im.copy()
-    art.thumbnail((int(W * FIT_W), int(H * FIT_H)), Image.LANCZOS)
-    x = (W - art.width) // 2
-    y = max(0, min(H - art.height, int(H * LIFT - art.height / 2)))
-
-    # A hairline keeps the painting from dissolving into its own blur.
-    frame = Image.new('RGB', (art.width + 2, art.height + 2), (60, 52, 40))
-    wall.paste(frame, (x - 1, y - 1))
-    wall.paste(art, (x, y))
-    return wall
+        y = int((im.height - h) * bias)
+        im = im.crop(((im.width - w) // 2, y, (im.width - w) // 2 + w, y + h))
+    im = im.copy()
+    im.thumbnail((MAX_W, MAX_H), Image.LANCZOS)
+    return im
 
 
 meta, by_key = {}, {}
@@ -130,7 +112,7 @@ for key, sheet, idx, bias, zoom in PICKS:
     except Exception:
         fetch(rec['full'], src)
 
-    im = treat(mount(Image.open(src).convert('RGB'), bias, zoom))
+    im = treat(fit(Image.open(src).convert('RGB'), bias, zoom))
     out = f'{key}-{n}.webp'
     im.save(os.path.join(DEST, out), 'WEBP', quality=80, method=6)
 
@@ -152,7 +134,9 @@ rows = (len(PICKS) + COLS - 1) // COLS
 sheet = Image.new('RGB', (COLS * 200, rows * 302), (241, 239, 236))
 for i, (key, *_) in enumerate(PICKS):
     n = sum(1 for k, *_ in PICKS[:i + 1] if k == key)
-    im = Image.open(os.path.join(DEST, f'{key}-{n}.webp')).resize((186, 279), Image.LANCZOS)
-    sheet.paste(im, ((i % COLS) * 200 + 7, (i // COLS) * 302 + 12))
+    im = Image.open(os.path.join(DEST, f'{key}-{n}.webp'))
+    im.thumbnail((186, 279), Image.LANCZOS)
+    sheet.paste(im, ((i % COLS) * 200 + 7 + (186 - im.width) // 2,
+                     (i // COLS) * 302 + 12 + (279 - im.height) // 2))
 sheet.save(os.path.join(HERE, 'preview-deities.jpg'), quality=88)
 print('preview written')
