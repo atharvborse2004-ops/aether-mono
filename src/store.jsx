@@ -47,6 +47,11 @@ export function AppProvider({ children }) {
 
   const t = useCallback((key, vars) => translate(lang, key, vars), [lang])
 
+  /* Which chart the user reads. A preference, not screen state: someone who
+     reads South Indian reads it everywhere, and finding the wheel again on
+     Profile after choosing it on /chart is the app forgetting who you are. */
+  const [chartSystem, setChartSystem] = useState('vedic')
+
   /* Wallet. The opening balance matches the `user` record so Profile and the
      wallet never disagree on load; every spend and top-up moves this one
      number, and the ledger is prepended to. */
@@ -249,6 +254,8 @@ export function AppProvider({ children }) {
       lang,
       setLang,
       t,
+      chartSystem,
+      setChartSystem,
     }),
     [
       isPro,
@@ -281,6 +288,7 @@ export function AppProvider({ children }) {
       showToast,
       lang,
       t,
+      chartSystem,
     ],
   )
 

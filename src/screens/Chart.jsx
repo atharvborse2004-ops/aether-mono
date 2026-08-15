@@ -3,10 +3,15 @@ import { Link } from 'react-router-dom'
 import { chartHouses, placements, user } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
+import { ChartNorth, ChartSouth } from '../components/ChartSquare.jsx'
+import { useStore } from '../store.jsx'
 import { Field, Section, Segmented, Stub } from '../components/Primitives.jsx'
 
+const SYSTEMS = ['vedic', 'south', 'western']
+const NOTE = { vedic: 'northNote', south: 'southNote', western: 'westernNote' }
+
 /**
- * Table view is the default, not the wheel.
+ * Table view is the default, not the diagram.
  *
  * A wheel is beautiful and illegible to anyone who has not been taught to read
  * one. The table carries the same data in a form you can scan, and the wheel is
@@ -14,14 +19,19 @@ import { Field, Section, Segmented, Stub } from '../components/Primitives.jsx'
  */
 export default function Chart() {
   const [view, setView] = useState('table')
+  const { chartSystem, setChartSystem, t } = useStore()
 
   return (
     <>
       <TopBar title="Your chart" sub={`${user.birthDate} · ${user.birthTime}`} />
+      {/* Two switches, not one four-way. The first is *what you are looking
+          at* — the numbers or the diagram — and the second is *which
+          tradition's diagram*. Folding them together would put "Table" beside
+          "South Indian" as though they were the same kind of choice. */}
       <Segmented
         items={[
-          { key: 'table', label: 'Table' },
-          { key: 'wheel', label: 'Wheel' },
+          { key: 'table', label: t('chart.table') },
+          { key: 'chart', label: t(`chart.${chartSystem}`) },
         ]}
         value={view}
         onChange={setView}
@@ -80,14 +90,33 @@ export default function Chart() {
           </Section>
         </div>
       ) : (
-        <div key="wheel" className="animate-fade">
+        <div key="chart" className="animate-fade">
           <Section label="Whole sign · Lahiri ayanamsa">
-            <ChartWheel size={280} />
+            <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
+              {SYSTEMS.map((sys) => (
+                <button
+                  key={sys}
+                  type="button"
+                  aria-pressed={chartSystem === sys}
+                  onClick={() => setChartSystem(sys)}
+                  className="pill caps-sm flex-none"
+                >
+                  {t(`chart.${sys}`)}
+                </button>
+              ))}
+            </div>
+
+            {chartSystem === 'vedic' && <ChartNorth size={280} />}
+            {chartSystem === 'south' && <ChartSouth size={280} />}
+            {chartSystem === 'western' && <ChartWheel size={280} />}
+
             <Stub className="mt-8" />
-            <p className="prose-c mt-8">
-              Houses run counter-clockwise from your rising sign. The inner figures are the two
-              exact aspects in your chart.
-            </p>
+            <p className="prose-c mt-8">{t(`chart.${NOTE[chartSystem]}`)}</p>
+            {chartSystem === 'south' && (
+              <p className="mt-3 text-meta text-t3">
+                {t('chart.ascendant')} · {chartHouses.find((h) => h.house === 1).sign}
+              </p>
+            )}
           </Section>
 
           <Section label="Birth data" last>

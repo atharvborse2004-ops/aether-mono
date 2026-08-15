@@ -3,6 +3,7 @@ import { days, sessionHistory, user, walletTransactions } from '../data/mock.js'
 import { LANGS } from '../data/i18n.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
+import { ChartNorth, ChartSouth } from '../components/ChartSquare.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
 import { Acts, Row, Segmented, Ticks } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
@@ -74,12 +75,17 @@ export default function Profile() {
 /* ── Overview ────────────────────────────────────────────────────────────── */
 
 function Overview() {
-  const { showToast, questionsLeft, cartCount, lang, setLang, t } = useStore()
+  const { showToast, questionsLeft, cartCount, lang, setLang, t, chartSystem } = useStore()
 
   return (
     <>
       <section className="border-b border-rule px-5 py-6 text-center">
-        <ChartWheel size={200} />
+        {/* Follows the preference set on /chart. Showing a wheel here to
+            someone who reads South Indian is the app forgetting who they are
+            between two screens. */}
+        {chartSystem === 'vedic' && <ChartNorth size={200} />}
+        {chartSystem === 'south' && <ChartSouth size={200} />}
+        {chartSystem === 'western' && <ChartWheel size={200} />}
         <div className="mt-6 flex gap-3">
           <PopButton onClick={() => showToast('Kundli PDF downloaded')}>Download</PopButton>
           <PopButton onClick={() => showToast('Chart link copied')}>Share</PopButton>

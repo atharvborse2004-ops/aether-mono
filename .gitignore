@@ -11,3 +11,7 @@ dist
 # ships from public/cards/ as 48 webps; these are the originals and have no
 # business in git. Ignored rather than deleted — they are not ours to remove.
 Bhaktambar Guidance Card/
+
+# Scratch bundle dir for rendering components to static SVG without a browser
+# (see the chart section of docs/HANDOFF.md). Regenerated on demand.
+.render/

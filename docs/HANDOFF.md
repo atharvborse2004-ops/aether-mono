@@ -132,6 +132,38 @@ must both be updated** or the context goes stale intermittently.
 **no new store surface**. Reach for it before adding state. `spend(amount,
 label)` handles paid actions and already refuses + toasts when short.
 
+### Three chart systems
+
+`chartSystem` on the store — `vedic` | `south` | `western` — because someone who
+reads South Indian reads it everywhere, and finding the wheel again on Profile
+after choosing it on `/chart` is the app forgetting who you are.
+
+`ChartWheel.jsx` is the Western wheel. `ChartSquare.jsx` has the two Indian
+charts, and **they are not skins of each other.** The difference is what stays
+still:
+
+| | Fixed to the page | Moves | So each cell is labelled |
+|---|---|---|---|
+| **North Indian** (`vedic`) | the twelve houses | the signs | with a sign *number* |
+| **South Indian** (`south`) | the twelve signs | the houses | and the ascendant is struck through |
+
+Get that backwards and you produce a chart that looks right and is wrong, which
+is worse than one that looks broken. House 1 is the top diamond and runs
+anticlockwise; the South ring runs *clockwise* from Pisces at the top left.
+
+Both read from `chartHouses`, so neither can drift from the table view.
+
+**`node tools/verify-chart-geometry.mjs`** re-derives which compartment each
+label point falls in, straight from the geometry, and asserts it matches the
+house the component assigns. The label positions are centroids, not eyeballed
+nudges — move one and it silently drifts into its neighbour. Run it after
+touching either chart.
+
+`tools/chart-preview.html` is generated, not committed: bundle
+`src/components/Chart*.jsx` with esbuild and render with
+`react-dom/server` to get all three as static SVG without a browser. That is
+how these were checked when the browser tooling was down.
+
 ### Two languages
 
 `src/data/i18n.js` — a flat map of key → `{ en, hi }`, and `t(key, vars)` off
