@@ -25,7 +25,8 @@ const AI_REPLIES = [
  * session window. All three are mock flows; nothing leaves the browser.
  */
 export default function ChatPanel() {
-  const { chatOpen, setChatOpen, chatTab, setChatTab, questionsLeft, spendQuestion } = useStore()
+  const { isPro, chatOpen, setChatOpen, chatTab, setChatTab, questionsLeft, spendQuestion } =
+    useStore()
 
   if (!chatOpen) return null
 
@@ -98,7 +99,7 @@ export default function ChatPanel() {
 
 /* ── Live consultant ─────────────────────────────────────────────────────── */
 
-function LiveConsultant() {
+function LiveConsultant({ isPro }) {
   const [activeId, setActiveId] = useState(null)
   const active = chatThreads.find((t) => t.id === activeId)
 

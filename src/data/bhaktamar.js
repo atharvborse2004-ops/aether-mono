@@ -9,6 +9,19 @@
  * English rendering and the remedies are the tradition's words, not the house
  * voice, and are left exactly as they came. Do not rewrite them to match
  * `mock.js`.
+ *
+ * TWO CARDS ARE INCOMPLETE and carry `partial: true`:
+ *
+ *   j37  `sa` and `iast` stop mid-verse on an ellipsis, with no `॥३७॥` marker.
+ *   j38  carries only the second half of the verse. The `॥३८॥` marker is
+ *        present, which makes it look whole — it is not.
+ *
+ * They came out of the master sheet that way. They have NOT been reconstructed,
+ * because guessing at scripture is worse than shipping a gap: a plausible wrong
+ * shloka in a devotional deck is undetectable to the person it misleads. Both
+ * need a verified source — a printed recension or an established text — pasted
+ * in whole, after which the flag comes off. Anything checking verse length or
+ * seeding these into a database must expect exactly two short rows.
  */
 export const bhaktamarCards = [
   {
@@ -528,6 +541,7 @@ export const bhaktamarCards = [
     sa: "इत्थं यथा तव विभूतिरभूज्जिनेन्द्र! धर्मोपदेशनविधौ न तथा परस्य । यादृक्प्रभा दिनकृतः प्रहतान्धकारा...",
     iast: "Ityaṁ yathā tava vibhūtir abhūj jinendra! dharmopadeśana-vidhau na tathā parasya; yādṛk prabhā dinakṛtaḥ prahatāndhakārā...",
     en: "O Jina, no one equals You in the ability to teach Dharma. Just as the sun removes darkness from the world, Your teaching removes the darkness of ignorance.",
+    partial: true, // sa/iast stop mid-verse — see the note at the top of the file
   },
   {
     id: "j38",
@@ -542,6 +556,7 @@ export const bhaktamarCards = [
     sa: "ऐरावताभिमभमुद्धतमापतन्तं दृष्ट्वा भयं भवति नो भवदाश्रितानाम् ॥३८॥",
     iast: "Airāvatābhimabham uddhatam āpatantaṁ dṛṣṭvā bhayaṁ bhavati no bhavad-āśritānām.",
     en: "Even when confronted by a terrifying force as mighty as the celestial elephant Airāvata rushing forward, those who have taken refuge in You remain free from fear.",
+    partial: true, // second half of the verse only — see the note at the top of the file
   },
   {
     id: "j39",

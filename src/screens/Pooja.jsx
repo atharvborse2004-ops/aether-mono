@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { deities, offerings } from '../data/mock.js'
+import { creditLine, deities, offerings } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { PopTag } from '../components/Pop.jsx'
@@ -511,7 +511,7 @@ function MurtiSheet({ deity, pic, onPick, onClose }) {
           ))}
         </ul>
         <p className="mt-3 text-[11px] leading-snug t-faint">
-          {deity.images[pic].label} · {deity.images[pic].credit}
+          {deity.images[pic].label} · {creditLine(deity.images[pic])}
         </p>
       </div>
     </div>

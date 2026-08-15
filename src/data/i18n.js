@@ -108,6 +108,19 @@ export const strings = {
     hi: 'कार्ड आपके लिए तय नहीं करेगा। पाठक भी नहीं, पर पाठक कम से कम बहस तो करेगा।',
   },
 
+  'tarot.whichDeck': { en: 'Which cards?', hi: 'कौन से कार्ड?' },
+  'tarot.whichDeckNote': {
+    en: 'Every tradition reads the same moment differently. Pick the one you keep.',
+    hi: 'हर परंपरा एक ही क्षण को अलग ढंग से पढ़ती है। वह चुनें जो आपकी है।',
+  },
+  'tarot.thinkTitle': { en: 'Think of a question', hi: 'एक प्रश्न सोचें' },
+  'tarot.thinkNote': {
+    en: 'Do not type it. Hold it until the card is face up.',
+    hi: 'लिखें नहीं। जब तक कार्ड सामने न आए, उसे मन में रखें।',
+  },
+  'tarot.changeDeck': { en: 'Change deck', hi: 'डेक बदलें' },
+  'tarot.pullAgain': { en: 'Pull again', hi: 'फिर निकालें' },
+
   // ── Chart systems ────────────────────────────────────────────────────────
   'chart.vedic': { en: 'Vedic', hi: 'वैदिक' },
   'chart.south': { en: 'South Indian', hi: 'दक्षिण भारतीय' },

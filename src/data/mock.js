@@ -1026,8 +1026,13 @@ export const panchang = {
  * openly licensed devotional painting off Wikimedia Commons — Ravi Varma press
  * oleographs, Rodrigues lithographs, Wellcome gouaches, a Basohli miniature —
  * muted and warmed at build time so they sit on the canvas instead of shouting
- * over it. `credit` is not decoration: some of these are share-alike and the
- * line under the picker is the attribution.
+ * over it.
+ *
+ * Attribution is three fields — `artist`, `licence`, `source` — not one string,
+ * because it is not decoration. Some of these are share-alike, the processing
+ * script produces derivatives, and "which images may not go behind a paywall"
+ * has to be answerable as a filter rather than by reading prose. `creditLine`
+ * below is the only place that knows how to render them as one line.
  *
  * Files live in `public/deities/`. Reprocess with the script in the scratchpad
  * rather than editing a webp by hand.
@@ -1037,64 +1042,71 @@ export const deities = [
     forWhat: 'Anything that has not started yet.',
     line: 'Removed obstacles are not the same as an easy road. He clears the entrance, not the route.',
     images: [
-      { f: 'ganesh-1.webp', label: 'Seated with attendants', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'ganesh-2.webp', label: 'Basohli miniature, c.1730', credit: 'Anonymous · Public domain · Wikimedia Commons' },
-      { f: 'ganesh-3.webp', label: 'Rodrigues lithograph', credit: 'E. A. Rodrigues · Public domain · Wikimedia Commons' },
-      { f: 'ganesh-4.webp', label: 'Rajput miniature', credit: 'Unknown artist · Public domain · Wikimedia Commons' },
+      { f: 'ganesh-1.webp', label: 'Seated with attendants', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'ganesh-2.webp', label: 'Basohli miniature, c.1730', artist: 'Anonymous', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'ganesh-3.webp', label: 'Rodrigues lithograph', artist: 'E. A. Rodrigues', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'ganesh-4.webp', label: 'Rajput miniature', artist: 'Unknown artist', licence: 'Public domain', source: 'Wikimedia Commons' },
     ] },
   { id: 'd2', name: 'Shiva', nameHi: 'शिव', graha: 'Chandra', day: 'Monday', aarti: 'Om Jai Shiv Omkara',
     forWhat: 'Grief, illness, and what you cannot fix by trying harder.',
     line: 'Rudrabhishek is the loud version. This is the quiet one, and it counts the same.',
     images: [
-      { f: 'shiva-1.webp', label: 'Shankar', credit: 'Ravi Varma Press · Public domain · Wikimedia Commons' },
-      { f: 'shiva-2.webp', label: 'With Parvati and Nandi', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'shiva-3.webp', label: 'Drinking the poison, 1913', credit: 'Nivedita & Coomaraswamy · Public domain · Wikimedia Commons' },
-      { f: 'shiva-4.webp', label: 'Ganga Visarjana', credit: 'E. A. Rodrigues · Public domain · Wikimedia Commons' },
+      { f: 'shiva-1.webp', label: 'Shankar', artist: 'Ravi Varma Press', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'shiva-2.webp', label: 'With Parvati and Nandi', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'shiva-3.webp', label: 'Drinking the poison, 1913', artist: 'Nivedita & Coomaraswamy', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'shiva-4.webp', label: 'Ganga Visarjana', artist: 'E. A. Rodrigues', licence: 'Public domain', source: 'Wikimedia Commons' },
     ] },
   { id: 'd3', name: 'Lakshmi', nameHi: 'लक्ष्मी', graha: 'Shukra', day: 'Friday', aarti: 'Om Jai Lakshmi Mata',
     forWhat: 'Money that arrives and does not stay.',
     line: 'She is asked for stability more often than for wealth. The second is easier to grant.',
     images: [
-      { f: 'lakshmi-1.webp', label: 'On the lotus', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'lakshmi-2.webp', label: 'Press oleograph, 1930s', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'lakshmi-3.webp', label: 'With Saraswati', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'lakshmi-4.webp', label: 'Painted 1896', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
+      { f: 'lakshmi-1.webp', label: 'On the lotus', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'lakshmi-2.webp', label: 'Press oleograph, 1930s', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'lakshmi-3.webp', label: 'With Saraswati', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'lakshmi-4.webp', label: 'Painted 1896', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
     ] },
   { id: 'd4', name: 'Hanuman', nameHi: 'हनुमान', graha: 'Mangal', day: 'Tuesday', aarti: 'Aarti Kije Hanuman Lala Ki',
     forWhat: 'Fear, court matters, and Mangal sitting badly.',
     line: 'Tuesdays and Saturdays. Read the Chalisa if you have forty minutes; light a diya if you have four.',
     images: [
-      { f: 'hanuman-1.webp', label: 'With two worshippers', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
-      { f: 'hanuman-2.webp', label: 'Gouache study', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
-      { f: 'hanuman-3.webp', label: 'Carrying Rama and Lakshman', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
-      { f: 'hanuman-4.webp', label: 'With the mountain', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
+      { f: 'hanuman-1.webp', label: 'With two worshippers', artist: 'Wellcome Collection', licence: 'CC BY 4.0', source: 'Wikimedia Commons' },
+      { f: 'hanuman-2.webp', label: 'Gouache study', artist: 'Wellcome Collection', licence: 'CC BY 4.0', source: 'Wikimedia Commons' },
+      { f: 'hanuman-3.webp', label: 'Carrying Rama and Lakshman', artist: 'Wellcome Collection', licence: 'CC BY 4.0', source: 'Wikimedia Commons' },
+      { f: 'hanuman-4.webp', label: 'With the mountain', artist: 'Wellcome Collection', licence: 'CC BY 4.0', source: 'Wikimedia Commons' },
     ] },
   { id: 'd5', name: 'Durga', nameHi: 'दुर्गा', graha: 'Rahu', day: 'Friday', aarti: 'Jai Ambe Gauri',
     forWhat: 'A fight you did not pick and cannot leave.',
     line: 'Navratri is the season. The rest of the year she is still there and considerably less busy.',
     images: [
-      { f: 'durga-1.webp', label: 'With the lions', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'durga-2.webp', label: 'Mahishasuramardini', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
-      { f: 'durga-3.webp', label: 'Slaying Mahishasura', credit: 'Dswaroop100 · CC BY-SA 3.0 · Wikimedia Commons' },
-      { f: 'durga-4.webp', label: 'On the tiger', credit: 'Sujit Kumar · CC BY-SA 4.0 · Wikimedia Commons' },
+      { f: 'durga-1.webp', label: 'With the lions', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'durga-2.webp', label: 'Mahishasuramardini', artist: 'Raja Ravi Varma', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'durga-3.webp', label: 'Slaying Mahishasura', artist: 'Dswaroop100', licence: 'CC BY-SA 3.0', source: 'Wikimedia Commons' },
+      { f: 'durga-4.webp', label: 'On the tiger', artist: 'Sujit Kumar', licence: 'CC BY-SA 4.0', source: 'Wikimedia Commons' },
     ] },
   { id: 'd7', name: 'Mahavir', nameHi: 'महावीर', graha: 'Guru', day: 'Sunday', aarti: 'Mangal Bhagwan Mahavir',
     forWhat: 'Anger you are proud of, and the habit under it.',
     line: 'Ahimsa is not gentleness. It is refusing the easy cruelty when nobody would blame you for it.',
     images: [
-      { f: 'mahavir-c.webp', label: 'In the arch', credit: 'Supplied' },
-      { f: 'mahavir-a.webp', label: 'Carved niche', credit: 'Supplied' },
-      { f: 'mahavir-b.webp', label: 'Golden halo', credit: 'Supplied' },
+      { f: 'mahavir-c.webp', label: 'In the arch', artist: null, licence: 'Supplied', source: null },
+      { f: 'mahavir-a.webp', label: 'Carved niche', artist: null, licence: 'Supplied', source: null },
+      { f: 'mahavir-b.webp', label: 'Golden halo', artist: null, licence: 'Supplied', source: null },
     ] },
   { id: 'd6', name: 'Shani', nameHi: 'शनि', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
     forWhat: 'Sade sati, dhaiya, and the long grinding years.',
     line: 'He is not punishing you. He is charging you for what you already did, in instalments.',
     images: [
-      { f: 'shani-1.webp', label: 'On the crow chariot', credit: 'Ravi Varma Press · Public domain · Wikimedia Commons' },
-      { f: 'shani-2.webp', label: 'With the crow', credit: 'Indian Poet · CC BY-SA 3.0 · Wikimedia Commons' },
-      { f: 'shani-3.webp', label: 'Rodrigues lithograph', credit: 'E. A. Rodrigues · Public domain · Wikimedia Commons' },
+      { f: 'shani-1.webp', label: 'On the crow chariot', artist: 'Ravi Varma Press', licence: 'Public domain', source: 'Wikimedia Commons' },
+      { f: 'shani-2.webp', label: 'With the crow', artist: 'Indian Poet', licence: 'CC BY-SA 3.0', source: 'Wikimedia Commons' },
+      { f: 'shani-3.webp', label: 'Rodrigues lithograph', artist: 'E. A. Rodrigues', licence: 'Public domain', source: 'Wikimedia Commons' },
     ] },
 ]
+
+/**
+ * The attribution line under the murti picker. Supplied art has no artist and
+ * no source, so the parts are filtered rather than joined blindly — an image
+ * credited " · Supplied · " reads as a bug.
+ */
+export const creditLine = (img) => [img.artist, img.licence, img.source].filter(Boolean).join(' · ')
 
 /** What you can do at the shrine. Each one is an animation, not a purchase. */
 export const offerings = [

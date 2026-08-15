@@ -1,200 +1,136 @@
-# Backend — working instructions
+# Backend — working rules
 
-How to build against `BACKEND.md`. Rules that hold regardless of which step you
-are on, then the steps themselves with the condition each must satisfy before it
-counts as done.
+Rules that hold regardless of which phase you are on. They are the most
+expensive things in this project to retrofit, and unlike the documents in
+`docs/` they are *rules*, so they cannot go stale.
 
-Read `BACKEND.md` first for *why*. This file is *how*. `HANDOFF.md` is *where we
-are*.
+- **What** to build: `docs/05-BACKEND-SCHEMA.md`
+- **Why** it is shaped that way: `docs/02-TRD.md`
+- **In what order**: `docs/06-IMPLEMENTATION.md`
+- **What is actually built**: `HANDOFF.md` at the repo root
 
 ---
 
-## 1. Rules that do not bend
+## 1. The rules that do not bend
 
-These are the ones that are expensive to retrofit. Everything else is
-negotiable.
+**1. Money is integers in paise.** Column names say so: `amount_paise`,
+`balance_paise`, `price_paise`. No float touches money at any layer. Format to
+rupees in the component, at the last moment.
 
-1. **Money is integers in paise.** Column names say so: `amount_paise`,
-   `balance_paise`, `unit_price_paise`. Format to rupees at the last moment, in
-   the component. No float touches money at any layer.
+Rates are **basis points**, never percentages: `1800`, not `18` and not `0.18`.
+The percent-or-fraction ambiguity is a permanent source of hundred-fold errors.
 
-2. **The ledger is append-only.** No `UPDATE`, no `DELETE`, ever. A mistake is
-   corrected by writing a reversing entry, not by editing history. `balance` is
-   a cache; if it disagrees with the sum of the ledger, the ledger is right and
-   the balance is the bug.
+**2. The ledgers are append-only.** No `UPDATE`, no `DELETE`, ever, enforced by
+trigger. A mistake is corrected by writing a reversing entry, not by editing
+history. `wallets.balance_paise` is a cache; if it disagrees with the sum of the
+ledger, the ledger is right and the balance is the bug.
 
-3. **The client never sends a price, an amount, or an identity.** It sends
-   `{ productId, qty }`, `{ consultantId, slot }`, `{ threadId, body }`. The
-   server looks up price, cost and caller. If a request body contains a number
-   the user benefits from, that is the bug.
+**3. The client never sends a price, an amount, or an identity.** It sends
+`{ consultantId, serviceId, startsAt }`, `{ productId, qty }`,
+`{ threadId, body }`. The server looks up price, cost and caller. **If a request
+body contains a number the user benefits from, that is the bug.**
 
-4. **Authorize on the server for every `/pro` route.** The URL decides routing.
-   It does not decide permission. `isPro` stays derived from the pathname in the
-   client — do not add a role boolean — and the server checks the token
-   independently.
+**4. Authorize on the server, always.** The URL decides routing; it does not
+decide permission. `isPro` stays derived from the pathname in the client — do not
+add a role boolean — and the server scopes every query by the caller's own ID.
 
-5. **One write per user action.** A booking that debits the wallet and claims
-   the slot is one transaction. Two calls means a wallet debited for a slot
-   someone else took.
+**5. One write per user action.** A booking that debits a wallet and claims a
+slot is one transaction. Two calls means a wallet debited for a slot someone
+else took.
 
-6. **Webhooks verify signatures, and are idempotent.** Razorpay retries. The
-   same event arriving twice must credit once. Key on the provider's event id.
+**6. Webhooks verify signatures and are idempotent.** Providers retry. The same
+event arriving twice must credit once, and the guarantee is a **unique index on
+the provider's own identifier** — never an application-level "have I seen this?"
+check, which races with its own write.
 
-7. **Secrets never reach the client.** Model keys, payment secrets, service
-   keys — server only. The Supabase anon key is the one thing that is meant to
-   be public, and it is only safe because RLS is on. If RLS is off on a table,
-   that table is public.
+**7. Secrets never reach the client.** Model keys, payment secrets, service-role
+keys: server only. The Supabase anon key is the one credential meant to be
+public, and it is only safe because RLS is on. **A table with RLS disabled is a
+public table.**
 
-8. **Store the input, compute the derivation.** Birth details are stored;
-   charts, horoscopes and panchang are computed. If you cache one, name the
-   column so it is obviously a cache and can be thrown away.
+**8. Store the input, compute the derivation.** Birth details are stored; charts,
+horoscopes and panchang are computed. If a derivation is ever cached, the column
+name says `_cache` so it is obviously throwaway.
 
 ---
 
 ## 2. Conventions
 
-**Layout**
+### Layout
 
 ```
 backend/
-  BACKEND.md          architecture and decisions
   INSTRUCTIONS.md     this file
-  HANDOFF.md          current state, decisions pending, next action
-  schema/             .sql files, numbered, forward-only
+  schema/             numbered .sql files, forward-only
   functions/          one folder per server function
   ephemeris/          the Python chart service
   seed/               static JSON lifted out of mock.js
 ```
 
-Nothing here exists yet. Create each folder in the step that needs it, not
-before.
+Create each folder in the phase that needs it, not before.
 
-**Naming** — tables plural and snake_case, columns snake_case, timestamps
-`*_at`, money `*_paise`, booleans read as assertions (`verified`, not
-`is_verified`).
+### Naming
 
-**Errors** — a refusal returns a reason the UI can show. `spend()` already
-toasts "Not enough balance"; the server's job is to make that string true, not
-to invent a new vocabulary. Never fail silently and never return 200 on a
-refusal.
+Tables plural and snake_case. Columns snake_case. Timestamps `*_at`. Money
+`*_paise`. Rates `*_bps`. Booleans read as assertions — `verified`, not
+`is_verified`. Caches carry `_cache` in the name.
 
-**Migrations** — numbered SQL files, forward-only, never edited once applied.
-`001_profiles.sql`, `002_wallet.sql`. A migration that has run on any real
-database is history.
+### Migrations
 
-**Testing** — one runnable check per non-trivial path, and money paths are never
-trivial. The check that matters most: apply the ledger from zero and assert it
-equals the stored balance. If that passes, most of the wallet is right.
+Numbered SQL files, forward-only, **never edited once applied**. A migration that
+has run against any real database is history.
 
----
+### Errors
 
-## 3. The steps
+A refusal returns a reason the interface can show, in the app's voice — second
+person, present tense, no hedging. `spend()` already toasts "Not enough
+balance"; **the server's job is to make that string true**, not to invent a new
+vocabulary. Never fail silently and never return 200 on a refusal without a
+structured reason.
 
-Each step lists what it delivers and the condition that proves it. Do not start
-the next until the previous is live and the app uses it.
+### Testing
 
-### Step 1 — Auth and profile
+One runnable check per non-trivial path, and **money paths are never trivial**.
+The check that matters most: apply the ledger from zero and assert it equals the
+stored balance. If that passes, most of the wallet is right.
 
-Phone OTP sign-in. `profiles` row with birth details written by onboarding.
+There is no test framework in this repo yet. Do not add one to write a single
+assertion.
 
-*Front end:* the onboarding screens already collect name, date, time and place
-into `birth` in the store. `setBirthField` keeps its signature; the last
-onboarding step writes the row.
+### Verification
 
-**Done when:** you sign in, close the tab, reopen, and your birth details are
-still there.
-
-### Step 2 — Wallet
-
-`wallets` and `ledger`. Server functions for debit and credit. `spend()` and
-`addMoney()` in the store become awaited calls with unchanged signatures.
-
-**Done when:** devtools cannot change your balance, a debit larger than the
-balance is refused by the server with the existing toast, and replaying the
-ledger from zero reproduces the balance exactly.
-
-### Step 3 — Payments in
-
-Razorpay checkout, webhook endpoint, signature verification, credit on success.
-
-**Done when:** a real ₹1 payment credits the wallet exactly once, and firing the
-same webhook payload twice still credits once.
-
-### Step 4 — Bookings
-
-`availability`, `bookings`, atomic claim. Wallet debit and slot claim in one
-transaction. `bookedSlots` becomes a query, not a constant.
-
-**Done when:** two clients requesting the same slot at the same moment produce
-one booking, one clear refusal, and no orphaned debit.
-
-### Step 5 — Chat
-
-`threads`, `messages`, realtime subscription. `ChatPanel` reads from the
-database.
-
-Fix the direction bug here: `chatThreads` is written from the seeker's side, so
-a consultant currently sees threads named after herself with her own replies
-marked as the other party. With real rows, sender identity is a column and the
-bug cannot be expressed.
-
-**Done when:** a message sent from the client side appears on the pro side
-without a reload, attributed correctly on both.
-
-### Step 6 — Charts
-
-Python ephemeris service. `placements`, `chartHouses`, `days` and `panchang`
-computed from the stored birth details.
-
-**Done when:** two users with different birth details get different charts, and a
-known birth time reproduces a chart you have verified against an independent
-source. Pick that reference chart before you start.
-
-### Step 7 — Ask AI
-
-Server-side model proxy. `questionsLeft` enforced server-side; `questionPacks`
-purchases credit it through the wallet.
-
-**Done when:** the key is absent from the network tab, and a client that fakes
-`questionsLeft` still gets refused at zero.
-
-### Step 8 — Shop orders, live video, payouts
-
-In that order. Orders freeze `unit_price_paise` at purchase. Live video is an
-SDK integration. Payouts need consultant KYC first and a CA conversation before
-the code.
+**`npm run build` passing proves almost nothing.** There is no linter and no type
+checker, so an undefined identifier inside JSX compiles cleanly and throws at
+runtime. It has shipped a blank screen twice. **Every phase ends with walking the
+affected routes in a browser.**
 
 ---
 
-## 4. Local development
+## 3. Local development
 
-Not set up yet. When it is, this section holds the actual commands. Until then,
-the shape:
+Not set up yet. When it is, this section holds the actual commands. The shape:
 
-- Front end stays `npm run dev` on any free port, unchanged.
-- The API runs separately; the client points at it through one env var so
+- The front end stays `npm run dev` on any free port, unchanged.
+- The API runs separately; the client points at it through **one env var**, so
   switching between local and deployed is a one-line change.
-- Secrets live in `.env.local`, which is gitignored. There is a committed
-  `.env.example` with the keys and no values.
-- Never point a dev front end at production data. The first destructive mistake
-  is always this one.
+- Secrets live in `.env.local`, gitignored, with a committed `.env.example`
+  carrying the keys and no values.
+- **Never point a dev front end at production data.** The first destructive
+  mistake is always this one.
 
 ---
 
-## 5. Keeping these files true
+## 4. Keeping the documents true
 
-`HANDOFF.md` is the one that goes stale, because it is the one that describes
-reality. It gets updated in the same session as the work, not later.
+The rule lives in `CLAUDE.md` at the repo root. The short version:
 
-The rule for all three files lives in `CLAUDE.md` at the repo root. The short
-version:
-
-- A **decision** — stack, schema, a rule, a third-party choice — updates
-  `BACKEND.md`.
-- A **convention or a step change** updates `INSTRUCTIONS.md`.
+- A **decision** — stack, schema, a third-party choice — updates the document
+  that owns it. Each fact has exactly one home; the others link.
 - **Anything built, blocked, deferred or discovered** updates `HANDOFF.md`.
+- **Edit the existing section.** Do not append a changelog. If a decision
+  reverses, rewrite it and say what it replaced.
 
-A document that describes the intent rather than the state is worse than no
-document, because it is trusted. The front-end `README.md` is currently proof of
-this: it describes a black-canvas monochrome build that the app stopped being
-several redesigns ago.
+A document describing intent as though it were state is worse than no document,
+because it gets trusted. This repo has already paid for that lesson twice: a
+design doc describing a build that had been replaced several redesigns earlier,
+and a handoff listing a chat fix as done while the panel threw on first open.

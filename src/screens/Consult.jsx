@@ -183,13 +183,14 @@ export default function Consult() {
                     >
                       <Icon name="chat" size={18} />
                     </button>
-                    {/* Small, not full-width. The row already has call and
-                        message as knobs; a stretched gold slab beside them made
-                        booking look like the only thing on offer. */}
+                    {/* Pushed to the right edge, not sitting in the run of
+                        knobs. Call and message are things you can undo; booking
+                        commits money, and putting it a thumb's width away from
+                        the other two is how you mis-tap it. */}
                     <PopButton
                       variant="gold"
                       size="sm"
-                      className="flex-none"
+                      className="ml-auto flex-none"
                       full={false}
                       onClick={() => openBooking(c)}
                     >
