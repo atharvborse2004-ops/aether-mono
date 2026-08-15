@@ -23,7 +23,7 @@ import { useStore } from '../store.jsx'
  * Nothing books a pandit, nothing is charged, and there is no audio.
  */
 export default function Pooja() {
-  const { showToast } = useStore()
+  const { showToast, lang, t } = useStore()
   const [deity, setDeity] = useState(deities[0])
   const [pic, setPic] = useState(0)
   const [sheet, setSheet] = useState(false)
@@ -199,7 +199,7 @@ export default function Pooja() {
     }
     if (key === 'diya') setLit((l) => ({ ...l, diya: !l.diya }))
     if (key === 'incense') setLit((l) => ({ ...l, incense: !l.incense }))
-    showToast(says)
+    showToast(t(says))
   }
 
   const image = deity.images[pic]
@@ -208,7 +208,7 @@ export default function Pooja() {
     /* relative, because the murti sheet is absolute against this screen rather
        than against the phone frame — it should not cover the tab bar. */
     <div className="relative flex h-full flex-col">
-      <TabHeader action={<PopTag tone="gold">e-puja</PopTag>} />
+      <TabHeader action={<PopTag tone="gold">{t('puja.tag')}</PopTag>} />
 
       {/* ── Choose a deity ─────────────────────────────────────────────── */}
       <section className="flex-none px-2 pb-2 pt-2">
@@ -240,7 +240,7 @@ export default function Pooja() {
                 <span
                   className={`caps-sm leading-tight ${deity.id === d.id ? 't-heading' : 't-body'}`}
                 >
-                  {d.name}
+                  {lang === 'hi' ? d.nameHi : d.name}
                 </span>
               </button>
             </li>
@@ -327,7 +327,7 @@ export default function Pooja() {
                   type="button"
                   onClick={() => offer(o.key, o.says)}
                   aria-pressed={on || undefined}
-                  aria-label={o.label}
+                  aria-label={t(o.label)}
                   className={`plinth ${on ? 'plinth-on' : ''}`}
                 >
                   <OfferingProp kind={o.key} on={on} />
@@ -342,7 +342,7 @@ export default function Pooja() {
         <button
           type="button"
           onClick={() => setSheet(true)}
-          aria-label="Choose a murti"
+          aria-label={t('puja.chooseMurti')}
           className="plinth absolute bottom-4 left-3"
         >
           <Icon name="eye" size={19} />
@@ -350,8 +350,8 @@ export default function Pooja() {
 
         <button
           type="button"
-          onClick={() => showToast('Sangeet — prototype has no audio')}
-          aria-label="Sangeet"
+          onClick={() => showToast(t('puja.noAudio'))}
+          aria-label={t('puja.sangeet')}
           className="plinth absolute bottom-4 right-3"
         >
           <SangeetGlyph />
@@ -419,7 +419,7 @@ export default function Pooja() {
             if (turned.current) return
             setAarti((a) => !a)
             ripple()
-            showToast(aarti ? 'Aarti ended' : 'Aarti begun')
+            showToast(t(aarti ? 'puja.aartiEnded' : 'puja.aartiBegun'))
           }}
           onPointerDown={startTurn}
           aria-pressed={aarti}
@@ -445,7 +445,7 @@ export default function Pooja() {
             className="mx-auto mt-1 block w-fit rounded-full px-2.5 py-0.5 caps-sm text-white backdrop-blur-[2px]"
             style={{ background: 'rgba(14, 14, 16, 0.72)' }}
           >
-            {aarti ? 'End aarti' : 'Aarti'}
+            {t(aarti ? 'puja.endAarti' : 'puja.aarti')}
           </span>
         </button>
 
@@ -475,6 +475,7 @@ export default function Pooja() {
  * carry text. If this sheet goes, the images have to go with it.
  */
 function MurtiSheet({ deity, pic, onPick, onClose }) {
+  const { lang, t } = useStore()
   return (
     <div className="absolute inset-0 z-30 flex flex-col justify-end">
       <button
@@ -484,7 +485,9 @@ function MurtiSheet({ deity, pic, onPick, onClose }) {
         className="animate-fade absolute inset-0 bg-black/45"
       />
       <div className="animate-fade-rise relative rounded-t-3xl bg-surface p-4 shadow-xl">
-        <p className="caps-sm t-faint">{deity.name} · murti</p>
+        <p className="caps-sm t-faint">
+          {lang === 'hi' ? deity.nameHi : deity.name} · {t('puja.murti')}
+        </p>
         <ul className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
           {deity.images.map((im, i) => (
             <li key={im.f}>

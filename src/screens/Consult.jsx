@@ -183,9 +183,13 @@ export default function Consult() {
                     >
                       <Icon name="chat" size={18} />
                     </button>
+                    {/* Small, not full-width. The row already has call and
+                        message as knobs; a stretched gold slab beside them made
+                        booking look like the only thing on offer. */}
                     <PopButton
                       variant="gold"
-                      className="flex-1"
+                      size="sm"
+                      className="flex-none"
                       full={false}
                       onClick={() => openBooking(c)}
                     >

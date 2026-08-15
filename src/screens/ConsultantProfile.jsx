@@ -110,11 +110,15 @@ export default function ConsultantProfile() {
             ))}
           </div>
 
-          {/* Follow, message and call. The last two are glyphs — a labelled
-              button for each would take the whole row and say less. */}
+          {/* Follow takes half the row; schedule, message and call are glyphs
+              beside it. Three labelled buttons would take two rows and say less
+              than three icons everyone already reads.
+
+              Schedule opens the same sheet as the sticky footer rather than a
+              second booking path — one flow, two ways in. */}
           <div className="mt-5 flex items-center gap-2">
             <PopButton
-              className="flex-1"
+              className="w-1/2 flex-none"
               full={false}
               variant={following ? 'ghost' : 'default'}
               onClick={() =>
@@ -128,9 +132,17 @@ export default function ConsultantProfile() {
             </PopButton>
             <button
               type="button"
+              aria-label={`Schedule a session with ${firstName(c.name)}`}
+              onClick={openSheet}
+              className="pill knob !h-10 flex-1 justify-center"
+            >
+              <Icon name="calendar" size={18} />
+            </button>
+            <button
+              type="button"
               aria-label={`Message ${firstName(c.name)}`}
               onClick={() => openChat('live')}
-              className="pill knob !h-10 !w-10 flex-none justify-center"
+              className="pill knob !h-10 flex-1 justify-center"
             >
               <Icon name="chat" size={18} />
             </button>
@@ -138,7 +150,7 @@ export default function ConsultantProfile() {
               type="button"
               aria-label={`Call ${firstName(c.name)}`}
               onClick={() => showToast(`Calling ${firstName(c.name)} — prototype only`)}
-              className="pill knob !h-10 !w-10 flex-none justify-center"
+              className="pill knob !h-10 flex-1 justify-center"
             >
               <Icon name="phone" size={18} />
             </button>

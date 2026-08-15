@@ -79,10 +79,13 @@ Sans, skeuomorphic surfaces, frosted ink tab bar.
   its subcategories.
 - **Academy** — Courses / Events / Downloads, all three with cover art.
 - **Tarot** — five decks by tradition. **Bhaktamar** leads and is the odd one:
-  48 painted faces, one per shloka of the stotra, each carrying a Sanskrit
-  verse, a transliteration, a question and a remedy. The other four (Western,
-  Hindu, Islamic, Buddhist) are six drawn cards each. One free pull a week then
-  ₹11, charged through the wallet.
+  48 painted faces, one per shloka of the stotra, each carrying the verse in
+  Devanagari, IAST and English, plus a question and a remedy. The other four
+  (Western, Hindu, Islamic, Buddhist) are six drawn cards each. **Two free
+  pulls a week**, then ₹11 through the wallet — and **no price is shown until a
+  card has been pulled**, because leading with the cost sells before the thing
+  has been handed over. Order on screen: face → shloka → meaning → remedy and
+  the question → ask a reader.
 
 ---
 
@@ -127,6 +130,36 @@ must both be updated** or the context goes stale intermittently.
 `hasFlag` / `toggleFlag(key, {on, off})` — sticky toggles and free toasts with
 **no new store surface**. Reach for it before adding state. `spend(amount,
 label)` handles paid actions and already refuses + toasts when short.
+
+### Two languages
+
+`src/data/i18n.js` — a flat map of key → `{ en, hi }`, and `t(key, vars)` off
+the store. **A missing `hi` is a valid state**: `t()` falls back to English,
+then to the key itself, so the dictionary fills in tranches without anything
+breaking, and a missing entry shows up on screen as `tarot.pull` rather than as
+an invisible blank.
+
+`lang` is the first thing in this app that could not live on `flags` — that Set
+holds booleans and this is a value — so it is a real store slice. Both the value
+object and the dep array, as always.
+
+Two rules that are easy to get wrong:
+
+- **UI chrome is keyed in `i18n.js`; content carries its own twin.** A deity has
+  `nameHi` beside `name`, a deck has `traditionHi`. A new deity therefore
+  arrives with its own Hindi name instead of needing an edit in a second file.
+  Offering `label` and `says` are *keys*, not text — check before "fixing" them.
+- **The Sanskrit on a tarot card is never translated.** It is not English in
+  need of a Hindi version; it is the verse.
+
+Translated so far: navigation, the header, Home's free tools, the whole mandir
+and the whole tarot screen. **Not translated, deliberately: the editorial copy
+in `mock.js`** — readings, card meanings, bios, remedies. That is ~1,580 lines
+and machine-translating it would wreck the voice rule at the top of that file.
+It needs a translator who can write the same blunt register in Hindi.
+
+See `docs/DESIGN.md` §2 for why Noto Sans Devanagari sits *after* Plus Jakarta
+Sans in the font stack and what breaks if it does not.
 
 ### Design system
 
@@ -224,10 +257,15 @@ on a sticky element makes it a containing block and un-sticks the bar.
    `` `h-[${n}px]` `` produce classes that are never generated. Anything that
    varies goes in inline `style`. Bitten twice.
 
-3. **Scripted multi-edit passes corrupt files.** A sequence of index-based
-   splices duplicated half of `Consult.jsx`; the build caught it as an unclosed
-   fragment, but it could as easily have been silent. For anything beyond one
-   or two replacements, rewrite the file.
+3. **Scripted multi-edit passes corrupt files, and `mock.js` is the trap.**
+   A sequence of index-based splices once duplicated half of `Consult.jsx`.
+   Worse, `mock.js` repeats the same shapes across unrelated collections —
+   `name: 'Ritu Kashyap'` followed by `initials: 'RK'` appears in both
+   `consultants` and `chatThreads`, so a replace meant for a thread silently
+   rewrote a consultant instead. Nothing failed; the build passed. **Slice the
+   file to the block you mean first** (`s.index("export const chatThreads")`),
+   assert the anchor occurs exactly once inside it, then replace. For anything
+   beyond one or two edits, rewrite the file.
 
 4. **Say which surface a contrast number belongs to.** `--gold` carried the
    comment "4.9:1 on canvas". That was its ratio against a white *card*; on the
@@ -252,7 +290,12 @@ on a sticky element makes it a containing block and un-sticks the bar.
    screen. Record first, capture second, and wrap it. Anything new that
    captures a pointer follows the same order.
 
-9. **Tailwind's opacity modifier silently does nothing on this palette.**
+9. **A component that calls `t()` without pulling it from the store builds
+   clean and crashes on render.** `MurtiSheet` did exactly this. It is trap 1
+   wearing a new hat, and the cheap guard is a scan for `t(` in a function body
+   with no `useStore()` above it — the build will never tell you.
+
+10. **Tailwind's opacity modifier silently does nothing on this palette.**
    Every colour resolves through a CSS variable, so `bg-ink/70` cannot be
    computed and Tailwind emits no background at all rather than failing.
    It cost a white label on a cream wall in the mandir. Anything translucent
@@ -266,12 +309,17 @@ on a sticky element makes it a containing block and un-sticks the bar.
   Studio publishes to a toast; "go live" opens the room that already exists.
 - **Client side:** no real payments or accounts. Every commit flow ends in a
   toast and the copy says so.
-- **Tarot's "weekly" free pull is a single flag**, not a dated window
-  (`tarot:usedFree`). Nothing persists across a reload, so a real week boundary
+- **Tarot's "weekly" free pulls are two flags** (`tarot:free1`, `tarot:free2`),
+  not a dated window
+  Nothing persists across a reload, so a real week boundary
   needs a clock *and* a store that remembers — add both or neither.
-- **`ChatPanel`'s threads are written from the seeker's side.** A consultant
-  reading them sees threads named after herself with her own replies marked as
-  the other party. ~6 lines to flip on `isPro`. Not done.
+- ~~`ChatPanel` reads backwards for a consultant.~~ **Done.** Each thread now
+  carries both ends (`seeker` / `seekerInitials` beside `name` / `initials`),
+  and `otherEnd(thread, isPro)` picks the one the reader is not. The pro side
+  also loses the Ask AI tab — a consultant is the person being asked — and
+  sends as `from: 'them'` with no canned reply, because `consultantReplies` is
+  a consultant answering a seeker and playing it back would have her talking to
+  herself.
 - **Sangeet in the mandir plays nothing** — there is no audio anywhere in the
   app. The button toasts and says so.
 - **The chosen murti does not survive leaving the tab.** `pic` is local state

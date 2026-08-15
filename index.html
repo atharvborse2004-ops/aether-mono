@@ -16,8 +16,16 @@
       and open apertures, and it holds up at 10px caps, which is where most
       geometric sans fall apart and where this UI spends most of its type.
     -->
+    <!--
+      Noto Sans Devanagari beside it, because Plus Jakarta Sans has no Indic
+      coverage at all. Without this every Hindi string silently falls back to
+      whatever the OS has — Nirmala UI on Windows, something else on Android —
+      and a bilingual screen renders in two unrelated typefaces. Loaded in the
+      same request; the stack in tailwind.config.js puts Jakarta first so Latin
+      is unaffected and only Devanagari resolves to Noto.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <title>Veda</title>

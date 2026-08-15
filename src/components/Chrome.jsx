@@ -23,11 +23,11 @@ import { useStore } from '../store.jsx'
  * separate places.
  */
 const TABS = [
-  { to: '/home', label: 'Home', icon: 'home' },
-  { to: '/pooja', label: 'Pooja', icon: 'pooja' },
-  { to: '/consult', label: 'Consult', icon: 'consult' },
-  { to: '/shop', label: 'Shop', icon: 'shop' },
-  { to: '/academy', label: 'Academy', icon: 'academy' },
+  { to: '/home', label: 'nav.home', icon: 'home' },
+  { to: '/pooja', label: 'nav.pooja', icon: 'pooja' },
+  { to: '/consult', label: 'nav.consult', icon: 'consult' },
+  { to: '/shop', label: 'nav.shop', icon: 'shop' },
+  { to: '/academy', label: 'nav.academy', icon: 'academy' },
 ]
 
 /**
@@ -40,14 +40,15 @@ const TABS = [
  * the drift is invisible in review and obvious on screen.
  */
 export const PRO_TABS = [
-  { to: '/pro/feed', label: 'Feed', icon: 'home' },
-  { to: '/pro/sessions', label: 'Sessions', icon: 'calendar' },
-  { to: '/pro/studio', label: 'Studio', icon: 'plus' },
-  { to: '/pro/earnings', label: 'Earnings', icon: 'rupee' },
-  { to: '/pro/profile', label: 'Profile', icon: 'consult' },
+  { to: '/pro/feed', label: 'nav.feed', icon: 'home' },
+  { to: '/pro/sessions', label: 'nav.sessions', icon: 'calendar' },
+  { to: '/pro/studio', label: 'nav.studio', icon: 'plus' },
+  { to: '/pro/earnings', label: 'nav.earnings', icon: 'rupee' },
+  { to: '/pro/profile', label: 'nav.profile', icon: 'consult' },
 ]
 
 function Tab({ to, label, icon }) {
+  const { t } = useStore()
   return (
     <li className="flex-1">
       <NavLink
@@ -77,7 +78,7 @@ function Tab({ to, label, icon }) {
             {/* The icon thickens rather than recolouring — one line set, two
                 states, and no second filled set to draw and keep in sync. */}
             <Icon name={icon} size={19} weight={isActive ? 2.1 : 1.6} />
-            <span className="leading-none">{label}</span>
+            <span className="leading-none">{t(label)}</span>
           </>
         )}
       </NavLink>
@@ -119,7 +120,7 @@ export function BottomNav({ tabs = TABS }) {
  * the cart, Live its on-air badge. Everything else passes nothing.
  */
 export function TabHeader({ action = null }) {
-  const { openChat, me, isPro } = useStore()
+  const { openChat, me, isPro, t } = useStore()
 
   return (
     <header className="topbar flex items-center gap-2.5 px-4 py-2">
@@ -129,7 +130,7 @@ export function TabHeader({ action = null }) {
           here. */}
       <Link
         to={me.profileTo}
-        aria-label="Your profile"
+        aria-label={t('a.yourProfile')}
         className="transition-opacity hover:opacity-70"
       >
         <PopAvatar initials={me.initials} size={30} />
@@ -141,7 +142,7 @@ export function TabHeader({ action = null }) {
         /* Ask AI is a seeker product. A consultant tapping messages wants his
            client threads, not a chart oracle. */
         onClick={() => openChat(isPro ? 'live' : 'ai')}
-        aria-label="Messages"
+        aria-label={t('a.messages')}
         className="pill knob relative !h-9 !w-9 justify-center"
       >
         <Icon name="chat" size={18} />

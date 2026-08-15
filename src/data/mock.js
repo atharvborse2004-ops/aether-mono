@@ -883,6 +883,29 @@ export const earnings = {
  * this file are display strings — do not parse them back into numbers; add the
  * figures a chart actually needs and leave the strings alone.
  */
+/**
+ * How the consultant is actually performing, as opposed to what she earned.
+ *
+ * These are the numbers a marketplace ranks on and a consultant is judged by,
+ * so they sit in Earnings rather than in a vanity insights tab: a slow reply
+ * and a missed call both cost money, and this is the screen about money.
+ *
+ * Real numbers, not display strings — `attended / requests` is computed and
+ * charted, so parsing "84.2k" back out of a label is not a trap anyone can
+ * fall into here.
+ */
+export const proMetrics = {
+  medianReplyMins: 4,
+  replyTargetMins: 10,
+  callsAttended: 128,
+  callsRequested: 146,
+  sessionsCompleted: 119,
+  repeatClientPct: 37,
+  ratingAvg: 4.9,
+  /** Median reply time by day, same seven days as the earnings bars. */
+  replyByDay: [6, 4, 3, 5, 4, 2, 3],
+}
+
 export const earningsSeries = [
   { label: 'Mon', value: 4200 },
   { label: 'Tue', value: 7480 },
@@ -1010,7 +1033,7 @@ export const panchang = {
  * rather than editing a webp by hand.
  */
 export const deities = [
-  { id: 'd1', name: 'Ganesh', graha: 'Ketu', day: 'Wednesday', aarti: 'Jai Ganesh Deva',
+  { id: 'd1', name: 'Ganesh', nameHi: 'गणेश', graha: 'Ketu', day: 'Wednesday', aarti: 'Jai Ganesh Deva',
     forWhat: 'Anything that has not started yet.',
     line: 'Removed obstacles are not the same as an easy road. He clears the entrance, not the route.',
     images: [
@@ -1019,7 +1042,7 @@ export const deities = [
       { f: 'ganesh-3.webp', label: 'Rodrigues lithograph', credit: 'E. A. Rodrigues · Public domain · Wikimedia Commons' },
       { f: 'ganesh-4.webp', label: 'Rajput miniature', credit: 'Unknown artist · Public domain · Wikimedia Commons' },
     ] },
-  { id: 'd2', name: 'Shiva', graha: 'Chandra', day: 'Monday', aarti: 'Om Jai Shiv Omkara',
+  { id: 'd2', name: 'Shiva', nameHi: 'शिव', graha: 'Chandra', day: 'Monday', aarti: 'Om Jai Shiv Omkara',
     forWhat: 'Grief, illness, and what you cannot fix by trying harder.',
     line: 'Rudrabhishek is the loud version. This is the quiet one, and it counts the same.',
     images: [
@@ -1028,7 +1051,7 @@ export const deities = [
       { f: 'shiva-3.webp', label: 'Drinking the poison, 1913', credit: 'Nivedita & Coomaraswamy · Public domain · Wikimedia Commons' },
       { f: 'shiva-4.webp', label: 'Ganga Visarjana', credit: 'E. A. Rodrigues · Public domain · Wikimedia Commons' },
     ] },
-  { id: 'd3', name: 'Lakshmi', graha: 'Shukra', day: 'Friday', aarti: 'Om Jai Lakshmi Mata',
+  { id: 'd3', name: 'Lakshmi', nameHi: 'लक्ष्मी', graha: 'Shukra', day: 'Friday', aarti: 'Om Jai Lakshmi Mata',
     forWhat: 'Money that arrives and does not stay.',
     line: 'She is asked for stability more often than for wealth. The second is easier to grant.',
     images: [
@@ -1037,7 +1060,7 @@ export const deities = [
       { f: 'lakshmi-3.webp', label: 'With Saraswati', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
       { f: 'lakshmi-4.webp', label: 'Painted 1896', credit: 'Raja Ravi Varma · Public domain · Wikimedia Commons' },
     ] },
-  { id: 'd4', name: 'Hanuman', graha: 'Mangal', day: 'Tuesday', aarti: 'Aarti Kije Hanuman Lala Ki',
+  { id: 'd4', name: 'Hanuman', nameHi: 'हनुमान', graha: 'Mangal', day: 'Tuesday', aarti: 'Aarti Kije Hanuman Lala Ki',
     forWhat: 'Fear, court matters, and Mangal sitting badly.',
     line: 'Tuesdays and Saturdays. Read the Chalisa if you have forty minutes; light a diya if you have four.',
     images: [
@@ -1046,7 +1069,7 @@ export const deities = [
       { f: 'hanuman-3.webp', label: 'Carrying Rama and Lakshman', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
       { f: 'hanuman-4.webp', label: 'With the mountain', credit: 'Wellcome Collection · CC BY 4.0 · Wikimedia Commons' },
     ] },
-  { id: 'd5', name: 'Durga', graha: 'Rahu', day: 'Friday', aarti: 'Jai Ambe Gauri',
+  { id: 'd5', name: 'Durga', nameHi: 'दुर्गा', graha: 'Rahu', day: 'Friday', aarti: 'Jai Ambe Gauri',
     forWhat: 'A fight you did not pick and cannot leave.',
     line: 'Navratri is the season. The rest of the year she is still there and considerably less busy.',
     images: [
@@ -1055,7 +1078,7 @@ export const deities = [
       { f: 'durga-3.webp', label: 'Slaying Mahishasura', credit: 'Dswaroop100 · CC BY-SA 3.0 · Wikimedia Commons' },
       { f: 'durga-4.webp', label: 'On the tiger', credit: 'Sujit Kumar · CC BY-SA 4.0 · Wikimedia Commons' },
     ] },
-  { id: 'd7', name: 'Mahavir', graha: 'Guru', day: 'Sunday', aarti: 'Mangal Bhagwan Mahavir',
+  { id: 'd7', name: 'Mahavir', nameHi: 'महावीर', graha: 'Guru', day: 'Sunday', aarti: 'Mangal Bhagwan Mahavir',
     forWhat: 'Anger you are proud of, and the habit under it.',
     line: 'Ahimsa is not gentleness. It is refusing the easy cruelty when nobody would blame you for it.',
     images: [
@@ -1063,7 +1086,7 @@ export const deities = [
       { f: 'mahavir-a.webp', label: 'Carved niche', credit: 'Supplied' },
       { f: 'mahavir-b.webp', label: 'Golden halo', credit: 'Supplied' },
     ] },
-  { id: 'd6', name: 'Shani', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
+  { id: 'd6', name: 'Shani', nameHi: 'शनि', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
     forWhat: 'Sade sati, dhaiya, and the long grinding years.',
     line: 'He is not punishing you. He is charging you for what you already did, in instalments.',
     images: [
@@ -1075,10 +1098,12 @@ export const deities = [
 
 /** What you can do at the shrine. Each one is an animation, not a purchase. */
 export const offerings = [
-  { id: 'o1', key: 'bell', label: 'Bell', says: 'Ghanti rung' },
-  { id: 'o2', key: 'flower', label: 'Flowers', says: 'Pushpanjali offered' },
-  { id: 'o3', key: 'diya', label: 'Diya', says: 'Diya lit' },
-  { id: 'o4', key: 'incense', label: 'Dhoop', says: 'Dhoop lit' },
+  // `label` and `says` are i18n keys, not text — the mandir is the one screen
+  // where the Hindi matters most, so nothing here is a literal string.
+  { id: 'o1', key: 'bell', label: 'puja.bell', says: 'puja.rung' },
+  { id: 'o2', key: 'flower', label: 'puja.flowers', says: 'puja.offered' },
+  { id: 'o3', key: 'diya', label: 'puja.diya', says: 'puja.diyaLit' },
+  { id: 'o4', key: 'incense', label: 'puja.dhoop', says: 'puja.dhoopLit' },
 ]
 
 /* ==========================================================================
@@ -1093,12 +1118,12 @@ export const TAROT_PRICE = 11
  */
 export const tarotDecks = [
   {
-    id: 'dk5', name: 'Bhaktamar', tradition: 'Jain',
+    id: 'dk5', name: 'Bhaktamar', tradition: 'Jain', traditionHi: 'जैन',
     line: 'Forty-eight cards, one for each shloka of the stotra. The only deck here with a painted face.',
     cards: bhaktamarCards,
   },
   {
-    id: 'dk1', name: 'Rider-Waite', tradition: 'Western',
+    id: 'dk1', name: 'Rider-Waite', tradition: 'Western', traditionHi: 'पाश्चात्य',
     line: 'The pack most people picture. Heavy on the majors.',
     cards: [
       { id: 'w1', name: 'The Tower', line: 'The thing you are bracing for has already happened. You are bracing for the admission.' },
@@ -1110,7 +1135,7 @@ export const tarotDecks = [
     ],
   },
   {
-    id: 'dk2', name: 'Vedic Kipper', tradition: 'Hindu',
+    id: 'dk2', name: 'Vedic Kipper', tradition: 'Hindu', traditionHi: 'हिन्दू',
     line: 'Read against the chart rather than alone. Each card names a house.',
     cards: [
       { id: 'v1', name: 'Dashami, the Tenth', line: 'Career asks first this month. The house you keep postponing is the one moving.' },
@@ -1122,7 +1147,7 @@ export const tarotDecks = [
     ],
   },
   {
-    id: 'dk3', name: 'Sufi Path', tradition: 'Islamic',
+    id: 'dk3', name: 'Sufi Path', tradition: 'Islamic', traditionHi: 'इस्लामी',
     line: 'Stations rather than events. What the card names is a state you are in.',
     cards: [
       { id: 's1', name: 'Sabr, Patience', line: 'Waiting is the work here. Not the waiting where you refresh the page.' },
@@ -1134,7 +1159,7 @@ export const tarotDecks = [
     ],
   },
   {
-    id: 'dk4', name: 'Lotus Path', tradition: 'Buddhist',
+    id: 'dk4', name: 'Lotus Path', tradition: 'Buddhist', traditionHi: 'बौद्ध',
     line: 'Attachment, aversion and the middle. Blunter than it sounds.',
     cards: [
       { id: 'b1', name: 'Anicca, Impermanence', line: 'It is already leaving. Holding tighter changes the grip, not the going.' },
@@ -1394,6 +1419,11 @@ export const chatThreads = [
     consultantId: 'a1',
     name: 'Ritu Kashyap',
     initials: 'RK',
+    // The other end of the thread. Without it the consultant opens Messages
+    // and reads a conversation labelled with her own name, and her own replies
+    // rendered as the other party.
+    seeker: 'Ananya Deshpande',
+    seekerInitials: 'AD',
     online: true,
     unread: 2,
     last: 'Send me the exact minute and I will look again.',
@@ -1410,6 +1440,8 @@ export const chatThreads = [
     consultantId: 'a3',
     name: 'Meher Bano',
     initials: 'MB',
+    seeker: 'Rohit Salvi',
+    seekerInitials: 'RS',
     online: true,
     unread: 0,
     last: 'Pull one card before you reply. Not three.',
@@ -1424,6 +1456,8 @@ export const chatThreads = [
     consultantId: 'a4',
     name: 'Dr. Nandita Rao',
     initials: 'NR',
+    seeker: 'Kavya Iyer',
+    seekerInitials: 'KI',
     online: false,
     unread: 0,
     last: 'Next session Tuesday. Bring the sleep log.',

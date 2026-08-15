@@ -9,6 +9,7 @@ import {
 } from 'react'
 import { useLocation } from 'react-router-dom'
 import { pro, user } from './data/mock.js'
+import { translate } from './data/i18n.js'
 
 /**
  * Tiny in-memory store for prototype-only state: the birth details typed
@@ -32,6 +33,19 @@ export function AppProvider({ children }) {
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
+
+  /* Language. A value, not a boolean, so it cannot live on `flags` — this is
+     the first slice that genuinely needed one. Not persisted, like everything
+     else here; it resets on reload with the rest of the app. */
+  const [lang, setLang] = useState('en')
+
+  /* Keeps the document in step, which is not decoration: it is what a screen
+     reader picks a voice from and what the browser hyphenates by. */
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
+
+  const t = useCallback((key, vars) => translate(lang, key, vars), [lang])
 
   /* Wallet. The opening balance matches the `user` record so Profile and the
      wallet never disagree on load; every spend and top-up moves this one
@@ -232,6 +246,9 @@ export function AppProvider({ children }) {
       setHoroscopeOpen,
       toast,
       showToast,
+      lang,
+      setLang,
+      t,
     }),
     [
       isPro,
@@ -262,6 +279,8 @@ export function AppProvider({ children }) {
       horoscopeOpen,
       toast,
       showToast,
+      lang,
+      t,
     ],
   )
 

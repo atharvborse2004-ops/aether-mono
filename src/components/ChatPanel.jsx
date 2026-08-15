@@ -54,12 +54,22 @@ export default function ChatPanel() {
             </button>
           </div>
 
+          {/* Ask AI is a seeker product. A consultant is the person being
+              asked; putting a chart oracle in her inbox is the app talking to
+              itself. Her tabs are clients and alerts, and "Consultant" becomes
+              "Clients" because she is not messaging one. */}
           <div className="flex" role="tablist">
-            {[
-              { key: 'live', label: 'Consultant' },
-              { key: 'ai', label: 'Ask AI' },
-              { key: 'alerts', label: 'Alerts' },
-            ].map((t) => (
+            {(isPro
+              ? [
+                  { key: 'live', label: 'Clients' },
+                  { key: 'alerts', label: 'Alerts' },
+                ]
+              : [
+                  { key: 'live', label: 'Consultant' },
+                  { key: 'ai', label: 'Ask AI' },
+                  { key: 'alerts', label: 'Alerts' },
+                ]
+            ).map((t) => (
               <button
                 key={t.key}
                 role="tab"
@@ -76,7 +86,7 @@ export default function ChatPanel() {
           </div>
         </header>
 
-        {chatTab === 'live' && <LiveConsultant />}
+        {chatTab === 'live' && <LiveConsultant isPro={isPro} />}
         {chatTab === 'ai' && (
           <AskAi questionsLeft={questionsLeft} spendQuestion={spendQuestion} />
         )}
@@ -92,11 +102,23 @@ function LiveConsultant() {
   const [activeId, setActiveId] = useState(null)
   const active = chatThreads.find((t) => t.id === activeId)
 
-  if (!active) return <ThreadList onOpen={setActiveId} />
-  return <Thread thread={active} onBack={() => setActiveId(null)} />
+  if (!active) return <ThreadList onOpen={setActiveId} isPro={isPro} />
+  return <Thread thread={active} isPro={isPro} onBack={() => setActiveId(null)} />
 }
 
-function ThreadList({ onOpen }) {
+/**
+ * Whoever is reading is "me".
+ *
+ * The mock threads are written from the seeker's side — `from: 'me'` is the
+ * seeker and the thread is named after the consultant. Read by a consultant
+ * that is exactly backwards: her own name at the top and her own replies in
+ * the other party's bubbles. These two helpers flip it, and are the only place
+ * that knows the threads have a fixed authorial side.
+ */
+const otherEnd = (t, isPro) => (isPro ? t.seeker : t.name)
+const otherInitials = (t, isPro) => (isPro ? t.seekerInitials : t.initials)
+
+function ThreadList({ onOpen, isPro }) {
   return (
     <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
       <ul>
@@ -107,10 +129,10 @@ function ThreadList({ onOpen }) {
               onClick={() => onOpen(t.id)}
               className="flex w-full items-start gap-3 border-b border-rule px-4 py-4 text-left transition-opacity hover:opacity-70"
             >
-              <PopAvatar initials={t.initials} size={40} online={t.online} />
+              <PopAvatar initials={otherInitials(t, isPro)} size={40} online={t.online} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline gap-2">
-                  <span className="truncate text-body t-heading">{t.name}</span>
+                  <span className="truncate text-body t-heading">{otherEnd(t, isPro)}</span>
                   <span className="ml-auto flex-none caps-sm t-faint tnum">{t.time}</span>
                 </span>
                 <span className="mt-1 block truncate text-meta t-body">{t.last}</span>
@@ -126,18 +148,26 @@ function ThreadList({ onOpen }) {
       </ul>
 
       <div className="px-4 py-6">
-        <p className="text-meta t-body">
-          Consultants reply inside their session window. Outside it, use Ask AI.
-        </p>
-        <PopButton to="/consult" variant="ghost" className="mt-4">
-          Find a consultant
-        </PopButton>
+        {isPro ? (
+          <p className="text-meta t-body">
+            Replies inside the session window count toward your response time.
+          </p>
+        ) : (
+          <>
+            <p className="text-meta t-body">
+              Consultants reply inside their session window. Outside it, use Ask AI.
+            </p>
+            <PopButton to="/consult" variant="ghost" className="mt-4">
+              Find a consultant
+            </PopButton>
+          </>
+        )}
       </div>
     </div>
   )
 }
 
-function Thread({ thread, onBack }) {
+function Thread({ thread, isPro, onBack }) {
   const [messages, setMessages] = useState(thread.messages)
   const [draft, setDraft] = useState('')
   const endRef = useRef(null)
@@ -157,8 +187,15 @@ function Thread({ thread, onBack }) {
   const send = () => {
     const text = draft.trim()
     if (!text) return
-    setMessages((m) => [...m, { id: `me${m.length}`, from: 'me', text, time: 'now' }])
+    setMessages((m) => [
+      ...m,
+      { id: `me${m.length}`, from: isPro ? 'them' : 'me', text, time: 'now' },
+    ])
     setDraft('')
+    // `consultantReplies` is a consultant answering a seeker. Playing it back
+    // to the consultant would have her talking to herself, so the pro side
+    // simply sends and waits, which is also what really happens.
+    if (isPro) return
     setTimeout(() => {
       const reply = consultantReplies[replyRef.current % consultantReplies.length]
       replyRef.current += 1
@@ -172,22 +209,42 @@ function Thread({ thread, onBack }) {
         <button type="button" onClick={onBack} className="text-body t-body" aria-label="Back">
           ←
         </button>
-        <PopAvatar initials={thread.initials} size={30} online={thread.online} />
-        <Link to={`/consult/${thread.consultantId}`} className="min-w-0 flex-1">
-          <span className="block truncate text-meta t-heading">{thread.name}</span>
-          <span className="block caps-sm t-faint">{thread.online ? 'Online' : 'Offline'}</span>
-        </Link>
-        <CallButton name={thread.name} />
+        <PopAvatar initials={otherInitials(thread, isPro)} size={30} online={thread.online} />
+        {/* A consultant tapping the name should not be sent to a consultant
+            profile — that is the seeker's route, and on this side it is the
+            seeker's name in the header. */}
+        {isPro ? (
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-meta t-heading">{otherEnd(thread, isPro)}</span>
+            <span className="block caps-sm t-faint">{thread.online ? 'Online' : 'Offline'}</span>
+          </span>
+        ) : (
+          <Link to={`/consult/${thread.consultantId}`} className="min-w-0 flex-1">
+            <span className="block truncate text-meta t-heading">{thread.name}</span>
+            <span className="block caps-sm t-faint">{thread.online ? 'Online' : 'Offline'}</span>
+          </Link>
+        )}
+        <CallButton name={otherEnd(thread, isPro)} />
       </div>
 
       <div className="no-scrollbar min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
         {messages.map((m) => (
-          <Bubble key={m.id} mine={m.from === 'me'} text={m.text} time={m.time} />
+          <Bubble
+            key={m.id}
+            mine={m.from === (isPro ? 'them' : 'me')}
+            text={m.text}
+            time={m.time}
+          />
         ))}
         <div ref={endRef} />
       </div>
 
-      <Composer value={draft} onChange={setDraft} onSend={send} placeholder="Write a message" />
+      <Composer
+        value={draft}
+        onChange={setDraft}
+        onSend={send}
+        placeholder={isPro ? 'Reply to your client' : 'Write a message'}
+      />
     </>
   )
 }

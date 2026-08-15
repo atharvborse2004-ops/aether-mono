@@ -76,8 +76,25 @@ export default {
         // and no separate mono. `display` and `mono` stay mapped to it so the
         // existing `font-display` call sites keep working; what makes a
         // display heading a display heading is the weight rule in index.css.
-        sans: ['"Plus Jakarta Sans"', '-apple-system', 'Segoe UI', 'Helvetica Neue', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', '-apple-system', 'Segoe UI', 'sans-serif'],
+        // Devanagari sits *after* Jakarta on purpose: a browser walks the
+        // stack per glyph, so Latin keeps Jakarta and only Indic characters
+        // fall through to Noto. Reversing these two would restyle the whole
+        // English UI.
+        sans: [
+          '"Plus Jakarta Sans"',
+          '"Noto Sans Devanagari"',
+          '-apple-system',
+          'Segoe UI',
+          'Helvetica Neue',
+          'sans-serif',
+        ],
+        display: [
+          '"Plus Jakarta Sans"',
+          '"Noto Sans Devanagari"',
+          '-apple-system',
+          'Segoe UI',
+          'sans-serif',
+        ],
         mono: ['"Plus Jakarta Sans"', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       fontSize: {

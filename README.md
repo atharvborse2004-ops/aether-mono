@@ -1,5 +1,11 @@
 # Aether Mono — monochrome editorial layout
 
+> **This file is out of date.** It describes the original monochrome build. The
+> app has since had the CRED-light redesign — warm canvas, gold accent, rounded
+> geometry — and the tabs are now Home · Pooja · Consult · Shop · Academy.
+> **`docs/HANDOFF.md` is the accurate description**; read that instead. For the
+> backend plan see `backend/`.
+
 A second, independent layout for the Aether astrology app, built to a
 brutalist-editorial spec: pure black canvas, no colour, no rounded corners, no
 shadows, hairline rules and a lot of whitespace. Black is primary and white is
@@ -138,7 +144,7 @@ src/
   screens/onboarding/
 ```
 
-See [DESIGN.md](DESIGN.md) for the token table, the affordance rules and the
+See [docs/DESIGN.md](docs/DESIGN.md) for the token table, the affordance rules and the
 five known flaws in the reference design that this build deliberately fixes.
 
 ## Imagery

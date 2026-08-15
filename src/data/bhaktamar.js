@@ -5,9 +5,10 @@
  * are referenced by filename rather than imported, so the 48 files stay out of
  * the bundle graph and only the pulled card is ever fetched.
  *
- * Generated from the deck master sheet; the Sanskrit, the transliteration and
- * the remedies are the tradition's words, not the house voice, and are left
- * exactly as they came. Do not rewrite them to match `mock.js`.
+ * Generated from the deck master sheet; the Sanskrit, the transliteration, the
+ * English rendering and the remedies are the tradition's words, not the house
+ * voice, and are left exactly as they came. Do not rewrite them to match
+ * `mock.js`.
  */
 export const bhaktamarCards = [
   {
@@ -22,6 +23,7 @@ export const bhaktamarCards = [
     remedy: "Begin the day by reciting Bhaktamar Stotra Verse 1 eleven times. Spend 10 minutes in silent meditation reflecting on humility. Perform one selfless act today without seeking appreciation.",
     sa: "भक्तामर-प्रणत-मौलि-मणि-प्रभाणामुद्योतकं दलित-पाप-तमो-वितानम् । सम्यक्-प्रणम्य जिन-पाद-युगं युगादावालम्बनं भव-जले पततां जनानाम् ॥१॥",
     iast: "Bhaktāmara-praṇata-mauli-maṇi-prabhāṇām udyotakaṁ dalita-pāpa-tamo-vitānam; samyak-praṇamya jina-pāda-yugaṁ yugādāv ālambanaṁ bhava-jale patatāṁ janānām.",
+    en: "Having rightly bowed before the pair of feet of the Jina—whose radiance outshines the jewels adorning the crowns of devoted worshippers and destroys the darkness of accumulated sin—I take refuge in those eternal feet, the support of beings drowning in the ocean of worldly existence.",
   },
   {
     id: "j02",
@@ -35,6 +37,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 2 eleven times. Express gratitude to a teacher, mentor, parent, or guide today. Speak only words that encourage and uplift others.",
     sa: "यः संस्तुतः सकल-वाङ्मय-तत्त्व-बोधादुद्भूत-बुद्धि-पटुभिः सुर-लोक-नाथैः । स्तोत्रैर्जगत्-त्रितय-चित्त-हरैरुदारैः स्तोष्ये किलाहमपि तं प्रथमं जिनेन्द्रम् ॥२॥",
     iast: "Yaḥ saṁstutaḥ sakala-vāṅmaya-tattva-bodhād udbhūta-buddhi-paṭubhiḥ sura-loka-nāthaiḥ; stotrair jagat-tritaya-citta-harair udāraiḥ stoṣye kilāham api taṁ prathamaṁ jinendram.",
+    en: "He who has been praised by the Lords of Heaven, whose wisdom arises from complete realization of all truth, and whose noble hymns captivate the hearts of all three worlds—to that First Jina I too offer my praise.",
   },
   {
     id: "j03",
@@ -48,6 +51,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 3 eleven times before starting an important task. Begin the work you have been postponing. Dedicate your effort to self-improvement rather than perfection.",
     sa: "बुद्ध्या विनापि विबुधार्चित-पाद-पीठ! स्तोतुं समुद्यत-मतिर्विगत-त्रपोऽहम् । बालं विहाय जल-संस्थित-मिन्दु-बिम्बमन्यः क इच्छति जनः सहसा ग्रहीतुम् ॥३॥",
     iast: "Buddhyā vināpi vibudhārcita-pāda-pīṭha! stotuṁ samudyata-matir vigata-trapo'ham; bālaṁ vihāya jala-saṁsthita-mindu-bimbam anyaḥ ka icchati janaḥ sahasā grahītum.",
+    en: "Though I possess limited wisdom, I have become fearless in praising the holy feet worshipped even by the celestial beings. Just as a child first reaches for the moon reflected in water, every great journey begins with an innocent attempt.",
   },
   {
     id: "j04",
@@ -61,6 +65,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 4 eleven times. Spend time studying a sacred text with humility. Before making an important decision, pause and acknowledge that there may be perspectives you have not yet considered.",
     sa: "वक्तुं गुणान् गुणसमुद्र ! शशाङ्ककान्तान्, कस्ते क्षमः सुरगुरुप्रतिमोऽपि बुद्ध्या । कल्पान्तकाल-पवनोद्धत-नक्रचक्रं, को वा तरीतुमलमम्बुनिधिं भुजाभ्याम् ॥४॥",
     iast: "Vaktuṁ guṇān guṇa-samudra! śaśāṅka-kāntān, kas te kṣamaḥ sura-guru-pratimo'pi buddhyā; kalpānta-kāla-pavanoddhata-nakra-cakraṁ, ko vā tarītum alam ambunidhiṁ bhujābhyām.",
+    en: "O Ocean of Virtues! Your qualities shine with the brilliance of the full moon. Who, even if equal in wisdom to the teacher of the gods, can fully describe them? Just as no one can cross the vast ocean filled with mighty creatures using only their arms, no one can fully comprehend Your infinite greatness.",
   },
   {
     id: "j05",
@@ -74,6 +79,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 5 eleven times. Perform one act of kindness to protect, support, or encourage someone weaker than yourself. Let love guide one important decision today.",
     sa: "सोऽहं तथापि तव भक्तिवशान्मुनीश! कर्तुं स्तवं विगतशक्तिरपि प्रवृत्तः । प्रीत्यात्मवीर्यमविचार्य मृगी मृगेन्द्रं नाभ्येति किं निजशिशोः परिपालनार्थम् ॥५॥",
     iast: "So'haṁ tathāpi tava bhakti-vaśān munīśa! kartuṁ stavaṁ vigata-śaktir api pravṛttaḥ; prītyātma-vīryam avicārya mṛgī mṛgendraṁ nābhyeti kiṁ nija-śiśoḥ paripālanārtham.",
+    en: "Although I possess little strength, O Lord, my devotion compels me to sing Your praise. Just as a mother deer, driven by love, courageously faces a mighty lion to protect her child, devotion gives strength beyond one's natural abilities.",
   },
   {
     id: "j06",
@@ -87,6 +93,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 6 eleven times before studying, teaching, writing, or giving an important speech. Read something inspiring each day and share knowledge with humility.",
     sa: "अल्प-श्रुतं श्रुतवतां परिहास-धाम, त्वद्-भक्तिरेव मुखरी-कुरुते बलान्माम्। यत्कोकिलः किल मधौ मधुरं विरौति, तच्चाम्र-चारु-कलिका-निकरैक-हेतुः ॥६॥",
     iast: "Alpa-śrutaṁ śrutavatāṁ parihāsa-dhāma, tvad-bhaktir eva mukharī-kurute balān mām; yat kokilaḥ kila madhau madhuraṁ virauti, tac cāmra-cāru-kalikā-nikaraika-hetuḥ.",
+    en: "Though I possess little learning and may become an object of ridicule among the wise, it is devotion to You alone that makes me eloquent. Just as the cuckoo sings sweetly in spring because of the blossoming mango buds, devotion naturally awakens beautiful expression.",
   },
   {
     id: "j07",
@@ -100,6 +107,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 7 eleven times at sunrise. Spend time in self-reflection and consciously forgive yourself or someone else. Begin one positive habit that brings greater purity into your daily life.",
     sa: "त्वत्संस्तवेन भव-सन्तति-सन्निबद्धं, पापं क्षणात्क्षयमुपैति शरीरभाजाम्। आक्रान्त-लोक-मलिनीलमशेषमाशु, सूर्यांशुभिन्नमिव शार्वरमन्धकारम्॥७॥",
     iast: "Tvat-saṁstavena bhava-santati-sannibaddhaṁ, pāpaṁ kṣaṇāt kṣayamupaiti śarīrabhājām; ākrānta-loka-malinīlam aśeṣamāśu, sūryāṁśu-bhinnamiva śārvaramandhakāram.",
+    en: "By praising You, the accumulated karmas that bind living beings to worldly existence are quickly destroyed, just as the darkness of night vanishes instantly when pierced by the rays of the rising sun.",
   },
   {
     id: "j08",
@@ -113,6 +121,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 8 eleven times. Spend time in the company of wise people or read uplifting spiritual literature. Keep your thoughts, speech, and actions as pure as possible today.",
     sa: "मत्वेति नाथ! तव संस्तवनं मयेदमारभ्यते तनु-धियापि तव प्रभावात्। चेतो हरिष्यति सतां नलिनी-दलेषु मुक्ताफल-द्युतिमुपैति ननूद-बिन्दुः ॥८॥",
     iast: "Matveti nātha! tava saṁstavanaṁ mayedam ārabhyate tanu-dhiyāpi tava prabhāvāt; ceto hariṣyati satāṁ nalinī-daleṣu muktāphala-dyutimupaiti nanūd-binduḥ.",
+    en: "O Lord, though my intellect is limited, I begin this hymn because of Your divine glory. Just as a tiny drop of water resting upon a lotus leaf shines with the brilliance of a pearl, even a humble offering becomes radiant through Your grace.",
   },
   {
     id: "j09",
@@ -126,6 +135,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 9 eleven times. Read or listen to a spiritual discourse today. Share one uplifting idea with someone who may benefit from it.",
     sa: "आस्तां तव स्तवनमस्तसमस्तदोषं, त्वत्संकथापि जगतां दुरितानि हन्ति । दूरे सहस्रकिरणः कुरुते प्रभैव, पद्माकरेषु जलजानि विकासभाजि ॥९॥",
     iast: "Āstāṁ tava stavanam asta-samasta-doṣaṁ, tvat-saṅkathāpi jagatāṁ duritāni hanti; dūre sahasra-kiraṇaḥ kurute prabhaiva, padmākareṣu jalajāni vikāsa-bhāji.",
+    en: "Let alone Your direct praise that destroys every fault—even hearing discussions about Your virtues removes the misfortunes of the world, just as the distant rays of the sun cause the lotuses in a lake to bloom.",
   },
   {
     id: "j10",
@@ -139,6 +149,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 10 eleven times. Consciously practice one virtue today—such as honesty, patience, forgiveness, or humility. Spend time with people who inspire excellence.",
     sa: "नात्यद्भुतं भुवन-भूषण ! भूत-नाथ! भूतैर्गुणैर्भुवि भवन्तमभिष्टुवन्तः । तुल्या भवन्ति भवतो ननु तेन किं वा भूत्याश्रितं य इह नात्मसमं करोति ॥१०॥",
     iast: "Nātyadbhutaṁ bhuvana-bhūṣaṇa! bhūta-nātha! bhūtair guṇair bhuvi bhavantam abhiṣṭuvantaḥ; tulyā bhavanti bhavato nanu tena kiṁ vā bhūtyāśritaṁ ya iha nātma-samaṁ karoti.",
+    en: "O Ornament of the Universe! It is not surprising that those who sincerely praise Your virtues gradually become like You. Does not every truly great person naturally elevate those who seek their guidance?",
   },
   {
     id: "j11",
@@ -152,6 +163,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 11 eleven times. Spend fifteen minutes in silent contemplation before an image of the Jina or in meditation. Reduce one unnecessary distraction today and dedicate that time to self-improvement.",
     sa: "दृष्ट्वा भवन्तमनिमेष-विलोकनीयम्, नान्यत्र तोषमुपयाति जनस्य चक्षुः । पीत्वा पयः शशिकर-द्युति-दुग्ध-सिन्धोः, क्षारं जलं जलनिधेरसितुं क इच्छेत् ॥११॥",
     iast: "Dṛṣṭvā bhavantam animeṣa-vilokanīyam, nānyatra toṣam upayāti janasya cakṣuḥ; pītvā payaḥ śaśikara-dyuti-dugdha-sindhoḥ, kṣāraṁ jalaṁ jalanidher asituṁ ka icchet.",
+    en: "Once a person beholds the infinitely beautiful and serene form of the Jina, nothing else can truly satisfy the eyes. After tasting the pure nectar-like milk of the celestial ocean, who would desire salty ocean water?",
   },
   {
     id: "j12",
@@ -165,6 +177,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 12 eleven times. Spend time in self-reflection without comparing yourself to anyone. Practice one virtue today simply because it aligns with your true nature.",
     sa: "यैः शान्त-राग-रुचिभिः परमाणुभिस्त्वं, निर्मापितस्त्रि-भुवनैक-ललाम-भूत । तावन्त एव खलु तेऽप्यणवः पृथिव्यां, यत्ते समानमपरं न हि रूपमस्ति ॥१२॥",
     iast: "Yaiḥ śānta-rāga-rucibhiḥ paramāṇubhis tvaṁ, nirmāpitas tri-bhuvanaika-lalāma-bhūta; tāvanta eva khalu te'py aṇavaḥ pṛthivyāṁ, yat te samānam aparaṁ na hi rūpam asti.",
+    en: "O Lord, Your incomparable form, free from attachment and fashioned from the purest spiritual excellence, is the supreme ornament of the three worlds. Even if the same atoms existed elsewhere, nothing equal to Your perfection could ever be created.",
   },
   {
     id: "j13",
@@ -178,6 +191,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 13 eleven times. Spend time contemplating the difference between external appearance and inner character. Practice seeing the divine qualities in everyone you meet today.",
     sa: "वक्त्रं क्व ते सुर-नरोरग-नेत्र-हारि, निःशेष-निर्जित-जगत्त्रितयोपमानम्। बिम्बं कलङ्क-मलिनं क्व निशाकरस्य, यद्वासरे भवति पाण्डुपलाशकल्पम् ॥१३॥",
     iast: "Vaktraṁ kva te sura-naroraga-netra-hāri, niḥśeṣa-nirjita-jagat-tritayopamānam; bimbaṁ kalaṅka-malinaṁ kva niśākarasya, yad vāsare bhavati pāṇḍu-palāśa-kalpam.",
+    en: "Where is Your divine face, which enchants the eyes of gods, humans, and celestial beings and surpasses every comparison in the three worlds, and where is the blemished moon whose pale brilliance fades away in daylight?",
   },
   {
     id: "j14",
@@ -191,6 +205,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 14 eleven times. Continue one important task without distraction today.",
     sa: "सम्पूर्ण-मण्डल-शशाङ्क-कला-कलाप-शुभ्रा गुणास्त्रिभुवनं तव लङ्घयन्ति । ये संश्रितास्त्रिजगदीश्वरनाथमेकं, कस्तान्निवारयति सञ्चरतः यथेष्टम् ॥१४॥",
     iast: "Sampūrṇa-maṇḍala-śaśāṅka-kalā-kalāpa-śubhrā guṇās tri-bhuvanaṁ tava laṅghayanti; ye saṁśritās tri-jagad-īśvara-nātham ekaṁ, kas tān nivārayati sañcarataḥ yatheṣṭam.",
+    en: "Your virtues, pure like the full moon, extend beyond the three worlds. Those who sincerely take refuge in You move freely upon the path of Dharma, and none can obstruct their progress.",
   },
   {
     id: "j15",
@@ -204,6 +219,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 15 eleven times. Practice ten minutes of silent observation without reacting to thoughts.",
     sa: "चित्रं किमत्र यदि ते त्रिदशाङ्गनाभिर्नीतं मनागपि मनो न विकारमार्गम् । कल्पान्त-काल-मरुता चलिताचलेन, किं मन्दराद्रिशिखरं चलितं कदाचित् ॥१५॥",
     iast: "Citraṁ kim atra yadi te tridaśāṅganābhir nītaṁ manāg api mano na vikāra-mārgam; kalpānta-kāla-marutā calitācalena, kiṁ mandarādri-śikharaṁ calitaṁ kadācit.",
+    en: "It is no wonder that even the celestial maidens cannot disturb Your mind. Can the peak of Mount Mandara ever be shaken, even by the mighty winds at the end of time?",
   },
   {
     id: "j16",
@@ -217,6 +233,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 16 eleven times. Spend ten minutes in silent meditation observing the light of awareness.",
     sa: "निर्धूम-वर्तिरपवर्जित-तैल-पूरेः, कृत्स्नं जगत्त्रयमिदं प्रकटीकरोषि । गम्यो न जातु मरुतां चलिताचलानां, दीपोऽपरस्त्वमसि नाथ! जगत्प्रकाशः ॥१६॥",
     iast: "Nirdhūma-vartir apavarjita-taila-pūreḥ, kṛtsnaṁ jagat-trayam idaṁ prakaṭī-karoṣi; gamyo na jātu marutāṁ calitācalānāṁ, dīpo'paras tvam asi nātha! jagat-prakāśaḥ.",
+    en: "O Lord! You are the eternal lamp that illuminates the three worlds without smoke, wick, or oil. Your light is self-existent and cannot be extinguished by any force.",
   },
   {
     id: "j17",
@@ -230,6 +247,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 17 at sunrise while contemplating the rising sun.",
     sa: "नास्तं कदाचिदुपयासि न राहुगम्यः, स्पष्टीकरोषि सहसा युगपज्जगन्ति । नाम्भोधरोदर-निरुद्ध-महाप्रभावः, सूर्यातिशायि-महिमासि मुनीन्द्र! लोके ॥१७॥",
     iast: "Nāstaṁ kadācid upayāsi na rāhu-gamyaḥ, spaṣṭī-karoṣi sahasā yugapaj jaganti; nāmbhodharodara-niruddha-mahā-prabhāvaḥ, sūryātiśāyi-mahimāsi munīndra! loke.",
+    en: "O Lord! Unlike the sun, You never set, are never eclipsed, and Your light is never hidden by clouds. Your glory surpasses even the brilliance of the sun.",
   },
   {
     id: "j18",
@@ -243,6 +261,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 18 before meditation or sleep. Spend time contemplating silence.",
     sa: "नित्योदयं दलित-मोह-महान्धकारं, गम्यं न राहुवदनस्य न वारिदानाम् । विभ्राजते तव मुखाब्जमनल्पकान्ति, विद्य्योतयज्जगदपूर्व-शशाङ्क-बिम्बम् ॥१८॥",
     iast: "Nityodayaṁ dalita-moha-mahāndhakāraṁ, gamyaṁ na rāhu-vadanasya na vāridānām; vibhrājate tava mukhābjamanalpa-kānti, vidyotayaj jagad apūrva-śaśāṅka-bimbam.",
+    en: "Your lotus-like face rises eternally, destroying the darkness of delusion. Neither eclipse nor clouds can diminish its incomparable radiance, which shines like a unique celestial moon.",
   },
   {
     id: "j19",
@@ -256,6 +275,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 19 eleven times. Express gratitude for what has already matured in your life before asking for more.",
     sa: "किं शर्वरीषु शशिनाह्नि विवस्वता वा, युष्मन्मुखेन्दुदलितेषु तमःसु नाथ! । निष्पन्न-शालि-वन-शालिनि जीव-लोके, कार्यं कियज्जलधरैर्जलभारनमै्रः ॥१९॥",
     iast: "Kiṁ śarvarīṣu śaśināhni vivasvatā vā, yuṣman-mukhendu-daliteṣu tamaḥsu nātha; niṣpanna-śāli-vana-śālini jīva-loke, kāryaṁ kiyaj jaladharair jala-bhāra-namraiḥ.",
+    en: "O Lord! When the darkness has already been dispelled by the radiance of Your moon-like face, what need remains for the moon or the sun? Likewise, once the fields are filled with ripened grain, heavy rain clouds are no longer required.",
   },
   {
     id: "j20",
@@ -269,6 +289,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 20 eleven times before studying or making an important decision. Spend time seeking understanding rather than collecting information.",
     sa: "ज्ञानं यथा त्वयि विभाति कृतावकाशं, नैवं तथा हरिहरादिषु नायकेषु । तेजो महा-मणिषु याति यथा महत्त्वं, नैवं तु काच-शकले किरणाकुलेऽपि ॥२०॥",
     iast: "Jñānaṁ yathā tvayi vibhāti kṛtāvakāśaṁ, naivaṁ tathā hari-harādiṣu nāyakeṣu; tejo mahā-maṇiṣu yāti yathā mahatvaṁ, naivaṁ tu kāca-śakale kiraṇākule'pi.",
+    en: "The brilliance of perfect knowledge shines fully in You and nowhere else in the same way. Just as a precious jewel possesses a radiance that ordinary glass can never equal, true wisdom surpasses imitation.",
   },
   {
     id: "j21",
@@ -282,6 +303,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 21 eleven times. Spend time in silent gratitude.",
     sa: "मन्ये वरं हरिहरादय एव दृष्टा, दृष्टेषु येषु हृदयं त्वयि तोषमेति । किं वीक्षितेन भवता भुवि येन नान्यः, कश्चिन्मनो हरति नाथ! भवान्तरेऽपि ॥२१॥",
     iast: "Manye varaṁ hari-harādaya eva dṛṣṭā, dṛṣṭeṣu yeṣu hṛdayaṁ tvayi toṣam eti; kiṁ vīkṣitena bhavatā bhuvi yena nānyaḥ, kaścin mano harati nātha! bhavāntare'pi.",
+    en: "Having experienced Your divine presence, O Lord, nothing else in this world can truly captivate the heart.",
   },
   {
     id: "j22",
@@ -295,6 +317,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 22. Honour your parents and teachers.",
     sa: "स्त्रीणां शतानि शतशो जनयन्ति पुत्रान्, नान्या सुतं त्वदुपमं जननी प्रसूता । सर्वा दिशो दधति भानि सहस्ररश्मिं, प्राच्येव दिग्जनयति स्फुरदंशुजालम् ॥२२॥",
     iast: "Strīṇāṁ śatāni śataśo janayanti putrān, nānyā sutaṁ tvad-upamaṁ jananī prasūtā; sarvā diśo dadhati bhāni sahasra-raśmiṁ, prācyeva dig janayati sphurad-aṁśu-jālam.",
+    en: "Many mothers give birth to children, yet none gives birth to one equal to You, just as only the East gives rise to the rising sun.",
   },
   {
     id: "j23",
@@ -308,6 +331,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 23 before meditation.",
     sa: "त्वामामनन्ति मुनयः परमं पुमांसम्, आदित्यवर्णममलं तमसः परस्तात् । त्वामेव सम्यगुपलभ्य जयन्ति मृत्युं, नान्यः शिवः शिवपदस्य मुनीन्द्र! पन्थाः ॥२३॥",
     iast: "Tvām āmananti munayaḥ paramaṁ pumāṁsam, āditya-varṇam amalaṁ tamasaḥ parastāt; tvām eva samyag-upalabhya jayanti mṛtyuṁ, nānyaḥ śivaḥ śiva-padasya munīndra! panthāḥ.",
+    en: "The sages proclaim that only through realizing the Enlightened One does one conquer the fear of death and attain liberation.",
   },
   {
     id: "j24",
@@ -321,6 +345,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 24. Spend time in silent meditation.",
     sa: "त्वामव्ययं विभुमचिन्त्यमसंख्यमाद्यं, ब्रह्माणमीश्वरमनन्तमनंगकेतुम् । योगीश्वरं विदितयोगमनेकमेकं, ज्ञानस्वरूपममलं प्रवदन्ति सन्तः ॥२४॥",
     iast: "Tvām avyayaṁ vibhum acintyam asaṅkhyam ādyaṁ, brahmāṇam īśvaram anantam anaṅga-ketum; yogīśvaraṁ vidita-yogam anekam ekaṁ, jñāna-svarūpam amalaṁ pravadanti santaḥ.",
+    en: "The wise describe the Enlightened One through many exalted names, yet all point toward the same infinite, pure consciousness.",
   },
   {
     id: "j25",
@@ -334,6 +359,7 @@ export const bhaktamarCards = [
     remedy: "Recite Verse 25 and perform one selfless act today.",
     sa: "बुद्धस्त्वमेव विबुधार्चितबुद्धिबोधात्, त्वं शंकरोऽसि भुवनत्रयशंकरत्वात् । धातासि धीर! शिवमार्गविधेर्विधानाद्, व्यक्तं त्वमेव भगवन् पुरुषोत्तमोऽसि ॥२५॥",
     iast: "Buddhas tvam eva vibudhārcita-buddhi-bodhāt, tvaṁ śaṅkaro'si bhuvana-traya-śaṅkaratvāt; dhātāsi dhīra! śiva-mārga-vidher vidhānād, vyaktaṁ tvam eva bhagavan puruṣottamo'si.",
+    en: "O Lord, You alone embody every supreme quality. The wise call You Buddha, Shankara, and the Highest Being because You bring welfare, wisdom, and liberation to all.",
   },
   {
     id: "j26",
@@ -347,6 +373,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 26 eleven times. Offer silent gratitude and consciously surrender one fear or burden to the path of Dharma today.",
     sa: "तुभ्यं नमस्त्रिभुवनार्तिहराय नाथ! तुभ्यं नमः क्षितितलामलभूषणाय । तुभ्यं नमस्त्रिजगतः परमेश्वराय, तुभ्यं नमो जिन! भवोदधिशोषणाय ॥२६॥",
     iast: "Tubhyaṁ namas tribhuvanārti-harāya nātha! tubhyaṁ namaḥ kṣiti-talāmala-bhūṣaṇāya; tubhyaṁ namas trijagataḥ parameśvarāya, tubhyaṁ namo jina! bhavodadhi-śoṣaṇāya.",
+    en: "Salutations to You, O Lord, remover of the suffering of the three worlds; salutations to the pure ornament of the earth; salutations to the Supreme Lord of the three worlds; salutations to the Jina who dries up the vast ocean of worldly existence.",
   },
   {
     id: "j27",
@@ -360,6 +387,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 27 eleven times. Practice one act of humility today without seeking recognition. Reflect honestly on one quality you wish to strengthen.",
     sa: "को विस्मयोऽत्र यदि नाम गुणैरशेषैस्त्वं संश्रितो निरवकाशतया मुनीश! । दोषैरुपात्तविविधाश्रयजातगर्वैः स्वप्नान्तरेऽपि न कदाचिदपीक्षितोऽसि ॥२७॥",
     iast: "Ko vismayo'tra yadi nāma guṇair aśeṣais tvaṁ saṁśrito niravakāśatayā munīśa; doṣair upātta-vividhāśraya-jāta-garvaiḥ svapnāntare'pi na kadācid apīkṣito'si.",
+    en: "What wonder is there that You, O Lord of Sages, are completely filled with infinite virtues? Since there is no room for faults, even pride born from countless defects cannot approach You—not even in a dream.",
   },
   {
     id: "j28",
@@ -373,6 +401,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 28 eleven times at sunrise. Begin an important task today with confidence and honesty.",
     sa: "उच्चैरशोकतरुसंश्रितमुन्मयूखमाभाति रूपममलं भवतो नितान्तम् । स्पष्टोल्लसत्किरणमस्ततमोवितानं बिम्बं रवेरिव पयोधरपार्श्ववर्ति ॥२८॥",
     iast: "Uccairaśoka-taru-saṁśritam-unmayūkham ābhāti rūpam amalaṁ bhavato nitāntam; spaṣṭollasat-kiraṇam-asta-tamo-vitānaṁ bimbaṁ raveriva payodhara-pārśva-varti.",
+    en: "Your immaculate form shines like the rising sun appearing beside the clouds, whose brilliant rays completely disperse the darkness of the world.",
   },
   {
     id: "j29",
@@ -386,6 +415,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 29 eleven times before accepting responsibility or leadership.",
     sa: "सिंहासने मणिमयूखशिखाविचित्रे विभ्राजते तव वपुः कनकावदातम् । बिम्बं वियद्विलसदंशुलतावितानं तुङ्गोदयाद्रिशिरसीव सहस्ररश्मेः ॥२९॥",
     iast: "Siṁhāsane maṇi-mayūkha-śikhā-vicitre vibhrājate tava vapuḥ kanakāvadātam; bimbaṁ viyad-vilasad-aṁśu-latā-vitānaṁ tuṅgodayādri-śirasīva sahasra-raśmeḥ.",
+    en: "Your golden form shines upon the jewel-studded throne like the rising sun upon the summit of the eastern mountain, spreading thousands of radiant rays across the heavens.",
   },
   {
     id: "j30",
@@ -399,6 +429,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 30 eleven times. Spend time in silence and keep your surroundings clean and peaceful today.",
     sa: "कुन्दावदातचलचामरचारुशोभं विभ्राजते तव वपुः कलधौतकान्तम् । उद्यच्छशाङ्कशुचिनिर्झरवारिधाराभिः सिक्तमिवाम्बरतलं विमलं विभाति ॥३०॥",
     iast: "Kundāvadāta-cala-cāmara-cāru-śobhaṁ vibhrājate tava vapuḥ kaladhauta-kāntam; udyac-chaśāṅka-śuci-nirjhara-vāri-dhārābhiḥ siktam ivāmbaratalaṁ vimalaṁ vibhāti.",
+    en: "Your radiant form, adorned by pure white chamaras, shines with the brilliance of refined gold, as though bathed in the pure streams of moonlit waterfalls descending from the heavens.",
   },
   {
     id: "j31",
@@ -412,6 +443,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 31 eleven times before accepting leadership responsibilities.",
     sa: "छत्रत्रयं तव विभाति शशाङ्ककान्तमुच्चैः स्थितं स्थगितभानुकरप्रतापम् । मुक्ताफलप्रकरजालविवृद्धशोभं प्रख्यापयत्त्रिजगतः परमेश्वरत्वम् ॥३१॥",
     iast: "Chatra-trayaṁ tava vibhāti śaśāṅka-kāntam uccaiḥ sthitaṁ sthagita-bhānu-kara-pratāpam; muktāphala-prakara-jāla-vivṛddha-śobhaṁ prakhyāpayat trijagataḥ parameśvaratvam.",
+    en: "The three royal umbrellas above You shine with the brilliance of the moon. Decorated with strings of pearls, they proclaim Your supreme spiritual sovereignty throughout the three worlds.",
   },
   {
     id: "j32",
@@ -425,6 +457,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 32 eleven times before an important meeting, lecture, or speech. Practice speaking truthfully and kindly throughout the day.",
     sa: "गम्भीरताररवपूरितदिग्विभागस्त्रैलोक्यलोकशुभसंगमभूतिदक्षः । सद्धर्मराजजयघोषणघोषकः सन् खेदुन्दुभिर्ध्वनति ते यशसः प्रवादी ॥३२॥",
     iast: "Gambhīra-tāra-rava-pūrita-dig-vibhāgas trailokya-loka-śubha-saṅgama-bhūti-dakṣaḥ; saddharma-rāja-jaya-ghoṣaṇa-ghoṣakaḥ san khedundubhir dhvanati te yaśasaḥ pravādī.",
+    en: "The deep resonance of the celestial drum echoes through every direction, proclaiming the victory of true Dharma and spreading the glory of the Enlightened One throughout the three worlds.",
   },
   {
     id: "j33",
@@ -438,6 +471,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 33 eleven times. Offer flowers before the image of the Jina and express gratitude for today's blessings.",
     sa: "मन्दारसुन्दरनमेरुसुपारिजातसन्तानकादिकुसुमोत्करवृष्टिरुद्धा । गन्धोदबिन्दुशुभमन्दमरुत्प्रपाता दिव्या दिवः पतति ते वचसां ततिर्वा ॥३३॥",
     iast: "Mandāra-sundara-nameru-supārijāta-santānakādi-kusumotkara-vṛṣṭir uddhā; gandhoda-bindu-śubha-manda-marut-prapātā divyā divaḥ patati te vacasāṁ tatir vā.",
+    en: "Celestial flowers such as Mandāra and Pārijāta shower from the heavens, accompanied by fragrant breezes, as though the very words praising You become a divine rain of blessings.",
   },
   {
     id: "j34",
@@ -451,6 +485,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 34 eleven times. Spend a few moments visualizing brilliant white light surrounding your body and extending compassion toward all living beings.",
     sa: "शुभ्रप्रभावलयभूरिविभाविभोस्ते लोकत्रये द्युतिमतां द्युतिमाक्षिपन्ती । प्रोद्यद्दिवाकरनिरन्तरभूरिसंख्या दीप्त्या जयत्यपि निशामपि सोमसौम्याम् ॥३४॥",
     iast: "Śubhra-prabhā-valaya-bhūri-vibhā-vibhos te loka-traye dyutimatāṁ dyutim ākṣipantī; prodyad-divākara-nirantara-bhūri-saṅkhyā dīptyā jayaty api niśām api soma-saumyām.",
+    en: "Your pure halo of divine radiance surpasses the brilliance of every luminous object in the three worlds. Its light exceeds even the combined beauty of countless rising suns and the gentle serenity of the moonlit night.",
   },
   {
     id: "j35",
@@ -464,6 +499,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 35 eleven times before teaching, writing, or giving an important presentation.",
     sa: "स्वर्गापवर्गगममार्गविमार्गणेष्टः सद्धर्मतत्त्वकथनैकपटुस्त्रिलोक्याः । दिव्यध्वनिर्भवति ते विशदार्थसर्वभाषास्वभावपरिणामगुणैः प्रयोज्यः ॥३५॥",
     iast: "Svargāpavarga-gama-mārga-vimārgaṇeṣṭaḥ saddharma-tattva-kathanai-ka-paṭus trilokyāḥ; divya-dhvanir bhavati te viśadārtha-sarva-bhāṣā-svabhāva-pariṇāma-guṇaiḥ prayojyaḥ.",
+    en: "Your Divine Sound perfectly explains the essence of true Dharma and is understood naturally by beings of every language according to their own capacity.",
   },
   {
     id: "j36",
@@ -477,6 +513,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 36 eleven times before beginning a journey, business, or important project.",
     sa: "उन्निद्रहेमनवपङ्कजपुञ्जकान्ती पर्युल्लसन्नखमयूखशिखाभिरामौ । पादौ पदानि तव यत्र जिनेन्द्र! धत्तः पद्मानि तत्र विबुधाः परिकल्पयन्ति ॥३६॥",
     iast: "Unnidra-hema-nava-paṅkaja-puñja-kāntī paryullasan-nakha-mayūkha-śikhābhirāmau; pādau padāni tava yatra jinendra! dhattaḥ padmāni tatra vibudhāḥ parikalpayanti.",
+    en: "O Jina! Wherever Your sacred feet touch the earth, the celestial beings imagine golden lotus flowers blooming beneath every step.",
   },
   {
     id: "j37",
@@ -490,6 +527,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 37 eleven times. Teach one useful lesson or help someone understand something today.",
     sa: "इत्थं यथा तव विभूतिरभूज्जिनेन्द्र! धर्मोपदेशनविधौ न तथा परस्य । यादृक्प्रभा दिनकृतः प्रहतान्धकारा...",
     iast: "Ityaṁ yathā tava vibhūtir abhūj jinendra! dharmopadeśana-vidhau na tathā parasya; yādṛk prabhā dinakṛtaḥ prahatāndhakārā...",
+    en: "O Jina, no one equals You in the ability to teach Dharma. Just as the sun removes darkness from the world, Your teaching removes the darkness of ignorance.",
   },
   {
     id: "j38",
@@ -503,6 +541,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 38 eleven times before undertaking a difficult task or journey. Visualize yourself surrounded by divine light and courage.",
     sa: "ऐरावताभिमभमुद्धतमापतन्तं दृष्ट्वा भयं भवति नो भवदाश्रितानाम् ॥३८॥",
     iast: "Airāvatābhimabham uddhatam āpatantaṁ dṛṣṭvā bhayaṁ bhavati no bhavad-āśritānām.",
+    en: "Even when confronted by a terrifying force as mighty as the celestial elephant Airāvata rushing forward, those who have taken refuge in You remain free from fear.",
   },
   {
     id: "j39",
@@ -516,6 +555,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 39 eleven times before entering challenging situations, negotiations, legal matters, or conflicts. Visualize yourself surrounded by a radiant shield of golden light.",
     sa: "भिन्नेभ-कुम्भ-गल-दुर्ज्जल-शोणिताक्त-मुक्ताफल-प्रकर-भूषित-भूमि-भागः । बद्ध-क्रमः क्रम-गतं हरिणाधिपोऽपि, नाक्रामति क्रम-युगाचल-संश्रितं ते ॥३९॥",
     iast: "Bhinnebha-kumbha-gala-durjjala-śoṇitākta-muktāphala-prakara-bhūṣita-bhūmi-bhāgaḥ; baddha-kramaḥ krama-gataṁ hariṇādhipo'pi nākrāmati krama-yugācala-saṁśritaṁ te.",
+    en: "Even the mighty lion, accustomed to attacking elephants whose foreheads are adorned with pearls and stained with blood from battle, does not attack one who has taken refuge in You.",
   },
   {
     id: "j40",
@@ -529,6 +569,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 40 eleven times during difficult situations or whenever you feel overwhelmed. Light a ghee lamp and meditate on cool white light filling your heart.",
     sa: "कल्पान्त-काल-पवनोद्धत-वह्नि-कल्पं, दावानलं ज्वलित-मुज्ज्वल-मुत्फुलिङ्गम्। विश्वं जिघत्सुमिव सम्मुखमापतन्तं, त्वन्नाम-कीर्तन-जलम् शमयत्यशेषम् ॥४०॥",
     iast: "Kalpānta-kāla-pavanoddhata-vahni-kalpaṁ, dāvānalaṁ jvalita-mujjvala-mutphuliṅgam; viśvaṁ jighatsum iva sammukham āpatantaṁ, tvan-nāma-kīrtana-jalam śamayaty aśeṣam.",
+    en: "A raging forest fire, fanned by the mighty winds of the end of time and appearing ready to consume the entire world, is completely extinguished by the cooling water of chanting Your holy name.",
   },
   {
     id: "j41",
@@ -542,6 +583,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 41 eleven times. Practice forgiveness today and consciously release one negative emotion.",
     sa: "रक्तेक्षणं समद-कोकिल-कण्ठ-नीलं, क्रोधोद्धतं फणिनमुद्फणमापतन्तम् । आक्रामति क्रमयुगेण निरस्तशंकस्- त्वन्नाम-नागदमनी हृदि यस्य पुंसः ॥४१॥",
     iast: "Raktekṣaṇaṁ samada-kokila-kaṇṭha-nīlaṁ, krodhoddhataṁ phaṇinam udphaṇam āpatantam; ākrāmati krama-yugeṇa nirasta-śaṅkas tvan-nāma-nāga-damanī hṛdi yasya puṁsaḥ.",
+    en: "Even a furious serpent with raised hood, red eyes, and deadly venom cannot harm the one who keeps Your holy name firmly established in the heart.",
   },
   {
     id: "j42",
@@ -555,6 +597,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 42 eleven times before important meetings, legal matters, competitions, or challenging situations.",
     sa: "वल्लत्तुरंग-गज-गर्जित-भीमनादम् आजौ बलं बलवतामपि भूपतीनाम् । उद्यद्दिवाकर-मयूख-शिखापविद्धं त्वत्कीर्तनात्तम इवाशु भिदामुपैति ॥४२॥",
     iast: "Vallat-turaṅga-gaja-garjita-bhīma-nādam ājau balaṁ balavatām api bhūpatīnām; udyad-divākara-mayūkha-śikhāpaviddhaṁ tvat-kīrtanāt tama iva āśu bhidām upaiti.",
+    en: "Even the mighty armies of powerful kings, filled with the terrifying sounds of horses and elephants, lose their strength like darkness pierced by the rays of the rising sun when Your glory is remembered.",
   },
   {
     id: "j43",
@@ -568,6 +611,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 43 eleven times before important negotiations, examinations, competitions, or legal matters.",
     sa: "कुन्ताग्र-भिन्न-गज-शोणित-वारिवाह-वेगावतार-तरणातुर-योध-भीमे । युद्धे जयं विजित-दुर्जय-जेय-पक्षास्त्वत्पाद-पङ्कज-वनाश्रयिणो लभन्ते ॥४३॥",
     iast: "Kuntāgra-bhinna-gaja-śoṇita-vārivāha-vegāvatāra-taraṇātura-yodha-bhīme; yuddhe jayaṁ vijita-durjaya-jeya-pakṣās tvat-pāda-paṅkaja-vanāśrayiṇo labhante.",
+    en: "In a terrifying battlefield where warriors struggle amid charging elephants and flowing blood, those who take refuge at Your lotus feet attain victory even over seemingly invincible opponents.",
   },
   {
     id: "j44",
@@ -581,6 +625,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 44 eleven times before beginning a journey or during periods of uncertainty. Visualize yourself safely crossing every obstacle.",
     sa: "अम्भोनिधौ क्षुभित-भीषण-नक्र-चक्र-पाठी्न-पीठ-भय-दोल्वण-वाडवाग्नौ । रङ्गत्तरङ्ग-शिखर-स्थित-यान-पात्रास्त्रासं विहाय भवतः स्मरणाद् व्रजन्ति ॥४४॥",
     iast: "Ambhonidhau kṣubhita-bhīṣaṇa-nakra-cakra-pāṭhīna-pīṭha-bhaya-dolvana-vāḍavāgnau; raṅgat-taraṅga-śikhara-sthita-yāna-pātrās trāsaṁ vihāya bhavataḥ smaraṇād vrajanti.",
+    en: "In the terrifying ocean filled with crocodiles, violent waves, and hidden dangers, those travelling upon ships abandon all fear through remembrance of You and safely continue their journey.",
   },
   {
     id: "j45",
@@ -594,6 +639,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 45 eleven times while praying for healing. Cultivate gratitude and maintain a peaceful state of mind.",
     sa: "उद्भूत-भीषण-जलोदर-भार-भुग्नाः, शोच्यां दशामुपगताश्च्युत-जीविताशाः । त्वत्पाद-पङ्कज-रजोऽमृत-दिग्ध-देहाः, मर्त्या भवन्ति मकरध्वज-तुल्यरूपाः ॥४५॥",
     iast: "Udbhūta-bhīṣaṇa-jalodara-bhāra-bhugnāḥ, śocyāṁ daśām upagatāś cyuta-jīvitāśāḥ; tvat-pāda-paṅkaja-rajo'mṛta-digdha-dehāḥ, martyā bhavanti makaradhvaja-tulya-rūpāḥ.",
+    en: "Those afflicted with severe illness, weakened and having lost hope of life, regain vitality and radiant health when touched by the nectar-like dust of Your lotus feet.",
   },
   {
     id: "j46",
@@ -607,6 +653,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 46 eleven times. Consciously release one unhealthy attachment, habit, or fear today.",
     sa: "आपाद-कण्ठमुरु-शृङ्खल-वेष्टिताङ्गाः, गाढं-बृहन्निगड-कोटि-निघृष्ट-जङ्घाः । त्वन्नाम-मन्त्रमनिशं मनुजाः स्मरन्तः, सद्यः स्वयं विगत-बन्ध-भया भवन्ति ॥४६॥",
     iast: "Āpāda-kaṇṭham uru-śṛṅkhala-veṣṭitāṅgāḥ, gāḍhaṁ-bṛhan-nigaḍa-koṭi-nighṛṣṭa-jaṅghāḥ; tvan-nāma-mantram aniśaṁ manujāḥ smarantaḥ, sadyaḥ svayaṁ vigata-bandha-bhayā bhavanti.",
+    en: "Even those bound from feet to neck with heavy chains and iron shackles become free from the fear of bondage through constant remembrance of Your sacred name.",
   },
   {
     id: "j47",
@@ -620,6 +667,7 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 47 eleven times whenever fear arises. Visualize yourself surrounded by a radiant sphere of golden light.",
     sa: "मत्त-द्विपेन्द्र-मृगराज-दवानलाहि-संग्राम-वारिधि-महोदर-बन्धनोत्थम् । तस्याशु नाशमुपयाति भयं भियेव, यस्तावकं स्तवमिमं मतिमानधीते ॥४७॥",
     iast: "Matta-dvipendra-mṛgarāja-davānalāhi-saṅgrāma-vāridhi-mahodara-bandhanottham; tasyāśu nāśam upayāti bhayaṁ bhiyeva, yastāvakaṁ stavam imaṁ matimān adhīte.",
+    en: "For the wise person who studies and recites this hymn devotedly, every fear arising from wild elephants, lions, forest fires, serpents, battles, oceans, imprisonment, and all other dangers quickly disappears.",
   },
   {
     id: "j48",
@@ -633,5 +681,6 @@ export const bhaktamarCards = [
     remedy: "Recite Bhaktamar Stotra Verse 48 daily with gratitude. Offer flowers before the image of Lord Adinath and dedicate your success to the welfare of all beings.",
     sa: "स्तोत्रस्रजं तव जिनेन्द्र! गुणैर्निबद्धां, भक्त्या मया विविधवर्णविचित्रपुष्पाम् । धत्ते जनो य इह कण्ठगतामजस्रं, तं मानतुंगमवशा समुपैति लक्ष्मीः ॥४८॥",
     iast: "Stotra-srajaṁ tava jinendra! guṇair nibaddhāṁ, bhaktyā mayā vividha-varṇa-vicitra-puṣpām; dhatte jano ya iha kaṇṭha-gatām ajasraṁ, taṁ Mānatuṅgam avaśā samupaiti Lakṣmīḥ.",
+    en: "O Jina! This hymn is like a beautiful garland woven from Your virtues and offered with devotion. Whoever constantly keeps this garland of praise close to the heart is naturally blessed with prosperity, honour, and auspiciousness.",
   },
 ]

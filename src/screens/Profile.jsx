@@ -1,5 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { days, sessionHistory, user, walletTransactions } from '../data/mock.js'
+import { LANGS } from '../data/i18n.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
@@ -73,7 +74,7 @@ export default function Profile() {
 /* ── Overview ────────────────────────────────────────────────────────────── */
 
 function Overview() {
-  const { showToast, questionsLeft, cartCount } = useStore()
+  const { showToast, questionsLeft, cartCount, lang, setLang, t } = useStore()
 
   return (
     <>
@@ -102,6 +103,28 @@ function Overview() {
         <PopButton to="/onboarding/date" className="mt-5">
           Edit birth details
         </PopButton>
+      </section>
+
+      {/* ── Language ─────────────────────────────────────────────────────
+          A pill pair rather than a Row into a sub-screen: there are two
+          options and switching is the whole interaction, so a page to hold it
+          would be a page you visit once and never again. */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>{t('set.language')}</Kicker>
+        <div className="mt-3 flex gap-2">
+          {LANGS.map((l) => (
+            <button
+              key={l.code}
+              type="button"
+              aria-pressed={lang === l.code}
+              onClick={() => setLang(l.code)}
+              className="pill flex-1"
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-meta t-faint">{t('set.langNote')}</p>
       </section>
 
       <section className="border-b border-rule px-5 py-6">

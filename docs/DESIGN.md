@@ -31,12 +31,30 @@ name. `borderRadius` and `boxShadow` scales all collapse to `0` / `none`, and
 
 ## 2. Typography
 
-Inter at 300 / 400 / 500. Nothing heavier is loaded.
+**Plus Jakarta Sans**, 300–800. This replaced Inter in the CRED-light redesign:
+CRED runs on Gilroy, which is licensed, and Jakarta is the closest free
+geometric sans — same low contrast and open apertures, and it survives 10px
+caps, which is where most geometric sans fall apart and where this UI spends
+most of its type.
 
-- Section headers: 11px, uppercase, `letter-spacing: .10em`, centered
-- Body reading text: 17px, `line-height: 1.65`, centered, `max-width: 34ch`
-- Hierarchy comes from **size, case and colour** — almost never weight. 500 is
-  reserved for the active nav item
+**One family for Latin, two for the app.** Jakarta has no Indic coverage at
+all, so the Hindi build pairs it with **Noto Sans Devanagari**, loaded in the
+same font request. Order in the stack is the whole trick:
+
+```
+sans: ['"Plus Jakarta Sans"', '"Noto Sans Devanagari"', …]
+```
+
+A browser walks that stack **per glyph**, so Latin keeps Jakarta and only
+Devanagari falls through to Noto. Reversing the two would restyle the entire
+English UI. Without Noto in there at all, Hindi silently resolves to whatever
+the OS ships — Nirmala UI on Windows, something else on Android — and one
+screen renders in two unrelated typefaces.
+
+- Section headers: 11px, uppercase, `letter-spacing: .10em`
+- Body reading text: 17px, `line-height: 1.6`, `max-width: 34ch`
+- Hierarchy comes from **size, case and weight**; a display heading is a weight
+  rule, not a second family
 
 Sizes are named to their role in `tailwind.config.js` (`label`, `meta`, `body`,
 `read`, `lead`, `title`, `display`, `huge`) so a screen cannot invent a

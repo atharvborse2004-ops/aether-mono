@@ -30,13 +30,13 @@ import { useStore } from '../store.jsx'
 const FREE_TOOLS = [
   {
     key: 'horoscope',
-    label: 'Horoscope',
+    label: 'tool.horoscope',
     icon: 'horoscope',
     act: ({ setHoroscopeOpen }) => setHoroscopeOpen(true),
   },
-  { key: 'ai', label: 'Ask AI', icon: 'ai', act: ({ openChat }) => openChat('ai') },
-  { key: 'tarot', label: 'Tarot', icon: 'tarot', to: '/tarot' },
-  { key: 'match', label: 'Matching', icon: 'consult', to: '/people' },
+  { key: 'ai', label: 'tool.ai', icon: 'ai', act: ({ openChat }) => openChat('ai') },
+  { key: 'tarot', label: 'tool.tarot', icon: 'tarot', to: '/tarot' },
+  { key: 'match', label: 'tool.match', icon: 'consult', to: '/people' },
 ]
 
 /** Every feed record resolves against one of these by `refId`. */
@@ -127,7 +127,7 @@ export default function Home({ action }) {
 /** The free row. Circles, because a circle reads as a tool and a card reads as
     content — and everything below this line is content. */
 function FreeTools() {
-  const { openChat, setHoroscopeOpen } = useStore()
+  const { openChat, setHoroscopeOpen, t } = useStore()
   const bag = { openChat, setHoroscopeOpen }
 
   return (
@@ -140,20 +140,20 @@ function FreeTools() {
                 <span className="tile-face">
                   <Icon name={f.icon} size={23} />
                 </span>
-                <span className="caps-sm leading-tight t-body">{f.label}</span>
+                <span className="caps-sm leading-tight t-body">{t(f.label)}</span>
               </Link>
             ) : (
               <button type="button" onClick={() => f.act(bag)} className="tile w-[76px]">
                 <span className="tile-face">
                   <Icon name={f.icon} size={23} />
                 </span>
-                <span className="caps-sm leading-tight t-body">{f.label}</span>
+                <span className="caps-sm leading-tight t-body">{t(f.label)}</span>
               </button>
             )}
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-center caps-sm t-faint">Free · no session needed</p>
+      <p className="mt-3 text-center caps-sm t-faint">{t('a.free')}</p>
     </section>
   )
 }

@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { earnings, earningsSeries, payouts, proLedger, referrals, topUpAmounts } from '../data/mock.js'
+import {
+  earnings,
+  earningsSeries,
+  payouts,
+  proLedger,
+  proMetrics,
+  referrals,
+  topUpAmounts,
+} from '../data/mock.js'
 import { Sheet, TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { Kicker, PopAvatar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
@@ -18,6 +26,14 @@ export default function ProEarnings() {
   const [amount, setAmount] = useState(earnings.available)
 
   const fee = Math.round((amount * earnings.commissionPct) / 100)
+
+  const answerRate = Math.round((proMetrics.callsAttended / proMetrics.callsRequested) * 100)
+  const missed = proMetrics.callsRequested - proMetrics.callsAttended
+  // `Bars` wants {label, value}; the reply series is seven bare minutes.
+  const replySeries = proMetrics.replyByDay.map((value, i) => ({
+    label: earningsSeries[i].label,
+    value,
+  }))
 
   return (
     <>
@@ -64,6 +80,45 @@ export default function ProEarnings() {
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Last 7 days</Kicker>
         <Bars data={earningsSeries} />
+      </section>
+
+      {/* ── How she is performing ───────────────────────────────────────
+          Answer rate and reply speed live with the money because that is what
+          they are: the two things that decide whether a request becomes a
+          session. A missed call is a refund and a slow reply is a cancelled
+          booking. */}
+      <section className="border-b border-rule px-5 py-6">
+        <Kicker>Performance</Kicker>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <PopCard className="p-4">
+            <p className="caps-sm t-faint">Median reply</p>
+            <p className="mt-1.5 text-lead tnum t-heading">{proMetrics.medianReplyMins} min</p>
+            <p className="mt-1 caps-sm tnum text-ok">
+              Target {proMetrics.replyTargetMins} min
+            </p>
+          </PopCard>
+          <PopCard className="p-4">
+            <p className="caps-sm t-faint">Calls attended</p>
+            <p className="mt-1.5 text-lead tnum t-heading">
+              {proMetrics.callsAttended}
+              <span className="t-faint">/{proMetrics.callsRequested}</span>
+            </p>
+            <p className="mt-1 caps-sm tnum t-body">{answerRate}% answered</p>
+          </PopCard>
+        </div>
+
+        <div className="mt-3">
+          <Field k="Sessions completed" v={proMetrics.sessionsCompleted} />
+          <Field k="Repeat clients" v={`${proMetrics.repeatClientPct}%`} />
+          <Field k="Rating" v={proMetrics.ratingAvg} />
+        </div>
+
+        <p className="mt-4 caps-sm t-faint">Median reply, last 7 days · minutes</p>
+        <Bars data={replySeries} />
+        <p className="mt-3 text-meta t-faint">
+          {missed} requests went unanswered. Each one was a session someone booked
+          elsewhere.
+        </p>
       </section>
 
       {/* ── Per-session ledger ─────────────────────────────────────────── */}
