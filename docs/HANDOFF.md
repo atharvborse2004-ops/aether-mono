@@ -43,6 +43,7 @@ in-flight work. Recent commits, newest first:
 
 | Commit | What |
 |---|---|
+| `8b6cc44` | Hindi/English, tarot flow, consultant inbox, pro metrics |
 | `be20ebd` | Mandir: swipe to change deity/murti, Mahavir, smaller footer |
 | `0c77167` | Mandir: full-bleed shrine, real brass props, no scroll |
 | `412dd61` | Bhaktamar deck (48 cards) + real murtis in the mandir |
