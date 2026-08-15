@@ -43,6 +43,7 @@ in-flight work. Recent commits, newest first:
 
 | Commit | What |
 |---|---|
+| `f72852d` | Three chart systems: Vedic, South Indian, Western |
 | `8b6cc44` | Hindi/English, tarot flow, consultant inbox, pro metrics |
 | `be20ebd` | Mandir: swipe to change deity/murti, Mahavir, smaller footer |
 | `0c77167` | Mandir: full-bleed shrine, real brass props, no scroll |
