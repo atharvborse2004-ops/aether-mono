@@ -40,8 +40,12 @@ export default function Pooja() {
   const chips = useRef(null)
 
   /**
-   * Swiping the shrine. Down for the next deity, right for the next murti of
-   * the one you are on; up and left go back.
+   * Swiping the shrine. Right for the next deity, down for the next murti of
+   * the one you are on; left and up go back.
+   *
+   * The axes match the rows they mirror: the deity strip above the shrine runs
+   * horizontally, so deities change horizontally. Murtis of one deity are a
+   * stack behind the frame, so they change vertically.
    *
    * The rule that makes this safe to add is the `closest('button')` bail. Every
    * prop on the shrine is a button and two of them own gestures already — the
@@ -83,12 +87,12 @@ export default function Pooja() {
 
     const wrap = (i, n) => ((i % n) + n) % n
     if (ax > ay * DOMINANCE) {
-      setPic((p) => wrap(p + (dx > 0 ? 1 : -1), deity.images.length))
-    } else if (ay > ax * DOMINANCE) {
       const i = deities.findIndex((d) => d.id === deity.id)
-      const next = deities[wrap(i + (dy > 0 ? 1 : -1), deities.length)]
+      const next = deities[wrap(i + (dx > 0 ? 1 : -1), deities.length)]
       setDeity(next)
       setPic(0)
+    } else if (ay > ax * DOMINANCE) {
+      setPic((p) => wrap(p + (dy > 0 ? 1 : -1), deity.images.length))
     }
   }
 

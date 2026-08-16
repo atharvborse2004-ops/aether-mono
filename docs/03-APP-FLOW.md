@@ -181,11 +181,19 @@ fires a toast. Its own footer says so.
 **The one screen that does not scroll.** A fixed-height column: deity row,
 shrine, tab bar.
 
-Gestures on the shrine — swipe down/up for the next/previous deity, right/left
-for the next/previous murti. Four offerings on a rail, each an animation and a
-toast. The thali rotates under a finger and settles to the nearest whole turn.
-A knob opens the murti picker, which is **the only place the image attribution
-appears** and therefore cannot be removed without removing the images.
+Gestures on the shrine — swipe **right/left for the next/previous deity**
+(which resets to that deity's first murti), **down/up for the next/previous
+murti**. Both wrap. The axes mirror the rows they move through: the deity strip
+runs horizontally above the shrine, and murtis are a stack behind the frame.
+
+A swipe is refused when it starts on a control, because every prop is a button
+and two own gestures already. Under 44px is a tap; an ambiguous diagonal is
+ignored rather than guessed.
+
+Four offerings on a rail, each an animation and a toast. The thali rotates under
+a finger and settles to the nearest whole turn. A knob opens the murti picker,
+which is **the only place the image attribution appears** and therefore cannot
+be removed without removing the images.
 
 No money anywhere. Nothing books a pandit.
 

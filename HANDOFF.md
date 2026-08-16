@@ -115,6 +115,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Change | Note |
 |---|---|
+| **Pooja swipe axes inverted** | Right/left = deity, down/up = murti. `node tools/verify-pooja-swipe.mjs` |
 | **Tarot is a guided flow**, not one laid-out screen | `deck → question → card`, the first two as centred modal dialogs. State machine in `docs/03-APP-FLOW.md` |
 | **Three chart systems** — Vedic, South Indian, Western | `chartSystem` on the store, so Profile follows the choice made on `/chart`. `ChartSquare.jsx` holds both Indian charts |
 | **Hindi and English** | `src/data/i18n.js`, `t()` off the store. Chrome, mandir and tarot translated; the ~1,580 lines of editorial copy in `mock.js` are not, deliberately |
