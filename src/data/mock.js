@@ -1090,6 +1090,7 @@ export const deities = [
       { f: 'mahavir-c.webp', label: 'In the arch', artist: null, licence: 'Supplied', source: null },
       { f: 'mahavir-a.webp', label: 'Carved niche', artist: null, licence: 'Supplied', source: null },
       { f: 'mahavir-b.webp', label: 'Golden halo', artist: null, licence: 'Supplied', source: null },
+      { f: 'mahavir-d.webp', label: 'Jain Tirth Temple, Ayodhya', artist: null, licence: 'Supplied', source: null },
     ] },
   { id: 'd6', name: 'Shani', nameHi: 'शनि', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
     forWhat: 'Sade sati, dhaiya, and the long grinding years.',
