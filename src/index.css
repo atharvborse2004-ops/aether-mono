@@ -548,19 +548,6 @@
     box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.07);
   }
 
-  /* Right-edge fade for a pill/chip row that can overflow — signals there is
-     more to scroll to without needing a visible scrollbar. Fades to `--bg`
-     since this sits directly on the page canvas, not a card. */
-  .scroll-fade {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 28px;
-    background: linear-gradient(90deg, rgba(241, 239, 236, 0), var(--bg));
-    pointer-events: none;
-  }
-
   /* ── Banners ──────────────────────────────────────────────────────────────
      The colour in this app arrives here and nowhere else: a gradient block,
      rounded, with a headline and one CTA. They scroll horizontally and snap,

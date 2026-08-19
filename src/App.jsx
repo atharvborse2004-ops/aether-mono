@@ -151,9 +151,8 @@ function Frame() {
               path falls through to `*` and teleports the consultant into the
               seeker app with no error — the most confusing failure available
               here. */}
-          {/* Live has no destination of its own — the rooms that are on air
-              surface inside Consult now, so the old bare path still resolves
-              there rather than falling through to the catch-all. */}
+          {/* Live is a Consult mode now; the old path still resolves rather
+              than falling through to the catch-all. */}
           <Route path="/live" element={<Navigate to="/consult" replace />} />
 
           <Route path="/pro/*" element={<Navigate to="/pro/studio" replace />} />
