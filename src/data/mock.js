@@ -850,15 +850,15 @@ export const mine = (list) => list.filter((x) => x.consultantId === pro.id)
  */
 export const bookings = [
   { id: 'bk1', client: 'Kabir S.', initials: 'KS', kind: 'Call', duration: '30 min', when: 'Today · 13:30', at: '13:30', startsIn: '2h 10m', price: 2998, status: 'pending',
-    note: 'Offer letter from a new company. I need timing, not encouragement.' },
+    note: 'Offer letter from a new company. I need timing, not encouragement.', birthDate: '2 March 1994', birthTime: '11:20 PM' },
   { id: 'bk2', client: 'Priya M.', initials: 'PM', kind: 'Chat', duration: '15 min', when: 'Today · 16:00', at: '16:00', startsIn: '4h 40m', price: 1499, status: 'pending',
-    note: 'Second session. Same relocation question, new dates.' },
+    note: 'Second session. Same relocation question, new dates.', birthDate: '19 July 1991', birthTime: '06:05 AM' },
   { id: 'bk3', client: 'Anonymous', initials: 'AN', kind: 'Live', duration: '10 min', when: 'Tomorrow · 09:30', at: '09:30', startsIn: '19h', price: 999, status: 'pending',
-    note: 'I would rather not say in advance.' },
-  { id: 'bk4', client: 'Rhea D.', initials: 'RD', kind: 'Call', duration: '30 min', when: 'Today · 11:00', at: '11:00', startsIn: 'Now', price: 2998, status: 'confirmed' },
-  { id: 'bk5', client: 'Imran Q.', initials: 'IQ', kind: 'Chat', duration: '15 min', when: 'Today · 18:30', at: '18:30', startsIn: '7h 10m', price: 1499, status: 'confirmed' },
-  { id: 'bk6', client: 'Sana B.', initials: 'SB', kind: 'Call', duration: '15 min', when: 'Today · 09:30', at: '09:30', startsIn: null, price: 1499, status: 'done' },
-  { id: 'bk7', client: 'Vikram T.', initials: 'VT', kind: 'Call', duration: '30 min', when: 'Yesterday · 20:00', at: '20:00', startsIn: null, price: 2998, status: 'done' },
+    note: 'I would rather not say in advance.', birthDate: '30 December 1999', birthTime: '02:50 PM' },
+  { id: 'bk4', client: 'Rhea D.', initials: 'RD', kind: 'Call', duration: '30 min', when: 'Today · 11:00', at: '11:00', startsIn: 'Now', price: 2998, status: 'confirmed', birthDate: '8 May 1988', birthTime: '09:15 AM' },
+  { id: 'bk5', client: 'Imran Q.', initials: 'IQ', kind: 'Chat', duration: '15 min', when: 'Today · 18:30', at: '18:30', startsIn: '7h 10m', price: 1499, status: 'confirmed', birthDate: '23 January 2000', birthTime: '07:40 PM' },
+  { id: 'bk6', client: 'Sana B.', initials: 'SB', kind: 'Call', duration: '15 min', when: 'Today · 09:30', at: '09:30', startsIn: null, price: 1499, status: 'done', birthDate: '11 September 1993', birthTime: '01:05 AM' },
+  { id: 'bk7', client: 'Vikram T.', initials: 'VT', kind: 'Call', duration: '30 min', when: 'Yesterday · 20:00', at: '20:00', startsIn: null, price: 2998, status: 'done', birthDate: '27 June 1985', birthTime: '04:30 PM' },
 ]
 
 /**
@@ -970,8 +970,8 @@ export const insights = {
  * items on the screen that ask for an action rather than describing the past.
  */
 export const warnings = [
-  { id: 'w1', tone: 'bad', title: 'Response rate is 68%', line: 'It was 94% last month. Two requests have sat unanswered for six hours.', to: '/pro/sessions' },
-  { id: 'w2', tone: 'warn', title: '3 slots unfilled tomorrow', line: 'Morning is empty. Opening an evening slot fills faster on a Thursday.', to: '/pro/sessions' },
+  { id: 'w1', tone: 'bad', title: 'Response rate is 68%', line: 'It was 94% last month. Two requests have sat unanswered for six hours.', to: '/pro/consult' },
+  { id: 'w2', tone: 'warn', title: '3 slots unfilled tomorrow', line: 'Morning is empty. Opening an evening slot fills faster on a Thursday.', to: '/pro/consult' },
   { id: 'w3', tone: 'warn', title: '“Relocation and the 4th house” is 31% below your average', line: 'Reels you post before 6 pm consistently underperform. Yours went out at 2 pm.', to: '/pro/studio' },
 ]
 

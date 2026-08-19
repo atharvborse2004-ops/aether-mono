@@ -34,10 +34,7 @@ export const strings = {
   'nav.consult': { en: 'Consult', hi: 'परामर्श' },
   'nav.shop': { en: 'Shop', hi: 'दुकान' },
   'nav.academy': { en: 'Academy', hi: 'अकादमी' },
-  'nav.feed': { en: 'Feed', hi: 'फ़ीड' },
-  'nav.sessions': { en: 'Sessions', hi: 'सत्र' },
   'nav.studio': { en: 'Studio', hi: 'स्टूडियो' },
-  'nav.earnings': { en: 'Earnings', hi: 'कमाई' },
   'nav.profile': { en: 'Profile', hi: 'प्रोफ़ाइल' },
 
   // ── Common actions ───────────────────────────────────────────────────────

@@ -388,9 +388,9 @@ function SettingsTab() {
           {/* Plain navigation — the URL is what decides which side you are on,
               so there is no role to toggle. */}
           <Row
-            to="/pro/feed"
+            to="/pro/studio"
             title="Switch to consultant"
-            note="Your sessions, your earnings, your page"
+            note="Your studio, your sessions, your page"
           />
         </div>
       </section>

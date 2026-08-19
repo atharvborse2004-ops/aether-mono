@@ -211,7 +211,7 @@ export function AppProvider({ children }) {
   const me = useMemo(
     () =>
       isPro
-        ? { ...pro, profileTo: '/pro/profile', homeTo: '/pro/feed' }
+        ? { ...pro, profileTo: '/pro/profile', homeTo: '/pro/studio' }
         : { ...user, profileTo: '/profile', homeTo: '/home' },
     [isPro],
   )

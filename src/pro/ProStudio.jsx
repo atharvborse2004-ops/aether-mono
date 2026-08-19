@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { clips, mine, pro, reads } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
@@ -9,7 +10,6 @@ import { useStore } from '../store.jsx'
 const TABS = [
   { key: 'reel', label: 'Reel' },
   { key: 'article', label: 'Article' },
-  { key: 'live', label: 'Live' },
 ]
 
 /** The consultant's own live room already exists as a real screen. */
@@ -21,7 +21,6 @@ export default function ProStudio() {
   const [caption, setCaption] = useState('')
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [topic, setTopic] = useState('')
 
   const words = body.trim() ? body.trim().split(/\s+/).length : 0
 
@@ -29,7 +28,24 @@ export default function ProStudio() {
     <>
       <TabHeader />
 
-      <div className="px-4 pt-4">
+      {/* Studio is the consultant's home tab now, and going live on camera is
+          the one action that should never sit behind a compose flow — the
+          product ask was "immediate, not three taps deep". One card, one
+          tap, straight into the real room. */}
+      <section className="px-5 pt-5">
+        <Link to={`/live/${MY_ROOM}`} className="pop-card pop-tap block overflow-hidden" aria-label="Go live now">
+          <Plate seed="studio-live" variant="orbit" className="aspect-[21/9] w-full">
+            <span className="absolute left-4 top-4">
+              <span className="badge-live">● Go live</span>
+            </span>
+            <span className="absolute inset-x-4 bottom-4 text-left text-lead font-semibold text-white">
+              Start a room now
+            </span>
+          </Plate>
+        </Link>
+      </section>
+
+      <div className="px-4 pt-5">
         {/* Local state, not the URL. Nothing links to a specific composer tab,
             so there is nothing to deep-link or share. */}
         <div role="tablist" className="seg">
@@ -118,32 +134,6 @@ export default function ProStudio() {
           </section>
         )}
 
-        {tab === 'live' && (
-          <section className="border-b border-rule px-5 py-6">
-            <Kicker>Go live</Kicker>
-            <Plate seed="draft-live" variant="orbit" className="mt-4 aspect-video w-full">
-              <span className="absolute left-3 top-3">
-                <span className="badge-live">● Preview</span>
-              </span>
-            </Plate>
-            <input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="What is the room about"
-              aria-label="Topic"
-              className="mt-4 w-full border-b border-rule bg-transparent pb-2 text-body outline-none transition-colors placeholder:text-t4 focus:border-gold t-heading"
-            />
-            <p className="mt-4 text-meta t-body">
-              Free to watch. Questions get answered if they are useful to everyone in the room,
-              which most are not.
-            </p>
-            {/* Opens the consultant's real room rather than firing a toast —
-                /live/l1 already exists and belongs to a1. */}
-            <PopButton variant="gold" to={`/live/${MY_ROOM}`} className="mt-6">
-              Start the room
-            </PopButton>
-          </section>
-        )}
       </div>
 
       <section className="px-5 py-6">

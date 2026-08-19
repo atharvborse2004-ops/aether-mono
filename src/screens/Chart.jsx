@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { chartHouses, placements, user } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
 import { ChartNorth, ChartSouth } from '../components/ChartSquare.jsx'
 import { useStore } from '../store.jsx'
-import { Field, Section, Segmented, Stub } from '../components/Primitives.jsx'
+import { Field, Section, Segmented, Stub, firstName } from '../components/Primitives.jsx'
 
 const SYSTEMS = ['vedic', 'south', 'western']
 const NOTE = { vedic: 'northNote', south: 'southNote', western: 'westernNote' }
@@ -20,10 +20,37 @@ const NOTE = { vedic: 'northNote', south: 'southNote', western: 'westernNote' }
 export default function Chart() {
   const [view, setView] = useState('table')
   const { chartSystem, setChartSystem, t } = useStore()
+  const [params] = useSearchParams()
+
+  /* A consultant's booking row (ProConsult.jsx) can open this with a
+     client's mock birth date/time in the query string, so the header and
+     "Birth data" fields below prefill for them instead of the seed user.
+     What does NOT change: the diagram and the placement table, which are
+     still `user`'s own fixed data — there is no chart-calculation service
+     (backend Phase 7, unbuilt), so nothing here is actually computed for
+     the client. Flagged on screen below rather than quietly passed off as
+     a real reading for someone else. */
+  const viewingOther = params.has('name')
+  const display = {
+    name: params.get('name') || user.name,
+    date: params.get('date') || user.birthDate,
+    time: params.get('time') || user.birthTime,
+  }
 
   return (
     <>
-      <TopBar title="Your chart" sub={`${user.birthDate} · ${user.birthTime}`} />
+      <TopBar
+        title={viewingOther ? `${firstName(display.name)}’s chart` : 'Your chart'}
+        sub={`${display.date} · ${display.time}`}
+      />
+
+      {viewingOther && (
+        <p className="mx-5 mt-4 rounded-xl bg-live/10 px-4 py-3 text-meta text-live">
+          Prototype — the diagram and placements below are still {firstName(user.name)}’s own.
+          There is no chart-calculation service yet, so this is not really computed for{' '}
+          {firstName(display.name)}.
+        </p>
+      )}
       {/* Two switches, not one four-way. The first is *what you are looking
           at* — the numbers or the diagram — and the second is *which
           tradition's diagram*. Folding them together would put "Table" beside
@@ -120,8 +147,8 @@ export default function Chart() {
           </Section>
 
           <Section label="Birth data" last>
-            <Field k="Date" v={user.birthDate} />
-            <Field k="Time" v={user.birthTime} />
+            <Field k="Date" v={display.date} />
+            <Field k="Time" v={display.time} />
             <Field k="Place" v={user.birthPlace} />
             <Field k="Source" v="NASA JPL" />
           </Section>

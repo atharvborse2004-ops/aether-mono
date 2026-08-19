@@ -21,10 +21,8 @@ import Pooja from './screens/Pooja.jsx'
 import Shop from './screens/Shop.jsx'
 import Tarot from './screens/Tarot.jsx'
 
-import ProFeed from './pro/ProFeed.jsx'
-import ProSessions from './pro/ProSessions.jsx'
 import ProStudio from './pro/ProStudio.jsx'
-import ProEarnings from './pro/ProEarnings.jsx'
+import ProConsult from './pro/ProConsult.jsx'
 import ProProfile from './pro/ProProfile.jsx'
 
 import Profile from './screens/Profile.jsx'
@@ -138,11 +136,13 @@ function Frame() {
           </Route>
 
           <Route element={<ProLayout />}>
-            <Route path="/pro/feed" element={<ProFeed />} />
-            <Route path="/pro/sessions" element={<ProSessions />} />
             <Route path="/pro/studio" element={<ProStudio />} />
-            <Route path="/pro/earnings" element={<ProEarnings />} />
+            <Route path="/pro/consult" element={<ProConsult />} />
+            {/* Profile carries its tab in the URL too, same reason as the
+                seeker's — Earnings needs to stay deep-linkable now that it
+                is a segment rather than a route. */}
             <Route path="/pro/profile" element={<ProProfile />} />
+            <Route path="/pro/profile/:tab" element={<ProProfile />} />
           </Route>
 
           {/* Must sit above the global catch-all. Without it a mistyped pro
@@ -153,7 +153,7 @@ function Frame() {
               than falling through to the catch-all. */}
           <Route path="/live" element={<Navigate to="/consult" replace />} />
 
-          <Route path="/pro/*" element={<Navigate to="/pro/feed" replace />} />
+          <Route path="/pro/*" element={<Navigate to="/pro/studio" replace />} />
 
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

@@ -1,22 +1,96 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { bookedSlots, bookings, timeSlots, weekDays } from '../data/mock.js'
+import { Link, useNavigate } from 'react-router-dom'
+import { bookedSlots, bookings, pro, timeSlots, weekDays } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { Kicker, PopAvatar, PopButton, PopTag } from '../components/Pop.jsx'
-import { firstName } from '../components/Primitives.jsx'
+import { Segmented, firstName } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 /**
- * Sessions — the queue, the day, and what you are open for.
- *
- * Accept/decline rides the store's existing `flags` Set rather than adding a
- * status slice: two namespaced keys per booking, sticky across navigation, and
- * `toggleFlag` already handles the toast.
- *
- * ponytail: two booleans standing in for a four-state lifecycle. If a third
- * action appears (reschedule), this wants a real status map in the store.
+ * Consult — everything that runs today's practice, bundled: who is asking,
+ * who is booked, and how you reach them. Sessions/Chat/Call are one screen
+ * rather than three routes because they are three views onto the same
+ * roster, not three separate places (mirrors how Live folded into the
+ * seeker's own Consult tab as a mode).
  */
+const TABS = [
+  { key: 'sessions', label: 'Sessions' },
+  { key: 'chat', label: 'Chat' },
+  { key: 'call', label: 'Call' },
+]
+
+export default function ProConsult() {
+  const { hasFlag, toggleFlag, openChat } = useStore()
+  const [tab, setTab] = useState('sessions')
+
+  const pending = bookings.filter((b) => decided(b, hasFlag) === 'pending')
+
+  // Online/offline rides the same flags Set the slot grid below uses — a
+  // namespaced key, no new store slice. `pro.online` is the seed default;
+  // the flag only ever pushes it to offline.
+  const online = pro.online && !hasFlag(`offline:${pro.id}`)
+
+  return (
+    <>
+      <TabHeader
+        action={pending.length > 0 ? <PopTag tone="gold">{pending.length} waiting</PopTag> : null}
+      />
+
+      {/* ── Availability, on the main app ─────────────────────────────────
+          The one control that isn't a subsection: whether clients see you as
+          bookable at all. Separate from the per-slot grid further down,
+          which is about *when*, not *whether*. */}
+      <section className="px-5 pb-2 pt-5">
+        <div className="pop-card flex items-center gap-3 p-4">
+          <span
+            className={`h-2.5 w-2.5 flex-none rounded-full ${online ? 'bg-ok' : 'bg-t4'}`}
+            aria-hidden="true"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-meta t-heading">
+              {online ? 'Online to clients' : 'Offline'}
+            </span>
+            <span className="mt-0.5 block caps-sm t-faint">
+              {online
+                ? 'Visible and bookable on the main app'
+                : 'Hidden from new bookings until you go back online'}
+            </span>
+          </span>
+          <PopButton
+            size="sm"
+            variant={online ? 'ghost' : 'gold'}
+            full={false}
+            onClick={() =>
+              toggleFlag(`offline:${pro.id}`, {
+                on: 'You are offline to clients',
+                off: 'You are online again',
+              })
+            }
+          >
+            {online ? 'Go offline' : 'Go online'}
+          </PopButton>
+        </div>
+      </section>
+
+      <div className="px-4 pt-4">
+        <Segmented items={TABS} value={tab} onChange={setTab} />
+      </div>
+
+      <div key={tab} className="animate-fade">
+        {tab === 'sessions' && <Sessions />}
+        {tab === 'chat' && <Chat onOpen={() => openChat('live')} />}
+        {tab === 'call' && <Call />}
+      </div>
+
+      <div className="h-24" />
+    </>
+  )
+}
+
+function decided(b, hasFlag) {
+  return hasFlag(`accept:${b.id}`) ? 'confirmed' : hasFlag(`decline:${b.id}`) ? 'declined' : b.status
+}
 
 /**
  * How each channel is actually delivered. The consultant's whole job runs
@@ -29,7 +103,15 @@ const CHANNELS = {
   Live: { icon: 'live', verb: 'Go live' },
 }
 
-export default function ProSessions() {
+/**
+ * Sessions — the queue, the day, and what you are open for. Ported from the
+ * old standalone /pro/sessions route unchanged, minus its own TabHeader
+ * (Consult owns one now).
+ *
+ * ponytail: two booleans standing in for a four-state lifecycle. If a third
+ * action appears (reschedule), this wants a real status map in the store.
+ */
+function Sessions() {
   const { hasFlag, toggleFlag, showToast, openChat } = useStore()
   const navigate = useNavigate()
   const [day, setDay] = useState('Thu')
@@ -41,22 +123,14 @@ export default function ProSessions() {
     return showToast(`Calling ${firstName(b.client)} — prototype only`)
   }
 
-  const decided = (b) => (hasFlag(`accept:${b.id}`) ? 'confirmed' : hasFlag(`decline:${b.id}`) ? 'declined' : b.status)
+  const decidedStatus = (b) => decided(b, hasFlag)
 
-  const pending = bookings.filter((b) => decided(b) === 'pending')
-  const today = bookings.filter((b) => decided(b) === 'confirmed')
-  const done = bookings.filter((b) => decided(b) === 'done')
+  const pending = bookings.filter((b) => decidedStatus(b) === 'pending')
+  const today = bookings.filter((b) => decidedStatus(b) === 'confirmed')
+  const done = bookings.filter((b) => decidedStatus(b) === 'done')
 
   return (
     <>
-      <TabHeader
-        action={
-          pending.length > 0 ? (
-            <PopTag tone="gold">{pending.length} waiting</PopTag>
-          ) : null
-        }
-      />
-
       {/* ── Requests ───────────────────────────────────────────────────── */}
       <section className="border-b border-rule px-5 py-6">
         <Kicker>{pending.length === 0 ? 'No requests waiting' : `${pending.length} requests`}</Kicker>
@@ -139,6 +213,18 @@ export default function ProSessions() {
               ) : (
                 <span className="flex-none caps-sm t-faint tnum">in {b.startsIn}</span>
               )}
+              {/* Prototype-only: prefills /chart with this client's mock
+                  birth data, but the diagram itself still renders the seed
+                  user's own placements — there is no chart-calculation
+                  service yet. Chart.jsx flags that on screen rather than
+                  presenting a stranger's chart as if it were really computed. */}
+              <Link
+                to={`/chart?name=${encodeURIComponent(b.client)}&date=${encodeURIComponent(b.birthDate)}&time=${encodeURIComponent(b.birthTime)}`}
+                aria-label={`View ${firstName(b.client)}'s kundli`}
+                className="pill knob !h-9 !w-9 flex-none justify-center"
+              >
+                <Icon name="kundli" size={16} />
+              </Link>
               <button
                 type="button"
                 aria-label={`${CHANNELS[b.kind].verb} with ${firstName(b.client)}`}
@@ -209,7 +295,7 @@ export default function ProSessions() {
 
       {/* ── Done ───────────────────────────────────────────────────────── */}
       <section className="px-5 py-6">
-        <Kicker action="Earnings" to="/pro/earnings">
+        <Kicker action="Earnings" to="/pro/profile/earnings">
           Finished
         </Kicker>
         <ul className="mt-3">
@@ -229,8 +315,47 @@ export default function ProSessions() {
           ))}
         </ul>
       </section>
-
-      <div className="h-24" />
     </>
+  )
+}
+
+/** Chat — the store already owns the whole inbox; this is the entry point. */
+function Chat({ onOpen }) {
+  return (
+    <section className="px-5 py-6">
+      <Kicker>Messages</Kicker>
+      <button type="button" onClick={onOpen} className="pop-card pop-tap mt-4 flex w-full items-center gap-3 p-4">
+        <span className="pill knob !h-10 !w-10 flex-none justify-center">
+          <Icon name="chat" size={18} />
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block text-meta t-heading">Open your inbox</span>
+          <span className="mt-0.5 block caps-sm t-faint">Every client thread, in one panel</span>
+        </span>
+      </button>
+    </section>
+  )
+}
+
+/** Call — a stub like today. Real dialling needs a video/voice SDK (Phase 11, unbuilt). */
+function Call() {
+  const { showToast } = useStore()
+  return (
+    <section className="px-5 py-6">
+      <Kicker>Incoming calls</Kicker>
+      <button
+        type="button"
+        onClick={() => showToast('Calling — prototype only')}
+        className="pop-card pop-tap mt-4 flex w-full items-center gap-3 p-4"
+      >
+        <span className="pill knob !h-10 !w-10 flex-none justify-center">
+          <Icon name="phone" size={18} />
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block text-meta t-heading">Pick up</span>
+          <span className="mt-0.5 block caps-sm t-faint">Prototype only — no call actually connects</span>
+        </span>
+      </button>
+    </section>
   )
 }

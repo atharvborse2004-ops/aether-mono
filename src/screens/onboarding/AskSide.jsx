@@ -24,7 +24,7 @@ const SIDES = [
   },
   {
     key: 'pro',
-    to: '/pro/feed',
+    to: '/pro/studio',
     kicker: 'I give readings',
     line: 'You take the sessions. We take the scheduling, the payments and the arguing about time zones.',
     art: 'contour',
