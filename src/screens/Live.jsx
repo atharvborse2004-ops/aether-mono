@@ -16,9 +16,14 @@ import { useStore } from '../store.jsx'
 export function LiveBody() {
   const { showToast, hasFlag, toggleFlag, openChat } = useStore()
 
-  const liveNow = liveSessions.filter((l) => l.live)
+  // A host's own End control (ProGoLive.jsx) sets `offair:{id}` when she
+  // stops broadcasting — mock data's `live: true` never flips back on its
+  // own, so that flag is what keeps an ended room from staying listed here.
+  const liveNow = liveSessions.filter((l) => l.live && !hasFlag(`offair:${l.id}`))
   // The top room plays in full; the others list beneath it.
   const [featured, ...rest] = liveNow
+  // Ended rooms just stop appearing here rather than sliding into Upcoming —
+  // they were never scheduled, so they have no `startsIn` to show.
   const upcoming = liveSessions.filter((l) => !l.live)
   const online = consultants.filter((c) => c.online)
 

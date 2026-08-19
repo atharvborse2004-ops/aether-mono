@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { clips, mine, pro, reads } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
@@ -11,9 +10,6 @@ const TABS = [
   { key: 'reel', label: 'Reel' },
   { key: 'article', label: 'Article' },
 ]
-
-/** The consultant's own live room already exists as a real screen. */
-const MY_ROOM = 'l1'
 
 export default function ProStudio() {
   const { showToast } = useStore()
@@ -27,23 +23,6 @@ export default function ProStudio() {
   return (
     <>
       <TabHeader />
-
-      {/* Studio is the consultant's home tab now, and going live on camera is
-          the one action that should never sit behind a compose flow — the
-          product ask was "immediate, not three taps deep". One card, one
-          tap, straight into the real room. */}
-      <section className="px-5 pt-5">
-        <Link to={`/live/${MY_ROOM}`} className="pop-card pop-tap block overflow-hidden" aria-label="Go live now">
-          <Plate seed="studio-live" variant="orbit" className="aspect-[21/9] w-full">
-            <span className="absolute left-4 top-4">
-              <span className="badge-live">● Go live</span>
-            </span>
-            <span className="absolute inset-x-4 bottom-4 text-left text-lead font-semibold text-white">
-              Start a room now
-            </span>
-          </Plate>
-        </Link>
-      </section>
 
       <div className="px-4 pt-5">
         {/* Local state, not the URL. Nothing links to a specific composer tab,

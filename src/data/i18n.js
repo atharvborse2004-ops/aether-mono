@@ -35,6 +35,7 @@ export const strings = {
   'nav.shop': { en: 'Shop', hi: 'दुकान' },
   'nav.academy': { en: 'Academy', hi: 'अकादमी' },
   'nav.studio': { en: 'Studio', hi: 'स्टूडियो' },
+  'nav.goLive': { en: 'Go Live', hi: 'लाइव जाएं' },
   'nav.earnings': { en: 'Earnings', hi: 'कमाई' },
   'nav.profile': { en: 'Profile', hi: 'प्रोफ़ाइल' },
 

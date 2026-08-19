@@ -23,6 +23,7 @@ import Tarot from './screens/Tarot.jsx'
 
 import ProEarnings from './pro/ProEarnings.jsx'
 import ProStudio from './pro/ProStudio.jsx'
+import ProGoLive from './pro/ProGoLive.jsx'
 import ProConsult from './pro/ProConsult.jsx'
 import ProProfile from './pro/ProProfile.jsx'
 
@@ -139,6 +140,7 @@ function Frame() {
           <Route element={<ProLayout />}>
             <Route path="/pro/earnings" element={<ProEarnings />} />
             <Route path="/pro/studio" element={<ProStudio />} />
+            <Route path="/pro/live" element={<ProGoLive />} />
             <Route path="/pro/consult" element={<ProConsult />} />
             {/* Profile carries its tab in the URL too, same reason as the
                 seeker's — Earnings needs to stay deep-linkable now that it

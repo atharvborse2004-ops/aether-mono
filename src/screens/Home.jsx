@@ -404,12 +404,18 @@ function ArticleCard({ read: b }) {
 }
 
 function LiveCard({ room: l }) {
+  // The host's own End control (ProGoLive.jsx) sets `offair:{id}` when she
+  // stops broadcasting — the mock's `live: true` on l1 never flips back on
+  // its own, and nothing here should keep showing her as live after that.
+  const { hasFlag } = useStore()
+  const live = l.live && !hasFlag(`offair:${l.id}`)
+
   return (
     <article className="pop-card p-4">
       <Link to={`/live/${l.id}`} className="block transition-opacity hover:opacity-80">
         <Plate seed={l.id} variant="orbit" className="aspect-video w-full">
           <span className="absolute left-3 top-3">
-            {l.live ? (
+            {live ? (
               <span className="badge-live">● Live</span>
             ) : (
               <span className="caps-sm rounded-full bg-surface/90 px-2.5 py-1 shadow-sm t-sub">Soon</span>
@@ -423,14 +429,14 @@ function LiveCard({ room: l }) {
         </Plate>
 
         <div className="mt-4 flex items-start gap-3">
-          <PopAvatar initials={l.initials} size={32} online={l.live} />
+          <PopAvatar initials={l.initials} size={32} online={live} />
           <span className="min-w-0 flex-1">
             <span className="block text-body t-heading">{l.topic}</span>
             <span className="mt-1 block caps-sm t-faint tnum">
-              {firstName(l.consultant)} · {l.live ? `${l.startedAgo} ago` : l.startsIn}
+              {firstName(l.consultant)} · {live ? `${l.startedAgo} ago` : l.startsIn ?? 'Ended'}
             </span>
           </span>
-          <PopTag tone={l.live ? 'live' : 'default'}>{l.tag}</PopTag>
+          <PopTag tone={live ? 'live' : 'default'}>{l.tag}</PopTag>
         </div>
       </Link>
     </article>

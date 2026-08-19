@@ -44,10 +44,15 @@ const TABS = [
  * takes the home slot instead, Sessions/Chat/Call bundle into Consult, and
  * Earnings leads the bar — it now carries Insights too, since a consultant
  * checks the money and the reach that drives it in the same breath.
+ *
+ * Go Live sits between Studio and Consult — its own tab now rather than a
+ * card inside Studio, since going live on camera is frequent enough to earn
+ * a permanent slot next to where it used to be buried.
  */
 export const PRO_TABS = [
   { to: '/pro/earnings', label: 'nav.earnings', icon: 'rupee' },
   { to: '/pro/studio', label: 'nav.studio', icon: 'plus' },
+  { to: '/pro/live', label: 'nav.goLive', icon: 'live' },
   { to: '/pro/consult', label: 'nav.consult', icon: 'calendar' },
   { to: '/pro/profile', label: 'nav.profile', icon: 'consult' },
 ]
