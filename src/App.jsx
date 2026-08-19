@@ -21,6 +21,7 @@ import Pooja from './screens/Pooja.jsx'
 import Shop from './screens/Shop.jsx'
 import Tarot from './screens/Tarot.jsx'
 
+import ProEarnings from './pro/ProEarnings.jsx'
 import ProStudio from './pro/ProStudio.jsx'
 import ProConsult from './pro/ProConsult.jsx'
 import ProProfile from './pro/ProProfile.jsx'
@@ -136,6 +137,7 @@ function Frame() {
           </Route>
 
           <Route element={<ProLayout />}>
+            <Route path="/pro/earnings" element={<ProEarnings />} />
             <Route path="/pro/studio" element={<ProStudio />} />
             <Route path="/pro/consult" element={<ProConsult />} />
             {/* Profile carries its tab in the URL too, same reason as the

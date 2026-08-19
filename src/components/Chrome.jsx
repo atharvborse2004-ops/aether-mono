@@ -31,7 +31,7 @@ const TABS = [
 ]
 
 /**
- * The consultant's three. Kept next to the seeker's so the two lists stay
+ * The consultant's four. Kept next to the seeker's so the two lists stay
  * visually consistent — they render through the same `Tab`, which is the point
  * of passing tabs in rather than writing a second nav. That `Tab` carries the
  * whole active-state language (indicator growing from centre, icon weight 1.6
@@ -42,9 +42,11 @@ const TABS = [
  * No Feed here. The consultant app is for running a practice, not for
  * browsing everyone else's content — Uber driver app versus rider app. Studio
  * takes the home slot instead, Sessions/Chat/Call bundle into Consult, and
- * Earnings folds into Profile.
+ * Earnings leads the bar — it now carries Insights too, since a consultant
+ * checks the money and the reach that drives it in the same breath.
  */
 export const PRO_TABS = [
+  { to: '/pro/earnings', label: 'nav.earnings', icon: 'rupee' },
   { to: '/pro/studio', label: 'nav.studio', icon: 'plus' },
   { to: '/pro/consult', label: 'nav.consult', icon: 'calendar' },
   { to: '/pro/profile', label: 'nav.profile', icon: 'consult' },

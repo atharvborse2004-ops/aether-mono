@@ -295,7 +295,7 @@ function Sessions() {
 
       {/* ── Done ───────────────────────────────────────────────────────── */}
       <section className="px-5 py-6">
-        <Kicker action="Earnings" to="/pro/profile/earnings">
+        <Kicker action="Earnings" to="/pro/earnings">
           Finished
         </Kicker>
         <ul className="mt-3">
