@@ -977,7 +977,7 @@ export const warnings = [
 
 /** Referrals. Another consultant you bring pays you a cut of their first month. */
 export const referrals = {
-  code: 'RITU-VEDA',
+  code: 'RITU-NAMO',
   invited: 14,
   joined: 6,
   earned: 18400,

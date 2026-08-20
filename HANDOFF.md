@@ -1,4 +1,4 @@
-# Handoff — Veda (aether-mono)
+# Handoff — Namo (aether-mono)
 
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.

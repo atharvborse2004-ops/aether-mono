@@ -145,7 +145,7 @@ export function TabHeader({ action = null }) {
       >
         <PopAvatar initials={me.initials} size={30} />
       </Link>
-      <p className="flex-1 font-display text-lead leading-none t-heading">Veda</p>
+      <p className="flex-1 font-display text-lead leading-none t-heading">Namo</p>
       {action}
       <button
         type="button"

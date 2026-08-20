@@ -1,6 +1,6 @@
 # 02 — Technical requirements
 
-How Veda is built: the stack, what runs where, and the line between what a user
+How Namo is built: the stack, what runs where, and the line between what a user
 may decide and what a server decides.
 
 **This document owns everything server-side that is not a table.** Table and

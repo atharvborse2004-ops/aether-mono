@@ -290,7 +290,7 @@ function AskAi({ questionsLeft, spendQuestion }) {
   return (
     <>
       <div className="flex flex-none items-center justify-between gap-3 border-b border-rule px-4 py-3">
-        <p className="caps-sm t-body">Veda AI · reads your chart</p>
+        <p className="caps-sm t-body">Namo AI · reads your chart</p>
         <span className={`caps-sm tnum ${locked ? 'text-live' : 'gold'}`}>
           {locked ? 'None left' : `${questionsLeft} free`}
         </span>

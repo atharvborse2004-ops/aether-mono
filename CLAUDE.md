@@ -1,4 +1,4 @@
-# Veda (aether-mono)
+# Namo (aether-mono)
 
 Astrology marketplace for India. Vite · React 18 · Tailwind · HashRouter.
 Two sides in one codebase: seeker (`/home`, `/pooja`, `/consult`, `/shop`,

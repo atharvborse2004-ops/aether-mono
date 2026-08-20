@@ -412,7 +412,7 @@ function SettingsTab() {
       <section className="px-5 py-6">
         <Kicker>About</Kicker>
         <p className="mt-4 text-meta t-body">
-          Veda. A front-end layout prototype — no backend, no auth, no network calls. Every value
+          Namo. A front-end layout prototype — no backend, no auth, no network calls. Every value
           on screen comes from one hardcoded file, and nothing survives a reload.
         </p>
         <PopButton to="/onboarding" className="mt-5">

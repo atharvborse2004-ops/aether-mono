@@ -179,7 +179,7 @@ function Settings() {
         <div className="mt-2">
           {/* Switching sides is a plain link — the URL is what decides which
               app you are in, so there is no state to flip. */}
-          <Row to="/home" title="Switch to seeking" note="Browse Veda as a client" />
+          <Row to="/home" title="Switch to seeking" note="Browse Namo as a client" />
           <Row onClick={() => showToast('Help — prototype only')} title="Help & support" />
         </div>
         <p className="mt-6 text-meta t-faint">

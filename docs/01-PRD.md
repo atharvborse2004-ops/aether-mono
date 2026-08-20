@@ -1,6 +1,6 @@
 # 01 — Product requirements
 
-What Veda is, who uses it, what it sells, and what ships first.
+What Namo is, who uses it, what it sells, and what ships first.
 
 **This document owns every rupee amount in the product.** No other document
 names a price. It owns no schema, no endpoints and no column names — those are

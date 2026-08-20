@@ -1,4 +1,4 @@
-# Veda — aether-mono
+# Namo — aether-mono
 
 An astrology marketplace for India, built as a phone app. A seeker asks a
 question; a consultant answers it, live, for money. Around that sit a daily

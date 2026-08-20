@@ -49,7 +49,7 @@ export default function Computing() {
             bottom nav and no way back — the stranded flow this fixes. */}
         <div className="mt-auto pt-12">
           <Button to="/home" variant="solid">
-            Enter Veda
+            Enter Namo
           </Button>
           <p className="mt-4 text-center text-meta text-t3">
             Your chart and today&apos;s reading are both waiting inside.
