@@ -99,6 +99,11 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  main {
+    /* Ensure scrollable content doesn't hide under fixed nav bar */
+    padding-bottom: 80px;
+  }
+
   /* Everything that is not explicitly a rectangle gets the house radius. The
      previous build enforced the opposite with `border-radius: 0 !important`,
      which is the single reason the layout could never read as CRED. */
