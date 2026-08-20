@@ -213,6 +213,7 @@ create table profiles (
   id              uuid primary key references auth.users(id) on delete cascade,
   phone           text unique not null,
   name            text not null,
+  email           text,                -- contact only, never an auth factor
   birth_date      date,
   birth_time      time,
   birth_time_known boolean not null default false,
@@ -246,6 +247,23 @@ distinguishable from midnight.
 simultaneously — an enum forces a false choice. Consultant-ness is the existence
 of a `consultants` row. Admin is the boolean, and admin *tier* lives in
 `admin_users` (§6.1), not here.
+
+**`email` is contact, not identity.** The phone is the account and the only
+channel anyone proves they hold. Nothing signs in with this address and nothing
+verifies it, so it must never be read as evidence of who someone is — a second
+account can carry the same address.
+
+It is nullable and not unique, and both are deliberate. Nullable because the
+column arrived after the first accounts existed and a `NOT NULL` would mean
+inventing an address for them; required-ness is enforced at the onboarding
+screen instead (`docs/03-APP-FLOW.md`). Not unique because one address across
+two phone numbers is ordinary in a family, and a unique index turns that into a
+signup failure the person cannot act on. The CHECK is shape only — nothing
+short of sending mail to an address proves it exists.
+
+Owner-writable, unlike `phone`: a contact address nobody can correct after a
+typo is a support ticket that never closes. Why it is collected at all, and the
+consent that governs using it, are `docs/01-PRD.md`'s.
 
 ### 4.2 Consultants
 
@@ -917,8 +935,12 @@ admin console exists.
 ### Conventions
 
 Numbered SQL files in `backend/schema/`, forward-only, **never edited once
-applied**: `001_profiles.sql`, `002_consultants.sql`. A migration that has run
-against any real database is history.
+applied**. A migration that has run against any real database is history.
+
+Applied so far: `001_profiles.sql`, `002_profiles_email.sql`. Both went in
+through the Supabase MCP rather than the CLI — there is no `supabase/migrations`
+directory in this repo, so the numbered file is a record of what ran, not the
+thing that runs it. Keep the two in step by hand.
 
 ### The seed cannot key on mock IDs
 

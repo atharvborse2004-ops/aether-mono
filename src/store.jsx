@@ -10,11 +10,15 @@ import {
 import { useLocation } from 'react-router-dom'
 import { pro, user } from './data/mock.js'
 import { translate } from './data/i18n.js'
+import { supabase } from './lib/supabase.js'
 
 /**
- * Tiny in-memory store for prototype-only state: the birth details typed
- * during onboarding, cart count, remaining AI questions and
- * toast messages. Nothing is persisted, nothing is fetched.
+ * In-memory store for prototype state (cart count, remaining AI questions,
+ * toast messages — still nothing persisted, nothing fetched) plus two things
+ * that now are real: `session` and `profile`, backed by Supabase auth and the
+ * `profiles` table (phase 1). `birth` stays the in-progress onboarding draft
+ * before it is written; once a profile exists, screens read `profile`, not
+ * `birth`.
  *
  * Which side of the app you are on is NOT state. HashRouter is mounted above
  * AppProvider in main.jsx, so the provider can read the URL — and the URL is
@@ -23,13 +27,90 @@ import { translate } from './data/i18n.js'
  */
 const AppStore = createContext(null)
 
-const EMPTY_BIRTH = { name: '', date: '', time: '', place: '' }
+const EMPTY_BIRTH = {
+  name: '',
+  date: '',
+  time: '',
+  place: '',
+  lat: null,
+  lon: null,
+  phone: '',
+  email: '',
+}
+
+/* The one draft that outlives a reload, and the only reason is the SMS step:
+   reading the code means leaving the app, and a phone is free to evict the
+   page while you are in Messages. Losing the draft there is silent — the
+   account gets created and the birth details never arrive. sessionStorage, not
+   localStorage, so an abandoned signup clears itself with the tab. */
+const BIRTH_KEY = 'namo:birth-draft'
+
+function readBirthDraft() {
+  try {
+    return { ...EMPTY_BIRTH, ...JSON.parse(sessionStorage.getItem(BIRTH_KEY) || '{}') }
+  } catch {
+    return EMPTY_BIRTH
+  }
+}
 
 export function AppProvider({ children }) {
   // Which side we are on, and therefore who "me" is.
   const isPro = useLocation().pathname.startsWith('/pro')
 
-  const [birth, setBirth] = useState(EMPTY_BIRTH)
+  const [birth, setBirth] = useState(readBirthDraft)
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(BIRTH_KEY, JSON.stringify(birth))
+    } catch {
+      /* Private mode with storage denied. The draft simply stays in memory. */
+    }
+  }, [birth])
+
+  /* Auth. `sessionReady` flips once on first load — before that we don't yet
+     know whether the visitor is signed in, so nothing should redirect on
+     their behalf. `profile` is the real `profiles` row for the signed-in
+     user; it starts null and is refetched whenever the session changes. */
+  const [session, setSession] = useState(null)
+  const [sessionReady, setSessionReady] = useState(false)
+  const [profile, setProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+
+  const refreshProfile = useCallback(async (userId) => {
+    if (!userId) return setProfile(null)
+    setProfileLoading(true)
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    // A failed load is not the same as "no profile", but both end up null here
+    // and every screen then falls back to seed identity — a signed-in person
+    // shown the mock user's name and birth data. Nothing surfaces that yet
+    // (phase 1 has no error UI), so at minimum make it diagnosable.
+    if (error) console.error('[profile] load failed:', error.message)
+    setProfile(data ?? null)
+    setProfileLoading(false)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    supabase.auth.getSession().then(({ data: { session: initial } }) => {
+      if (!active) return
+      setSession(initial)
+      setSessionReady(true)
+      if (initial) refreshProfile(initial.user.id)
+    })
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      setSession(next)
+      if (next) refreshProfile(next.user.id)
+      else setProfile(null)
+    })
+
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
+    }
+  }, [refreshProfile])
+
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
   const timer = useRef(null)
@@ -223,6 +304,11 @@ export function AppProvider({ children }) {
       me,
       birth,
       setBirthField,
+      session,
+      sessionReady,
+      profile,
+      profileLoading,
+      refreshProfile,
       cart,
       cartCount,
       cartTotal,
@@ -262,6 +348,11 @@ export function AppProvider({ children }) {
       me,
       birth,
       setBirthField,
+      session,
+      sessionReady,
+      profile,
+      profileLoading,
+      refreshProfile,
       cart,
       cartCount,
       cartTotal,
@@ -299,4 +390,47 @@ export function useStore() {
   const ctx = useContext(AppStore)
   if (!ctx) throw new Error('useStore must be used inside <AppProvider>')
   return ctx
+}
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+
+function formatIsoDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number)
+  return `${d} ${MONTHS[m - 1]} ${y}`
+}
+
+function formatSqlTime(hms) {
+  let [h, min] = hms.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')} ${period}`
+}
+
+function initialsOf(name) {
+  return name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+}
+
+/**
+ * The real `profiles` row, shaped the way the screens already expect to read
+ * it, merged with the mock user for the fields the backend doesn't compute
+ * yet. Sun/moon/rising need the ephemeris service (phase 7, unbuilt), so
+ * those stay seed data until then — identity and birth details are real the
+ * moment a profile exists.
+ */
+export function useProfileFields() {
+  const { profile } = useStore()
+
+  return {
+    name: profile?.name || user.name,
+    initials: profile ? initialsOf(profile.name) : user.initials,
+    birthDate: profile?.birth_date ? formatIsoDate(profile.birth_date) : user.birthDate,
+    birthTime: profile?.birth_time ? formatSqlTime(profile.birth_time) : user.birthTime,
+    birthPlace: profile?.birth_place || user.birthPlace,
+    sunSign: user.sunSign,
+    moonSign: user.moonSign,
+    risingSign: user.risingSign,
+  }
 }

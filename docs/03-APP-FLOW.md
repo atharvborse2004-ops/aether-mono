@@ -54,6 +54,8 @@ In file order, which is also resolution order.
 | `/onboarding/date` | AskDate | Plain |
 | `/onboarding/time` | AskTime | Plain |
 | `/onboarding/place` | AskPlace | Plain |
+| `/onboarding/phone` | AskPhone — number **and** email | Plain |
+| `/onboarding/verify` | VerifyOtp | Plain |
 | `/onboarding/computing` | Computing | Plain |
 | `/profile` · `/profile/:tab` | Profile | Plain |
 | `/wallet` | Wallet | Plain |
@@ -110,12 +112,14 @@ In file order, which is also resolution order.
 | Step | Route | Asks | Validation | Next |
 |---|---|---|---|---|
 | 1 | `/onboarding` | Intro. *"Two ways in. Pick yours."* | — | `/onboarding/side` |
-| 2 | `/onboarding/side` | **The fork.** Two cards, no continue button | — | *"I want a reading"* → `/onboarding/name`, *"I give readings"* → `/pro/feed` |
+| 2 | `/onboarding/side` | **The fork.** Two cards, no continue button | — | *"I want a reading"* → `/onboarding/name`, *"I give readings"* → `/pro/studio` |
 | 3 | `/onboarding/name` | What to call you | non-empty | `/onboarding/date` |
 | 4 | `/onboarding/date` | Birth date — D / M / Y | 1–31, 1–12, ≥ 1900 | `/onboarding/time` |
 | 5 | `/onboarding/time` | Birth time — H : M, AM/PM | 1–12, 0–59 | `/onboarding/place` |
-| 6 | `/onboarding/place` | Birth place | one of **four hardcoded cities** | `/onboarding/computing` |
-| 7 | `/onboarding/computing` | Two beats: loading lines, then the reveal | — | `/home` |
+| 6 | `/onboarding/place` | Birth place | one of **four hardcoded cities** | `/onboarding/phone` |
+| 7 | `/onboarding/phone` | Mobile number and email, together | number matches `[6-9]` + 9 digits; email matches a shape check. **Both required** | `/onboarding/verify` |
+| 8 | `/onboarding/verify` | Six-digit code, with a resend | six digits, accepted by Supabase | `/onboarding/computing` |
+| 9 | `/onboarding/computing` | Two beats: loading lines, then the reveal. Writes the profile | — | `/home` |
 
 The four questions share one frame — one question per screen, large type, and
 **no progress bar**, deliberately: a bar turns three questions into a form.
@@ -129,14 +133,28 @@ should not have to give his own moment of birth to reach his own bookings. And
 **nothing about the fork is stored**: the URL is the only record of which side
 you are on, so the choice cannot disagree with where you are.
 
-What it does not do: gate anything. Anyone typing `/pro/feed` is a consultant.
+What it does not do: gate anything. Anyone typing `/pro/studio` is a consultant.
 Consultant approval (§8.3) is the fix.
 
-### The data is collected and then ignored
+### The draft, and where it becomes real
 
-Birth details entered here are held in the store and used **only** for the name
-on the reveal screen. Profile, Chart and Horoscope all read a fixed mock user
-instead. Type a different birth date and nothing downstream changes.
+Steps 3–7 fill an in-progress draft. Step 8 creates the account, and step 9
+turns the draft into the `profiles` row by `UPDATE` — never an insert, because
+the row already exists by then (`docs/05-BACKEND-SCHEMA.md` §7). From that point
+Profile, Chart and Horoscope read the real row, not the mock user.
+
+**The draft survives a reload.** It has to: reading the SMS means leaving the
+app, and a phone is free to evict the page while you are in Messages. Held in
+`sessionStorage`, so an abandoned signup clears itself with the tab. Before
+this, an eviction during the code step created an account with no birth details
+and said nothing.
+
+Two failures on step 9 are surfaced rather than swallowed, both because the
+reveal screen looks identical whether or not the write landed:
+
+- **Draft lost and no details already stored** → back to step 4 to re-answer.
+- **The write itself fails** → a "not saved" screen carrying the error, with a
+  retry. Never the reveal.
 
 Re-entry points: *Run onboarding again* restarts at step 1; *Edit birth details*
 jumps to step 4 and continues through the rest of the flow, so there is no
@@ -455,7 +473,7 @@ next rather than showing an empty list.
 | Question packs display a price and grant questions free | Open |
 | Ask AI's wallet figure is a hardcoded string, not the live balance | Open |
 | `/chart` has no back control | Open |
-| The consultant's feed is the seeker's feed, including shop and free tools | Open |
+| The consultant's feed is the seeker's feed, including shop and free tools | **Closed** — `ProFeed.jsx` deleted, Feed is no longer a concept on the pro side |
 | Consultant performance metrics disagree with the warnings that cite them — 88% against 68% for the same figure | Open |
-| Birth details are collected in onboarding and never used | Open — closes when profiles are real |
+| Birth details are collected in onboarding and never used | **Closed** — phase 1. Written to `profiles`, read back by Profile, Chart and Horoscope |
 | Two Bhaktamar cards carry incomplete verses | Flagged in data; needs a verified source |

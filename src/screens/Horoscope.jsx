@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { days, user } from '../data/mock.js'
+import { days } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import {
   Acts,
@@ -14,7 +14,7 @@ import {
   Stub,
   Ticks,
 } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { useStore, useProfileFields } from '../store.jsx'
 
 const TABS = [
   { key: 'yesterday', label: 'Yesterday' },
@@ -25,6 +25,7 @@ const TABS = [
 export default function Horoscope() {
   const [key, setKey] = useState('today')
   const { showToast, hasFlag, toggleFlag } = useStore()
+  const me = useProfileFields()
   const day = days[key]
 
   return (
@@ -33,14 +34,14 @@ export default function Horoscope() {
           slots the reference app gives this screen. */}
       <TopBar
         title="Daily horoscope"
-        sub={`${user.sunSign} · ${user.moonSign} · ${user.risingSign}`}
+        sub={`${me.sunSign} · ${me.moonSign} · ${me.risingSign}`}
         left={
           <Link
             to="/profile"
             aria-label="Your profile"
             className="transition-opacity hover:opacity-60"
           >
-            <Avatar initials={user.initials} size={28} />
+            <Avatar initials={me.initials} size={28} />
           </Link>
         }
         right={

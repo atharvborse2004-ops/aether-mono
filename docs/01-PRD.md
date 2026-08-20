@@ -386,6 +386,20 @@ consultants.
   words. Two are currently incomplete and are flagged as such rather than
   reconstructed — a plausible wrong shloka is undetectable to the person it
   misleads.
+- **Email is collected at signup and its purpose is not yet settled.** Onboarding
+  requires an address alongside the phone. It is never used to sign in and is
+  never verified — it is held for reaching people later, marketing included.
+  Under the DPDP Act that intent is the part that carries obligations: personal
+  data is collected against a **stated** purpose, with consent for it, and
+  marketing use generally needs its own opt-out. Today the screen says only that
+  it is how we reach you outside the app, which is honest but is not a consent
+  record, and nothing stores whether the person agreed to marketing.
+
+  **Open, and it blocks the first campaign, not the signup:** settle the stated
+  purpose, decide whether marketing consent is separate and explicit, and if it
+  is, it needs a column — that is `docs/05-BACKEND-SCHEMA.md`'s to add. Sending
+  the first marketing mail before this is settled is the expensive order to do
+  it in.
 
 ---
 

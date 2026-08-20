@@ -1,4 +1,5 @@
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { AppProvider, useStore } from './store.jsx'
 import { BottomNav, PRO_TABS, Toast } from './components/Chrome.jsx'
 import ChatPanel from './components/ChatPanel.jsx'
@@ -12,6 +13,8 @@ import AskSide from './screens/onboarding/AskSide.jsx'
 import AskDate from './screens/onboarding/AskDate.jsx'
 import AskTime from './screens/onboarding/AskTime.jsx'
 import AskPlace from './screens/onboarding/AskPlace.jsx'
+import AskPhone from './screens/onboarding/AskPhone.jsx'
+import VerifyOtp from './screens/onboarding/VerifyOtp.jsx'
 import Computing from './screens/onboarding/Computing.jsx'
 
 import Home from './screens/Home.jsx'
@@ -89,12 +92,38 @@ function PlainLayout() {
   )
 }
 
+/**
+ * Restores the session on load and sends a signed-out visitor back to
+ * onboarding. Waits for `sessionReady` before acting, so a page reload with a
+ * valid session never flashes onboarding first. The `/pro` side is exempt —
+ * consultant identity isn't built yet (phase 4), so nothing there requires a
+ * seeker session.
+ */
+function SessionGate() {
+  const { session, sessionReady } = useStore()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!sessionReady || session) return
+    // `/profile` starts with the four characters `/pro`, so this has to be a
+    // segment-boundary check, not startsWith('/pro') — that swallowed the
+    // seeker's own profile route into the consultant exemption.
+    const onPro = pathname === '/pro' || pathname.startsWith('/pro/')
+    if (pathname.startsWith('/onboarding') || onPro) return
+    navigate('/onboarding', { replace: true })
+  }, [session, sessionReady, pathname, navigate])
+
+  return null
+}
+
 function Frame() {
   const { toast } = useStore()
 
   return (
     <div className="flex min-h-[100dvh] w-full justify-center bg-ink">
       <div className="relative flex h-[100dvh] w-full max-w-[420px] flex-col overflow-hidden bg-bg text-t1">
+        <SessionGate />
         <Routes>
           <Route path="/" element={<Navigate to="/onboarding" replace />} />
 
@@ -105,6 +134,8 @@ function Frame() {
             <Route path="/onboarding/date" element={<AskDate />} />
             <Route path="/onboarding/time" element={<AskTime />} />
             <Route path="/onboarding/place" element={<AskPlace />} />
+            <Route path="/onboarding/phone" element={<AskPhone />} />
+            <Route path="/onboarding/verify" element={<VerifyOtp />} />
             <Route path="/onboarding/computing" element={<Computing />} />
 
             {/* Profile carries its tab in the URL so it stays deep-linkable. */}

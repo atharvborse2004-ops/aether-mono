@@ -1,12 +1,12 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { days, sessionHistory, user, walletTransactions } from '../data/mock.js'
+import { days, sessionHistory, walletTransactions } from '../data/mock.js'
 import { LANGS } from '../data/i18n.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
 import { ChartNorth, ChartSouth } from '../components/ChartSquare.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
 import { Acts, Row, Segmented, Ticks } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { useStore, useProfileFields } from '../store.jsx'
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -34,6 +34,7 @@ const SETTINGS = [
 export default function Profile() {
   const { tab = 'overview' } = useParams()
   const navigate = useNavigate()
+  const me = useProfileFields()
 
   if (!TABS.some((t) => t.key === tab)) return <Navigate to="/profile" replace />
 
@@ -44,11 +45,11 @@ export default function Profile() {
       <TopBar title="Profile" back backTo="/home" hardBack />
 
       <section className="flex items-center gap-4 border-b border-stroke px-5 py-6">
-        <PopAvatar initials={user.initials} size={56} />
+        <PopAvatar initials={me.initials} size={56} />
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-title leading-none t-heading">{user.name}</h1>
+          <h1 className="font-display text-title leading-none t-heading">{me.name}</h1>
           <p className="mt-2 caps-sm t-faint">
-            {user.sunSign} · {user.moonSign} · {user.risingSign}
+            {me.sunSign} · {me.moonSign} · {me.risingSign}
           </p>
         </div>
         <PopTag tone="gold">Member</PopTag>
@@ -76,6 +77,7 @@ export default function Profile() {
 
 function Overview() {
   const { showToast, questionsLeft, cartCount, lang, setLang, t, chartSystem } = useStore()
+  const me = useProfileFields()
 
   return (
     <>
@@ -96,9 +98,9 @@ function Overview() {
         <Kicker>Birth data</Kicker>
         <dl className="mt-4">
           {[
-            ['Date', user.birthDate],
-            ['Time', user.birthTime],
-            ['Place', user.birthPlace],
+            ['Date', me.birthDate],
+            ['Time', me.birthTime],
+            ['Place', me.birthPlace],
           ].map(([k, v]) => (
             <div key={k} className="flex items-baseline justify-between gap-6 border-b border-rule py-3">
               <dt className="caps-sm t-faint">{k}</dt>
@@ -194,6 +196,7 @@ function Overview() {
  */
 function HoroscopeTab() {
   const { showToast, hasFlag, toggleFlag } = useStore()
+  const me = useProfileFields()
   const day = days.today
   const transit = day.transits[0]
 
@@ -242,9 +245,9 @@ function HoroscopeTab() {
         </Kicker>
         <div className="mt-4 grid grid-cols-3 gap-3">
           {[
-            ['Sun', user.sunSign, 'how you push'],
-            ['Moon', user.moonSign, 'how you feel'],
-            ['Rising', user.risingSign, 'how you land'],
+            ['Sun', me.sunSign, 'how you push'],
+            ['Moon', me.moonSign, 'how you feel'],
+            ['Rising', me.risingSign, 'how you land'],
           ].map(([label, sign, note]) => (
             <PopCard key={label} className="p-3">
               <p className="caps-sm gold">{label}</p>
@@ -378,7 +381,10 @@ function WalletTab() {
 /* ── Settings tab ────────────────────────────────────────────────────────── */
 
 function SettingsTab() {
-  const { showToast } = useStore()
+  const { showToast, hasFlag, toggleFlag } = useStore()
+  // Full/uncropped is the default now; the flag is an opt-in back to the
+  // screen-filling crop, so its absence is the common case.
+  const fullImage = !hasFlag('setting:croppedDeityImage')
 
   return (
     <>
@@ -398,6 +404,17 @@ function SettingsTab() {
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Preferences</Kicker>
         <div className="mt-2">
+          <Row
+            onClick={() =>
+              toggleFlag('setting:croppedDeityImage', {
+                on: 'Back to the cropped, screen-filling murti',
+                off: 'Full deity image on — the murti will no longer be cropped',
+              })
+            }
+            title="Full deity image"
+            note="Show the complete murti, uncropped"
+            meta={fullImage ? 'On' : 'Off'}
+          />
           {SETTINGS.map((s) => (
             <Row
               key={s.key}

@@ -4,10 +4,10 @@ import QuestionFrame from './QuestionFrame.jsx'
 import { useStore } from '../../store.jsx'
 
 const SUGGESTIONS = [
-  { city: 'Pune, Maharashtra, India', coords: '18.5204° N · 73.8567° E' },
-  { city: 'Mumbai, Maharashtra, India', coords: '19.0760° N · 72.8777° E' },
-  { city: 'Bengaluru, Karnataka, India', coords: '12.9716° N · 77.5946° E' },
-  { city: 'Delhi, India', coords: '28.6139° N · 77.2090° E' },
+  { city: 'Pune, Maharashtra, India', coords: '18.5204° N · 73.8567° E', lat: 18.5204, lon: 73.8567 },
+  { city: 'Mumbai, Maharashtra, India', coords: '19.0760° N · 72.8777° E', lat: 19.0760, lon: 72.8777 },
+  { city: 'Bengaluru, Karnataka, India', coords: '12.9716° N · 77.5946° E', lat: 12.9716, lon: 77.5946 },
+  { city: 'Delhi, India', coords: '28.6139° N · 77.2090° E', lat: 28.6139, lon: 77.2090 },
 ]
 
 export default function AskPlace() {
@@ -25,10 +25,12 @@ export default function AskPlace() {
       question="And where?"
       hint="The city fixes your horizon. Everything angular in the chart is measured from it."
       canContinue={Boolean(picked)}
-      nextLabel="Compute"
+      nextLabel="Continue"
       onNext={() => {
         setBirthField('place', picked.city)
-        navigate('/onboarding/computing')
+        setBirthField('lat', picked.lat)
+        setBirthField('lon', picked.lon)
+        navigate('/onboarding/phone')
       }}
     >
       <input
