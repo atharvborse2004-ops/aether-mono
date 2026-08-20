@@ -60,10 +60,9 @@ const SOURCES = {
  * data and stays in sync with the screen it links to.
  */
 export default function Home({ action }) {
-  /* The reading leads and the panchang follows it, ahead of anything social.
-     Both are the product; a consultant's note is content about the product.
-     They are hoisted here rather than reordered in `feed` so the pointer list
-     stays a list of content and does not have to carry the two fixed cards. */
+  /* The reading leads ahead of anything social. Panchang is pushed down after
+     3-4 feed items so the daily reading is the immediate follow-up, not both
+     product cards back-to-back. */
   const rest = feed
     .filter((f) => f.kind !== 'reading')
     .map((f) => {
@@ -72,10 +71,12 @@ export default function Home({ action }) {
     })
     .filter(Boolean)
 
+  const PANCHANG_AFTER = 3
   const items = [
     { id: 'f-reading', kind: 'reading', data: days.today },
+    ...rest.slice(0, PANCHANG_AFTER),
     { id: 'f-panchang', kind: 'panchang' },
-    ...rest,
+    ...rest.slice(PANCHANG_AFTER),
   ]
 
   return (
