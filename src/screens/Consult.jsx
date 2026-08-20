@@ -4,7 +4,7 @@ import { categories, consultants, liveSessions, SESSION } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
-import { Kicker, PopAvatar, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
+import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { firstName, Search } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
@@ -56,7 +56,7 @@ const CHANNELS = {
 }
 
 export default function Consult() {
-  const { showToast, openChat, hasFlag, toggleFlag } = useStore()
+  const { showToast, openChat } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
   const [slide, setSlide] = useState(0)
@@ -91,10 +91,6 @@ export default function Consult() {
   })
 
   const online = consultants.filter((c) => c.online)
-
-  const liveNow = liveSessions.filter((l) => l.live)
-  const [featured, ...alsoLive] = liveNow
-  const upcoming = liveSessions.filter((l) => !l.live)
 
   return (
     <>
@@ -203,106 +199,6 @@ export default function Consult() {
           ))}
         </div>
       </section>
-
-      {/* ── On air now ─────────────────────────────────────────────────────
-          Folded in from the old Live mode rather than dropped: the featured
-          stream, the rest of what's airing, and what's coming up next are
-          real, deliberately-built content the mockup doesn't show but that
-          has nowhere else to live now that Live is a per-card action. */}
-      {featured && (
-        <section className="pt-8">
-          <Kicker className="px-5">On air now</Kicker>
-
-          <div className="mt-3 px-4">
-            <Link to={`/live/${featured.id}`} className="relative block overflow-hidden rounded-2xl shadow-lg">
-              <Plate seed={featured.id} variant="orbit" className="!rounded-none aspect-[16/9] w-full !shadow-none" />
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/85 via-black/40 to-transparent"
-              />
-              <span className="absolute left-3 top-3 flex items-center gap-2">
-                <span className="badge-live">● Live</span>
-                <span className="rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-white backdrop-blur-sm tnum">
-                  {featured.viewers} watching
-                </span>
-              </span>
-              <span className="absolute inset-x-0 bottom-0 p-4">
-                <span className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white ring-1 ring-white/40">
-                    {featured.initials}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-meta font-semibold text-white">
-                      {featured.topic}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[11px] uppercase tracking-[0.08em] text-white/65">
-                      {featured.consultant} · started {featured.startedAgo} ago
-                    </span>
-                  </span>
-                  <span className="flex-none rounded-xl bg-white px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-ink shadow-md">
-                    Join
-                  </span>
-                </span>
-              </span>
-            </Link>
-          </div>
-
-          {alsoLive.length > 0 && (
-            <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto px-4 pb-1">
-              {alsoLive.map((l) => (
-                <Link
-                  key={l.id}
-                  to={`/live/${l.id}`}
-                  className="w-44 flex-none transition-opacity hover:opacity-80"
-                >
-                  <Plate seed={l.id} variant="orbit" className="aspect-video w-full">
-                    <span className="absolute left-2 top-2">
-                      <span className="badge-live">● Live</span>
-                    </span>
-                  </Plate>
-                  <p className="mt-2 truncate text-meta t-heading">{l.topic}</p>
-                  <p className="mt-0.5 truncate caps-sm t-faint">{l.consultant}</p>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {upcoming.length > 0 && (
-            <div className="mt-4 space-y-3 px-4">
-              {upcoming.map((l) => {
-                const reminded = hasFlag(`remind:${l.id}`)
-                return (
-                  <PopCard key={l.id} className="p-4">
-                    <div className="flex items-start gap-3">
-                      <PopAvatar initials={l.initials} size={34} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-body t-heading">{l.topic}</p>
-                        <p className="mt-1 caps-sm t-faint tnum">
-                          {l.consultant} · {l.startsIn}
-                        </p>
-                      </div>
-                      <PopTag>{l.tag}</PopTag>
-                    </div>
-                    <PopButton
-                      variant={reminded ? 'gold' : 'default'}
-                      size="sm"
-                      className="mt-3"
-                      onClick={() =>
-                        toggleFlag(`remind:${l.id}`, {
-                          on: 'You will be reminded',
-                          off: 'Reminder removed',
-                        })
-                      }
-                    >
-                      {reminded ? 'Reminder set' : 'Remind me'}
-                    </PopButton>
-                  </PopCard>
-                )
-              })}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* ── Available now — the full roster ───────────────────────────── */}
       <section ref={listRef} className="px-5 pt-8">
