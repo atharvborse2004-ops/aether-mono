@@ -3,7 +3,7 @@ import { TAROT_PRICE, tarotDecks } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
-import { Segmented, Stub } from '../components/Primitives.jsx'
+import { Stub } from '../components/Primitives.jsx'
 import { useStore } from '../store.jsx'
 
 /**
@@ -46,6 +46,8 @@ export default function Tarot() {
   const [deck, setDeck] = useState(null)
   const [card, setCard] = useState(null)
   const [step, setStep] = useState('deck')
+  const [showConsultDialog, setShowConsultDialog] = useState(false)
+  const [consultName, setConsultName] = useState('')
 
   const usedFree = FREE_KEYS.filter(hasFlag).length
   const freeLeft = FREE_PULLS - usedFree
@@ -93,6 +95,7 @@ export default function Tarot() {
             canAfford={canAfford}
             onAgain={() => setStep('question')}
             onChangeDeck={() => setStep('deck')}
+            onConsult={() => setShowConsultDialog(true)}
           />
         ) : (
           /* The face-down deck, waiting behind whichever dialog is open. It is
@@ -115,6 +118,42 @@ export default function Tarot() {
       </section>
 
       <div className="h-8" />
+
+      {showConsultDialog && (
+        <Dialog
+          title={t('tarot.bookReader') || 'Book a tarot reader'}
+          onBack={() => {
+            setShowConsultDialog(false)
+            setConsultName('')
+          }}
+        >
+          <input
+            type="text"
+            placeholder={t('a.name') || 'Your name'}
+            value={consultName}
+            onChange={(e) => setConsultName(e.target.value)}
+            className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body placeholder-t-faint focus:border-ink focus:outline-none"
+          />
+          <PopButton
+            variant="gold"
+            className="mt-4 w-full"
+            onClick={() => {
+              if (!consultName.trim()) {
+                showToast(t('a.fieldRequired') || 'Please enter a name')
+                return
+              }
+              showToast(`Booking request sent for ${consultName}`)
+              setShowConsultDialog(false)
+              setConsultName('')
+            }}
+          >
+            {t('tarot.requestBooking') || 'Request booking'}
+          </PopButton>
+          <p className="mt-3 text-center text-meta t-faint text-sm">
+            {t('tarot.bookingNote') || 'A tarot reader will contact you shortly'}
+          </p>
+        </Dialog>
+      )}
 
       {step === 'deck' && (
         <Dialog title={t('tarot.whichDeck')} note={t('tarot.whichDeckNote')}>
@@ -202,129 +241,86 @@ function Dialog({ title, note, onBack, children }) {
   )
 }
 
-/** The pulled card: face, verse, meaning, then what to do about it. */
-function Card({ card, deck, tradition, canAfford, onAgain, onChangeDeck }) {
-  const { t, showToast } = useStore()
-  const [cardTab, setCardTab] = useState('reading')
-  const [bookingName, setBookingName] = useState('')
-
-  const handleBookingSubmit = () => {
-    if (!bookingName.trim()) {
-      showToast(t('a.fieldRequired') || 'Please enter a name')
-      return
-    }
-    showToast(`Booking request sent for ${bookingName}`)
-    setBookingName('')
-  }
-
+/** The pulled card: face, verse, meaning, then consult flow. Sequential experience. */
+function Card({ card, deck, tradition, canAfford, onAgain, onChangeDeck, onConsult }) {
+  const { t } = useStore()
   return (
     <>
-      <Segmented
-        value={cardTab}
-        onChange={setCardTab}
-        items={[
-          { value: 'reading', label: t('tarot.meaning') || 'Meaning & Remedies' },
-          { value: 'consult', label: t('tarot.consult') || 'Consult' },
-        ]}
-        className="mb-4"
-      />
-
-      {cardTab === 'reading' ? (
-        <>
-          <PopCard raised className="overflow-hidden">
-            {card.img ? (
-              /* A painted deck. Only the Bhaktamar cards have faces; the file sits
-                 in public/ so BASE_URL, not the bundler, resolves it — GitHub Pages
-                 serves this app from a sub-path. */
-              <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#e8e2d8]">
-                <img
-                  src={`${import.meta.env.BASE_URL}cards/${card.img}`}
-                  alt={card.name}
-                  className="h-full w-full object-cover"
-                />
-                <span className="absolute left-3 top-3">
-                  <PopTag>{tradition(deck)}</PopTag>
-                </span>
-                <span className="absolute right-3 top-3">
-                  <PopTag tone="gold">{card.no}</PopTag>
-                </span>
-              </div>
-            ) : (
-              <Plate
-                seed={card.id}
-                variant="engraving"
-                className="!rounded-none aspect-[3/4] w-full !shadow-none"
-              >
-                <span className="absolute left-3 top-3">
-                  <PopTag>{tradition(deck)}</PopTag>
-                </span>
-              </Plate>
-            )}
-
-            {/* The verse comes straight off the face, before any reading of it —
-                the shloka is the card, the meaning is our gloss on it. */}
-            {card.sa && (
-              <div className="border-t border-stroke p-5">
-                <p className="caps-sm t-faint">
-                  {t('tarot.shloka')} {card.no}
-                </p>
-                <p lang="sa" className="mt-2 text-read leading-relaxed t-body">
-                  {card.sa}
-                </p>
-                <p className="mt-2 text-meta italic t-faint">{card.iast}</p>
-                {card.en && (
-                  <>
-                    <Stub className="my-4" />
-                    <p className="text-meta t-sub">{card.en}</p>
-                  </>
-                )}
-              </div>
-            )}
-          </PopCard>
-
-          {/* What the card means: title, the line under it, the virtue it asks for. */}
-          <div className="pop-inset mt-4 p-5 text-center">
-            <p className="caps-sm gold">{card.name}</p>
-            {card.sub && <p className="mt-1.5 text-meta t-faint">{card.sub}</p>}
-            <Stub className="my-4" />
-            <p className="text-read t-heading">{card.line}</p>
-            {card.virtue && <p className="mt-4 caps-sm t-faint">{card.virtue}</p>}
+      <PopCard raised className="overflow-hidden">
+        {card.img ? (
+          /* A painted deck. Only the Bhaktamar cards have faces; the file sits
+             in public/ so BASE_URL, not the bundler, resolves it — GitHub Pages
+             serves this app from a sub-path. */
+          <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#e8e2d8]">
+            <img
+              src={`${import.meta.env.BASE_URL}cards/${card.img}`}
+              alt={card.name}
+              className="h-full w-full object-cover"
+            />
+            <span className="absolute left-3 top-3">
+              <PopTag>{tradition(deck)}</PopTag>
+            </span>
+            <span className="absolute right-3 top-3">
+              <PopTag tone="gold">{card.no}</PopTag>
+            </span>
           </div>
-
-          {card.ask && (
-            <div className="pop-inset mt-4 p-4">
-              <p className="caps-sm t-faint">{t('tarot.askYourself')}</p>
-              <p className="mt-1.5 text-meta t-heading">{card.ask}</p>
-              <Stub className="my-4" />
-              <p className="caps-sm t-faint">{t('tarot.remedy')}</p>
-              <p className="mt-1.5 text-meta t-body">{card.remedy}</p>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="pop-inset p-5">
-          <p className="caps-sm t-faint mb-4">{t('tarot.bookReader') || 'Book a tarot reader'}</p>
-          <input
-            type="text"
-            placeholder={t('a.name') || 'Your name'}
-            value={bookingName}
-            onChange={(e) => setBookingName(e.target.value)}
-            className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body placeholder-t-faint focus:border-ink focus:outline-none"
-          />
-          <PopButton
-            variant="gold"
-            className="mt-4"
-            onClick={handleBookingSubmit}
+        ) : (
+          <Plate
+            seed={card.id}
+            variant="engraving"
+            className="!rounded-none aspect-[3/4] w-full !shadow-none"
           >
-            {t('tarot.requestBooking') || 'Request booking'}
-          </PopButton>
-          <p className="mt-3 text-center text-meta t-faint text-sm">
-            {t('tarot.bookingNote') || 'A tarot reader will contact you shortly'}
-          </p>
+            <span className="absolute left-3 top-3">
+              <PopTag>{tradition(deck)}</PopTag>
+            </span>
+          </Plate>
+        )}
+
+        {/* The verse comes straight off the face, before any reading of it —
+            the shloka is the card, the meaning is our gloss on it. */}
+        {card.sa && (
+          <div className="border-t border-stroke p-5">
+            <p className="caps-sm t-faint">
+              {t('tarot.shloka')} {card.no}
+            </p>
+            <p lang="sa" className="mt-2 text-read leading-relaxed t-body">
+              {card.sa}
+            </p>
+            <p className="mt-2 text-meta italic t-faint">{card.iast}</p>
+            {card.en && (
+              <>
+                <Stub className="my-4" />
+                <p className="text-meta t-sub">{card.en}</p>
+              </>
+            )}
+          </div>
+        )}
+      </PopCard>
+
+      {/* What the card means: title, the line under it, the virtue it asks for. */}
+      <div className="pop-inset mt-4 p-5 text-center">
+        <p className="caps-sm gold">{card.name}</p>
+        {card.sub && <p className="mt-1.5 text-meta t-faint">{card.sub}</p>}
+        <Stub className="my-4" />
+        <p className="text-read t-heading">{card.line}</p>
+        {card.virtue && <p className="mt-4 caps-sm t-faint">{card.virtue}</p>}
+      </div>
+
+      {card.ask && (
+        <div className="pop-inset mt-4 p-4">
+          <p className="caps-sm t-faint">{t('tarot.askYourself')}</p>
+          <p className="mt-1.5 text-meta t-heading">{card.ask}</p>
+          <Stub className="my-4" />
+          <p className="caps-sm t-faint">{t('tarot.remedy')}</p>
+          <p className="mt-1.5 text-meta t-body">{card.remedy}</p>
         </div>
       )}
 
-      <div className="mt-6 flex items-center gap-2">
+      <PopButton variant="gold" className="mt-6" onClick={onConsult}>
+        {t('tarot.askReader') || 'Consult with a reader'}
+      </PopButton>
+
+      <div className="mt-3 flex items-center gap-2">
         <PopButton
           variant="ghost"
           className="flex-1"
