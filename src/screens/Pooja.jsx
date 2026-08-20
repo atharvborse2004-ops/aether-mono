@@ -254,21 +254,13 @@ export default function Pooja() {
       </section>
 
       {/* ── The shrine, taking whatever is left ────────────────────────── */}
-      {/* `object-contain` by default — the complete murti, letterboxed on
-          the shrine's own background rather than cropped.
+      {/* Image scaling: `object-scale-down` by default maintains aspect ratio
+          and fits within the container without distortion. The complete murti
+          is shown, letterboxed if needed, responsive to any screen size.
 
-          `setting:croppedDeityImage` (Profile → Settings) opts back into
-          `cover`, so the murti fills the box exactly and there is never a
-          bar to hide. That has to be a crop — the box is 420 wide by
-          whatever the device leaves, and measuring it gave 0.574 on a tall
-          Android up to 0.899 on an SE, so no single image aspect fits them
-          all. It costs almost nothing in practice: the murtis are 2:3
-          (0.667) and every current phone lands between 0.574 and 0.652,
-          which trims 2-14% off the *width* — pillars and empty arch, not
-          the figure. `object-position` puts that crop where it hurts
-          least: on a short screen the trim is vertical, and biasing to 32%
-          drops marble floor off the bottom rather than taking the crown
-          off the top. */}
+          `setting:croppedDeityImage` (Profile → Settings) opts into `cover`,
+          which fills the box and crops edges. The crop position is optimized
+          for each device height. */}
       <section
         className="relative min-h-0 flex-1 touch-none overflow-hidden bg-[#e4ddd1]"
         onPointerDown={startSwipe}
@@ -279,8 +271,8 @@ export default function Pooja() {
           key={image.f}
           src={`${import.meta.env.BASE_URL}deities/${image.f}`}
           alt={`${deity.name} — ${image.label}`}
-          className={`animate-fade absolute inset-0 h-full w-full ${fullImage ? 'object-contain' : 'object-cover'}`}
-          style={fullImage ? undefined : { objectPosition: '50% 32%' }}
+          className={`animate-fade absolute inset-0 h-full w-full ${fullImage ? 'object-scale-down' : 'object-cover'}`}
+          style={fullImage ? { objectPosition: '50% 50%' } : { objectPosition: '50% 32%' }}
         />
 
         {/* Lamp light over the murti, always breathing. */}
