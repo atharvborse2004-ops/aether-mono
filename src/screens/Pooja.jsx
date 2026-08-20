@@ -35,8 +35,6 @@ export default function Pooja() {
   const [ripples, setRipples] = useState([])
   const [turn, setTurn] = useState(0)
   const [turning, setTurning] = useState(false)
-  const [suggestionName, setSuggestionName] = useState('')
-  const [suggestionImage, setSuggestionImage] = useState('')
   const seq = useRef(0)
   const turned = useRef(false)
   const swipe = useRef(null)
@@ -253,40 +251,6 @@ export default function Pooja() {
             </li>
           ))}
         </ul>
-
-        {/* ── Suggest a deity ─────────────────────────────────────────── */}
-        <div className="mt-4 space-y-2 rounded-lg bg-surface/50 p-3">
-          <p className="caps-sm t-faint">{t('puja.suggestDeity') || 'Suggest a deity'}</p>
-          <input
-            type="text"
-            placeholder={t('puja.deityName') || 'Deity name'}
-            value={suggestionName}
-            onChange={(e) => setSuggestionName(e.target.value)}
-            className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body placeholder-t-faint focus:border-ink focus:outline-none"
-          />
-          <input
-            type="text"
-            placeholder={t('puja.imageUrl') || 'Image URL (optional)'}
-            value={suggestionImage}
-            onChange={(e) => setSuggestionImage(e.target.value)}
-            className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body placeholder-t-faint focus:border-ink focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              if (!suggestionName.trim()) {
-                showToast(t('a.fieldRequired') || 'Please enter a deity name')
-                return
-              }
-              showToast(t('puja.suggestionSent') || 'Thank you — your deity suggestion has been sent')
-              setSuggestionName('')
-              setSuggestionImage('')
-            }}
-            className="w-full rounded-lg bg-ink px-3 py-2 caps-sm text-white transition hover:bg-ink/90"
-          >
-            {t('a.submit') || 'Submit'}
-          </button>
-        </div>
       </section>
 
       {/* ── The shrine, taking whatever is left ────────────────────────── */}
