@@ -1092,6 +1092,12 @@ export const deities = [
       { f: 'mahavir-b.webp', label: 'Golden halo', artist: null, licence: 'Supplied', source: null },
       { f: 'mahavir-d.webp', label: 'Jain Tirth Temple, Ayodhya', artist: null, licence: 'Supplied', source: null },
     ] },
+  { id: 'd8', name: 'Aadinath', nameHi: 'आदिनाथ', graha: 'Surya', day: 'Sunday', aarti: 'Rushabh Jinesar Prithamji',
+    forWhat: 'The very first step — starting over when everything before it failed.',
+    line: 'He gave up a kingdom to walk first. Every path needs someone willing to take the step nobody has proof of yet.',
+    images: [
+      { f: 'aadinath-a.webp', label: 'Jain Tirth Temple, Ayodhya', artist: null, licence: 'Supplied', source: null },
+    ] },
   { id: 'd6', name: 'Shani', nameHi: 'शनि', graha: 'Shani', day: 'Saturday', aarti: 'Jai Jai Shani Dev',
     forWhat: 'Sade sati, dhaiya, and the long grinding years.',
     line: 'He is not punishing you. He is charging you for what you already did, in instalments.',
