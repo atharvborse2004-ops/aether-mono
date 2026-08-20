@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { bookedSlots, consultants, SESSION, timeSlots } from '../data/mock.js'
+import { bookedSlots, consultants, SESSION, SESSION_LENGTHS, timeSlots } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
@@ -40,16 +40,21 @@ export default function ConsultantProfile() {
   const [tab, setTab] = useState('about')
   const [sheet, setSheet] = useState(false)
   const [slot, setSlot] = useState(null)
+  const [duration, setDuration] = useState(SESSION.mins)
 
   const c = consultants.find((x) => x.id === id)
   if (!c) return <Navigate to="/consult" replace />
 
   const following = hasFlag(`follow:${c.id}`)
 
-  /* One length now, so `price` is the whole story. */
+  /* `c.price` is quoted against SESSION.mins; every other length is that
+     same per-minute rate scaled up or down, not a separate price to keep in
+     sync. */
+  const total = Math.round((c.price / SESSION.mins) * duration)
 
   const openSheet = () => {
     setSlot(null)
+    setDuration(SESSION.mins)
     setSheet(true)
   }
 
@@ -208,7 +213,14 @@ export default function ConsultantProfile() {
       </div>
 
       <Sheet open={sheet} onClose={() => setSheet(false)} title={`Book ${firstName(c.name)}`}>
-        <p className="label text-left mb-4">Available today</p>
+        <p className="label text-left mb-4">Length</p>
+        <Segmented
+          items={SESSION_LENGTHS.map((m) => ({ key: m, label: `${m} min` }))}
+          value={duration}
+          onChange={setDuration}
+        />
+
+        <p className="label mt-8 text-left mb-4">Available today</p>
         <div className="mb-10 grid grid-cols-3 gap-3">
           {timeSlots.map((t) => {
             const taken = bookedSlots.includes(t)
@@ -227,9 +239,9 @@ export default function ConsultantProfile() {
 
         <Field k="Consultant" v={c.name} />
         <Field k="When" v={slot ? `Today, ${slot}` : 'Not picked yet'} />
-        <Field k="Length" v={SESSION.label} />
+        <Field k="Length" v={`${duration} min`} />
         <Field k="Questions" v={SESSION.promise} />
-        <Field k="Total" v={`₹${c.price.toLocaleString('en-IN')}`} />
+        <Field k="Total" v={`₹${total.toLocaleString('en-IN')}`} />
 
         <Button
           className="mt-10"
@@ -237,7 +249,7 @@ export default function ConsultantProfile() {
           disabled={!slot}
           onClick={() => {
             setSheet(false)
-            showToast(`Booked · today ${slot}`)
+            showToast(`Booked · today ${slot} · ${duration} min`)
           }}
         >
           {slot ? `Confirm ${slot}` : 'Pick a time'}
@@ -263,12 +275,12 @@ function About({ c }) {
       </Section>
 
       <Section label="What a session is">
-        <Field k="Length" v={SESSION.label} />
+        <Field k="Length" v={`${SESSION_LENGTHS.join(', ')} min`} />
         <Field k="Questions" v={SESSION.promise} />
-        <Field k="Price" v={`₹${c.price.toLocaleString('en-IN')}`} />
+        <Field k="Price" v={`₹${c.price.toLocaleString('en-IN')} for ${SESSION.label}`} />
         <p className="mt-6 text-center text-meta text-t3">
-          One length, one price. Ask as much as you like inside it — if the call runs over, it
-          runs over.
+          Pick the length that fits when you book. Ask as much as you like inside it — if the
+          call runs over, it runs over.
         </p>
       </Section>
     </>

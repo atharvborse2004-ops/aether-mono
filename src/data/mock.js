@@ -995,6 +995,11 @@ export const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export const SESSION = { mins: 20, label: '20 min', promise: 'Unlimited questions' }
 
+/** The lengths a seeker can pick at booking. `SESSION.mins` is the default
+    and the rate `c.price` is quoted against — the other two are priced off
+    it, not stored separately, so there is nothing to keep in sync. */
+export const SESSION_LENGTHS = [15, 20, 30]
+
 /**
  * Today's panchang. The almanac half of the app — the daily reading says what
  * to do with the day, this says what the day is made of.
