@@ -335,11 +335,13 @@ function WalletTab() {
           <p className="mt-2 font-display text-display leading-none tnum t-heading">
             {balance === null ? '—' : `₹${rupees(balance)}`}
           </p>
-          <div className="mt-6 flex gap-3">
+          {/* One button, not two. Both went to /wallet, and since phase 2 the
+              gold one promised something that screen refuses — adding money
+              waits for payments. */}
+          <div className="mt-6">
             <PopButton size="sm" to="/wallet" variant="gold">
-              Add money
+              Open wallet
             </PopButton>
-            <PopButton to="/wallet">Open wallet</PopButton>
           </div>
         </PopCard>
 

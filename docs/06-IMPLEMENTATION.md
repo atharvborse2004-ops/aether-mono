@@ -37,7 +37,7 @@ Small repairs, each cheaper before it reaches a database than after.
 | Split deity `credit` into artist / licence / source, with one renderer | **Done** |
 | Flag the two incomplete Bhaktamar verses rather than reconstructing them | **Done** |
 | Reconcile the uncommitted working tree | **Done** |
-| Walk every route in a browser, including the messages knob | **Owed** — blocked on tooling for three sessions. See `HANDOFF.md` §4 |
+| Walk every route in a browser, including the messages knob | **Done** — 22 Aug, 22 routes plus drill-ins, no errors. `HANDOFF.md` §4 |
 | Choose the ephemeris reference chart | **Owed** — blocks phase 7, not phase 1 |
 
 **Done when:** the tree is clean, the app has been walked end to end, and no

@@ -206,12 +206,20 @@ It rolls itself back by raising on its last line, so it is safe to re-run at
 any time. Passing prints `ERROR: PHASE 2 CHECKS PASSED`, which reads like a
 failure and is not.
 
-Double-tap is the fourth condition and is the one **not** proven by that
-script — it is a client concern, and it is guarded by the ref in `store.jsx`
-described in §1. It needs the browser walk below.
+**The fourth condition is now proven too, and in its strictest form.** Three
+clicks fired in one tick at the paid tarot pull produced **exactly one ledger
+row** of −1100 paise. The store's ref is what refuses the second and third; a
+state flag could not, because state set by the first has not applied when they
+land.
 
-**Next action:** the browser walk (§4), then the second-account walk. Then
-phase 3 — payments in.
+The refusal path was walked as well: a ₹1,497 report against a ₹1,240 balance
+returned "Not enough balance" **from the server**, moved nothing, and wrote no
+row. The test charge was then undone the only way the ledger allows — a
+reversing `refund` entry — leaving three rows of history and a balance back at
+124000 that still replays exactly.
+
+**Next action:** phase 3 — payments in. Nothing is owed behind it except the
+environment split described in §5, which has to happen first.
 
 ### Decisions made
 
@@ -268,10 +276,10 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | Book button moved to the right edge of the consultant row | It commits money; sitting a thumb's width from call and message is how it gets mis-tapped |
 | Consultant inbox reads from her side | Threads carry both ends; the Ask AI tab is gone on `/pro/*` |
 | Performance metrics in Earnings | Reply time against target, calls attended over requested |
-| **Pro nav is Studio / Consult / Profile** — Feed dropped entirely | `ProFeed.jsx` deleted; a consultant runs her practice, she does not browse the seeker feed. `/pro/*` now redirects to `/pro/studio` |
+| **Pro nav is Earnings / Studio / Go Live / Consult / Profile** — Feed dropped entirely | Five tabs, not the three an earlier version of this row claimed. `ProFeed.jsx` deleted; a consultant runs her practice, she does not browse the seeker feed. `/pro/*` redirects to `/pro/studio`. The tab is `/pro/live`, not `/pro/golive` — the latter hits the catch-all and lands silently on Studio |
 | **Sessions, Chat and Call merged into one Consult tab** | `ProConsult.jsx`; an online/offline toggle sits above them on `flags`' `offline:{proId}` key, no new store slice |
 | **"View kundli" on a Consult booking row** opens `/chart` prefilled | `Chart.jsx` reads `?name=&date=&time=` off `useSearchParams`, falling back to the logged-in user's own birth data; `birthDate`/`birthTime` added to every mock booking |
-| **Earnings folded into Profile**, nav down to three tabs | `/pro/earnings` still routes for deep links; nothing links to it from the UI |
+| **Earnings leads the pro nav**, carrying Insights with it | This reverses an earlier row here that said Earnings was folded into Profile and unlinked — it is a tab again, first in the bar, and Go Live earned its own slot beside Studio. Corrected 22 Aug after reading `Chrome.jsx:52` against this file |
 | **Consult (seeker side) redesigned** — banners, an "online now" quick-strip, per-card Call/Chat/Live actions | `Consult.jsx`; the old top-level Live/Booking mode switcher is gone, Live opens straight from the card like Call and Chat already did |
 | **Deity image is uncropped by default** | `setting:croppedDeityImage` on `flags`, toggled from Profile → Settings. The flag is an **opt-in back to the crop**, so its absence is the common case: the shrine, deity chips and murti-picker sheet ship `object-contain`, and setting it returns them to the screen-filling `object-cover`. Read by `Pooja.jsx:27`/`:479` and `Profile.jsx:387` |
 | **Phase 1 (auth and profile) built** | `profiles` table + RLS + `handle_new_user` trigger, applied via Supabase MCP — see §2 above |
@@ -288,6 +296,9 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **22 Aug — top-up is withdrawn, not deferred** | `addMoney()` deleted from the store; the top-up sheet, quick-recharge grid and payment tags out of `Wallet.jsx`. There is no payment provider until phase 3 and a credit RPC before then is a mint. The **"+2% cashback" label is deleted** with it |
 | **22 Aug — the seeded wallet transactions are gone** | `walletTransactions` is no longer read by `Wallet.jsx` or `Profile.jsx`. It held rupees while real rows hold paise, and a list mixing the two is off by a hundred on half its lines. Wallets now start empty and honest |
 | **22 Aug — `/people/:id` showed the wrong person's initial** | `Synastry.jsx` rendered the mock `user.initials` under the label "You". Now `useProfileFields()`. Found by auditing every identity read against `data/mock.js`, which is the cheap substitute for the second-account UI walk |
+| **22 Aug — the app is walked in a browser, first time in four sessions** | 22 routes plus seven drill-ins, zero runtime and zero console errors. Phase 2's four done-conditions all verified. §4 |
+| **22 Aug — Profile's wallet card lost its "Add money" button** | It was gold, it navigated to `/wallet`, and since phase 2 that screen refuses to add money. "Open wallet" already went to the same place, so it is one button now |
+| **22 Aug — two pro-nav rows in this table were wrong** | They claimed three tabs with Earnings folded into Profile. `Chrome.jsx:52` has five, Earnings first. Rewritten in place |
 | **22 Aug — the Chrome extension blocker is diagnosed** | Installed on Default and Profile 3; the Claude Code account is on Profile 1, which has neither. §4 |
 | **22 Aug — Phase 0's "reconcile the tree" is closed** | The 21 Aug onboarding work is committed. An earlier version of §5 claimed the tree also held pro-nav and deity-image work; it did not, that was already committed |
 
@@ -306,32 +317,23 @@ a prop threaded through four components, defined in none of them, green build.
   They were deliberately not reconstructed: a plausible wrong shloka in a
   devotional deck is undetectable to the person it misleads.
 - **The 48 card faces carry no attribution at all.** The murtis now do.
-- **Nobody has walked the deity-image, pro-nav or phase 2 wallet changes in a
-  browser.** The build passes, which here proves almost nothing. **The Chrome
-  extension has now failed to connect for three sessions running** and is the
-  single longest-standing blocker in this file. **The cause is now known.**
-  Chrome here has five profiles, and the Claude extension
-  (`fcoeoabgfenejglbffodgkkbkcdhcgfn`) is installed on only two of them:
+- **The app has now been walked in a browser, 22 Aug.** The extension blocker
+  is cleared: it was installed on the Default and Profile 3 Chrome profiles
+  while the Claude Code account sits on Profile 1. Installing it there fixed
+  it. **Keep that in mind if it breaks again — it presents as "extension is
+  not connected", which reads like an install problem and is not.**
 
-  | Profile | Google account | Extension |
-  |---|---|---|
-  | Default | atharv@sleepycat.in | yes, v1.0.85 |
-  | **Profile 1** | **atharvborse2004@gmail.com** | **no** |
-  | Profile 3 | none signed in | yes, v1.0.75 |
-  | Profile 4 | abzzo.india@gmail.com | no |
-  | Profile 5 | marketplaces@sleepycat.in | no |
+  Walked: all 22 top-level routes plus seven drill-ins, signed in as a real
+  account. **Zero runtime errors and zero console errors anywhere.** Phase 2's
+  four done-conditions all verified, including the two that no SQL check can
+  reach — see §2.
 
-  `atharvborse2004@gmail.com` is the Claude Code account and it lives on
-  Profile 1, which has no extension. Either install it on Profile 1 from
-  claude.ai/chrome, or sign that account into claude.ai on Default. Restart
-  Chrome afterwards. Until then in-session browser QA is unavailable and every
-  phase's last step is owed the moment it is written.
+  One caveat on the tooling, because it cost time: **CDP input dispatch times
+  out on this machine** while screenshots and `javascript_tool` work fine. The
+  clicks in this walk were driven from JS. That is not a worse test for the
+  double-tap condition — it is a stricter one, since three clicks can be fired
+  in a single tick, which no human tap can do.
 
-  What that leaves unproven for phase 2, specifically: **the double-tap
-  done-condition**, which is guarded in `store.jsx` by a ref and cannot be
-  checked from SQL. Everything server-side is proven by
-  `003_wallets_ledger_check.sql`. The phase 1 signup path was walked by hand on
-  a real device with real SMS; nothing since has been.
 - **The second-account check needs a second SIM.** Proven at the database
   level, not through the UI. See §2 — owner is the partner, after deploy.
 
@@ -375,15 +377,11 @@ converted; the client cannot write a balance. What is not proven is the
 double-tap condition, which lives in the browser and needs the extension
 blocker in §4 cleared.
 
-One thing is owed, and it is not code.
-
-**Connect the Chrome extension** (§4). Three sessions blocked, and it is the
-reason two phases in a row end with an unwalked route.
-
-The other two are closed. The repository secrets were never missing — see
-below. The second-account condition is proven at the database level with a
-real second account and its one front-end defect is fixed (§2); only the
-visual walk remains, and that is the same browser blocker.
+**Nothing is owed on phases 1 and 2.** All three items that were open this
+morning are closed: the Chrome extension is connected and the app is walked
+(§4), the repository secrets were never actually missing (below), and the
+second-account condition is proven with a real second account, with the one
+front-end defect it exposed fixed (§2).
 
 **Not yet deployed, and the deploy needs one manual step first.** Everything
 above was verified against `localhost:5260`. Vite inlines `VITE_*` at build
