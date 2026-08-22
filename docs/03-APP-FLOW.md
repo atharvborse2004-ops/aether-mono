@@ -116,7 +116,7 @@ In file order, which is also resolution order.
 | 3 | `/onboarding/name` | What to call you | non-empty | `/onboarding/date` |
 | 4 | `/onboarding/date` | Birth date — D / M / Y | 1–31, 1–12, ≥ 1900 | `/onboarding/time` |
 | 5 | `/onboarding/time` | Birth time — H : M, AM/PM | 1–12, 0–59 | `/onboarding/place` |
-| 6 | `/onboarding/place` | Birth place | one of **four hardcoded cities** | `/onboarding/phone` |
+| 6 | `/onboarding/place` | Birth place — worldwide search, debounced 300ms | a result must be **picked**, not typed; the pick carries lat, lon and IANA zone | `/onboarding/phone` |
 | 7 | `/onboarding/phone` | Mobile number and email, together | number matches `[6-9]` + 9 digits; email matches a shape check. **Both required** | `/onboarding/verify` |
 | 8 | `/onboarding/verify` | Six-digit code, with a resend | six digits, accepted by Supabase | `/onboarding/computing` |
 | 9 | `/onboarding/computing` | Two beats: loading lines, then the reveal. Writes the profile | — | `/home` |
@@ -135,6 +135,51 @@ you are on, so the choice cannot disagree with where you are.
 
 What it does not do: gate anything. Anyone typing `/pro/studio` is a consultant.
 Consultant approval (§8.3) is the fix.
+
+### The two session gates
+
+`SessionGate` in `App.jsx` runs on every route and enforces two things, both
+waiting for the session to resolve first so a reload never flashes onboarding.
+
+1. **Signed out** → `/onboarding`.
+2. **Signed in, but the stored profile has no birth date** → `/onboarding/date`,
+   to finish the questions.
+
+The second exists because an account is created the moment the phone is
+verified, while the write that fills in everything else happens a step later and
+can be refused. A wrong device clock is enough to cause it. Anyone left in that
+state used to land on `/home`, where every screen fills its gaps from `mock.js`
+— so they were shown a stranger's birth date and sun sign as their own, with
+nothing indicating anything had failed.
+
+It fires only on a profile row that **loaded and genuinely has no birth date.**
+A row still in flight, or one whose fetch failed, leaves people where they are:
+redirecting on either would throw someone out of the app on a weak connection.
+
+Consequences elsewhere in the flow, both because the person is already
+authenticated:
+
+- **Step 6 skips step 7 for them.** A signed-in visitor goes from place straight
+  to the write. Sending them through the phone step would text a second code for
+  an account they are already inside.
+- **Skipping step 7 means no email is typed**, so the write falls back to the
+  address already stored rather than overwriting it with an empty draft.
+
+### Why the place step carries a timezone
+
+Step 6 is the only moment anyone knows the zone of the birth *place*, so it is
+where `birth_zone` is captured — from the geocoder, alongside lat and lon, never
+defaulted and never derived later. While the list was four Indian cities a
+hardcoded `Asia/Kolkata` was survivable; with worldwide search it would file a
+London birth under India's zone and shift every cusp with no error raised
+anywhere (`docs/05-BACKEND-SCHEMA.md` §4.1).
+
+This is why the step requires a **picked result** rather than typed text, and
+why the zone is shown on each row before it is committed. Two places called
+London differ by four hours, and that difference is invisible once stored.
+
+A draft saved before this step carried zones has no zone, so it is treated as
+incomplete and routed back to re-answer rather than written with a null.
 
 ### The draft, and where it becomes real
 
@@ -155,6 +200,17 @@ reveal screen looks identical whether or not the write landed:
 - **Draft lost and no details already stored** → back to step 4 to re-answer.
 - **The write itself fails** → a "not saved" screen carrying the error, with a
   retry. Never the reveal.
+- **The token is refused on timing** → the same screen, but it names the cause
+  and what to do: the device clock is wrong, set date and time to automatic.
+
+**The retry replaces the session, it does not resend it.** A token refused for
+its issued-at or expiry stays refused however many times it is sent, so a plain
+resend loops forever — which is how it behaved for the first outside tester,
+who saw only the raw string `JWT issued at future` and a button that did
+nothing. The retry now refreshes the session first.
+
+Raw API error text stays on the screen but demoted to a diagnostic line. It is
+for whoever reads the bug report, not for the person stuck on the screen.
 
 Re-entry points: *Run onboarding again* restarts at step 1; *Edit birth details*
 jumps to step 4 and continues through the rest of the flow, so there is no
@@ -270,9 +326,15 @@ most of the app. Settings holds **Switch to consultant → `/pro/feed`**, which 
 an ordinary link because the side is not state.
 
 ### `/wallet`
-Balance, quick-recharge presets, and a top-up sheet with a validated custom
-amount and a live new-balance preview. **The only credit path in the app.**
-Payment-method tags are decorative.
+Balance and history, both read from the server. **Nothing on this screen adds
+money.** The quick-recharge presets, the top-up sheet and the payment-method
+tags are gone: there is no payment provider until phase 3, and a control that
+moves a real balance with nothing behind it is the one thing a wallet must not
+offer. *Add money* is present but disabled, and says when it opens.
+
+The seeded transaction list is gone too, here and on the profile wallet tab.
+It was denominated in rupees while real entries are paise, and a list mixing
+the two is off by a hundred on half its lines.
 
 ### Others
 `/reports` charges for real but **has no way to open the cart** — the only route
@@ -347,8 +409,8 @@ and open only from their own screen.
 
 ## 7. Money paths
 
-**Stated once, here.** Five paths move the wallet today. All five are
-client-side arithmetic.
+**Stated once, here.** Four paths move the wallet, and none of them is
+arithmetic in the browser any more.
 
 | # | Path | Effect |
 |---|---|---|
@@ -356,11 +418,20 @@ client-side arithmetic.
 | 2 | Shop *Buy now* | Debits the product price |
 | 3 | Reports *Buy now* | Debits the report price |
 | 4 | Tarot paid pull | Debits the per-pull price |
-| 5 | Wallet top-up | **Credits** — the only credit path |
 
-Debits run through one guard that refuses when the balance is short and toasts
-the reason. That refusal path already exists and already has copy, which is the
-one piece of money logic the prototype gets right.
+**There is no credit path.** Top-up was the fifth and it is withdrawn until
+phase 3 gives it a payment behind it.
+
+All four debits go through one function on the server, which decides under a
+row lock and refuses in the app's own words when the balance is short. The
+client compares nothing: the balance it holds is a read of a cache, and a
+screen that decided for itself would be deciding on a number devtools can
+edit.
+
+**Every caller awaits it.** The debit returns a promise, and `if (promise)` is
+truthy — a caller that forgets lets through a purchase the server refused. A
+second guard sits in the store rather than on the buttons, so a re-entrant tap
+is refused even if a button forgets its pending state.
 
 ### Displayed but never charged
 
@@ -436,11 +507,15 @@ stored** — a persisted role could disagree with the address bar. Also: the act
 profile tab, the visible reel, and every drill-in identity.
 
 ### The store
-One context, no persistence, everything resets on reload.
+One context. Most of it still resets on reload.
 
-Birth draft · wallet balance and ledger · cart lines · questions remaining ·
-chat panel open state and tab · horoscope panel state · cart sheet state ·
-language · toast · and the flag set.
+Server-backed, and therefore surviving a reload: the session, the profile, and
+the **wallet balance and ledger**.
+
+Still local, still evaporating: cart lines · questions remaining · chat panel
+open state and tab · horoscope panel state · cart sheet state · language ·
+toast · and the flag set. The birth draft is the one exception — it survives in
+`sessionStorage` for the length of the signup.
 
 ### The flag set
 One flat `Set` of namespaced strings, which is the prototype's best idea:
@@ -476,4 +551,6 @@ next rather than showing an empty list.
 | The consultant's feed is the seeker's feed, including shop and free tools | **Closed** — `ProFeed.jsx` deleted, Feed is no longer a concept on the pro side |
 | Consultant performance metrics disagree with the warnings that cite them — 88% against 68% for the same figure | Open |
 | Birth details are collected in onboarding and never used | **Closed** — phase 1. Written to `profiles`, read back by Profile, Chart and Horoscope |
+| `/people/:id` showed the **mock user's initial under the label "You"** — a signed-in Rahul saw Atharv's `A` | **Fixed** — `Synastry.jsx` reads `useProfileFields()`. Found by auditing identity reads, not by the browser walk, which is still owed |
+| Sun, moon and rising are the mock's for every account, on four screens — `Computing.jsx`, `HoroscopePanel.jsx`, `Shop.jsx` and via `useProfileFields()` | Open by design — they need the ephemeris service. **Phase 7 must change all four**, not just the hook |
 | Two Bhaktamar cards carry incomplete verses | Flagged in data; needs a verified source |

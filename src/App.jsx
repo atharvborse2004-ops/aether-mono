@@ -93,26 +93,49 @@ function PlainLayout() {
 }
 
 /**
- * Restores the session on load and sends a signed-out visitor back to
- * onboarding. Waits for `sessionReady` before acting, so a page reload with a
- * valid session never flashes onboarding first. The `/pro` side is exempt —
- * consultant identity isn't built yet (phase 4), so nothing there requires a
- * seeker session.
+ * Two gates, not one.
+ *
+ * A signed-out visitor goes back to onboarding. Waits for `sessionReady` before
+ * acting, so a page reload with a valid session never flashes onboarding first.
+ *
+ * A signed-in visitor whose profile never received its birth details goes back
+ * to finish them. That state is real, not theoretical: an account is created
+ * the moment the phone is verified, and the write that fills in the rest can be
+ * refused afterwards — a wrong device clock is enough. Without this gate they
+ * land on `/home` and every screen fills the gaps from `mock.js`, showing a
+ * stranger's birth date and sun sign back to them as their own.
+ *
+ * The `/pro` side is exempt from both — consultant identity isn't built yet
+ * (phase 4), so nothing there requires a seeker session or a birth chart.
  */
 function SessionGate() {
-  const { session, sessionReady } = useStore()
+  const { session, sessionReady, profile, profileLoading } = useStore()
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!sessionReady || session) return
+    if (!sessionReady) return
+
     // `/profile` starts with the four characters `/pro`, so this has to be a
     // segment-boundary check, not startsWith('/pro') — that swallowed the
     // seeker's own profile route into the consultant exemption.
     const onPro = pathname === '/pro' || pathname.startsWith('/pro/')
     if (pathname.startsWith('/onboarding') || onPro) return
-    navigate('/onboarding', { replace: true })
-  }, [session, sessionReady, pathname, navigate])
+
+    if (!session) {
+      navigate('/onboarding', { replace: true })
+      return
+    }
+
+    // `profile` must be a loaded row, not the null it holds before the first
+    // fetch returns — and not the null a *failed* fetch leaves behind either.
+    // Redirecting on those would bounce people out of the app on a flaky
+    // connection. Only a row that came back and genuinely has no birth date
+    // sends anyone back to the questions.
+    if (!profileLoading && profile && !profile.birth_date) {
+      navigate('/onboarding/date', { replace: true })
+    }
+  }, [session, sessionReady, profile, profileLoading, pathname, navigate])
 
   return null
 }

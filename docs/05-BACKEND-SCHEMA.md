@@ -442,18 +442,20 @@ the new row inherits `order_id`.
 ```sql
 create table wallets (
   profile_id     uuid primary key references profiles(id) on delete cascade,
-  balance_paise  integer not null default 0
+  balance_paise  integer not null default 0,
+  constraint wallets_never_negative check (balance_paise >= 0)
 );
 
 create table ledger (
   id           uuid primary key default gen_random_uuid(),
-  wallet_id    uuid not null references wallets(profile_id),
+  wallet_id    uuid not null references wallets(profile_id) on delete cascade,
   delta_paise  integer not null,          -- signed
   kind         text not null,
   ref_type     text not null check (ref_type in ('order','payment','refund','adjustment')),
   ref_id       uuid,
   note         text,
-  created_at   timestamptz not null default now()
+  created_at   timestamptz not null default now(),
+  constraint ledger_delta_nonzero check (delta_paise <> 0)
 );
 
 create table earnings_ledger (
@@ -500,6 +502,48 @@ create trigger ledger_immutable before update or delete on ledger
 create trigger earnings_ledger_immutable before update or delete on earnings_ledger
   for each row execute function refuse_mutation();
 ```
+
+**The balance cache is maintained by the ledger, not by its writers.**
+
+```sql
+create function apply_ledger_to_balance() returns trigger as $$
+begin
+  update wallets set balance_paise = balance_paise + new.delta_paise
+   where profile_id = new.wallet_id;
+  return new;
+end $$ language plpgsql security definer set search_path = public;
+
+create trigger ledger_applies_to_balance after insert on ledger
+  for each row execute function apply_ledger_to_balance();
+```
+
+This is what makes §1.3's promise checkable rather than aspirational. There is
+no way to write a ledger row and forget the balance — not from a function
+written later, not from a hand-typed `INSERT` in the SQL editor. Replaying the
+ledger from zero reproduces the stored balance because the stored balance *is*
+that replay, accumulated one row at a time.
+
+`wallets_never_negative` is the backstop underneath it. Every debit is already
+checked inside `wallet_debit()` under a row lock; the constraint is what
+survives a mistake in a function nobody has written yet.
+
+**Debits go through one function, and it is the only one in v1 that moves a
+wallet.** `wallet_debit(p_amount_paise, p_kind, p_ref_type)` — `security
+definer`, granted to `authenticated`. It takes the row lock, compares against
+the locked balance, and either inserts the signed ledger row or returns
+`{ ok: false, reason }` with the string the interface already shows. The lock is
+the concurrency control: two debits firing together serialise on it rather than
+both reading the same balance and both passing.
+
+**It accepts the amount from the client, and that is within rule 3**, which
+bans a number *the user benefits from*. A debit is not one. It is shaped this
+way because the catalogue is still in `mock.js` — there is no server-side price
+for a tarot card until phases 8 and 10, and phase 5's booking is the first
+purchase whose price the server looks up for itself.
+
+**There is no credit function.** Crediting is phase 3's webhook. Until then a
+test wallet is funded by inserting a ledger row directly, which the trigger
+above carries into the balance.
 
 ### 4.7 Orders — where the sellable things become one shape
 

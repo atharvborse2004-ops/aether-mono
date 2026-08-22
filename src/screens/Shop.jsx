@@ -74,7 +74,7 @@ const CAT_LINE = {
 }
 
 export default function Shop() {
-  const { cartCount, addToCart, buyNow, setCartOpen, showToast } = useStore()
+  const { cartCount, addToCart, buyNow, spending, setCartOpen, showToast } = useStore()
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
   const [slide, setSlide] = useState(0)
@@ -270,7 +270,13 @@ export default function Shop() {
                 <PopButton size="sm" full={false} onClick={() => addToCart(hero)}>
                   Add to cart
                 </PopButton>
-                <PopButton size="sm" full={false} variant="gold" onClick={() => buyNow(hero)}>
+                <PopButton
+                  size="sm"
+                  full={false}
+                  variant="gold"
+                  disabled={spending}
+                  onClick={() => buyNow(hero)}
+                >
                   Buy now
                 </PopButton>
               </div>
@@ -344,6 +350,7 @@ export default function Shop() {
                             size="sm"
                             variant="gold"
                             full={false}
+                            disabled={spending}
                             onClick={() => buyNow(p)}
                             className="flex-1"
                           >

@@ -12,12 +12,23 @@ import { useStore } from '../store.jsx'
  * draw against the wallet.
  */
 export default function CartSheet() {
-  const { cartOpen, setCartOpen, cart, cartTotal, setQty, removeFromCart, clearCart, spend } =
-    useStore()
+  const {
+    cartOpen,
+    setCartOpen,
+    cart,
+    cartTotal,
+    setQty,
+    removeFromCart,
+    clearCart,
+    spend,
+    spending,
+  } = useStore()
 
-  const checkout = () => {
+  /* `spend` is a promise since phase 2. Without the await this reads as
+     truthy every time and clears the cart on a payment the server refused. */
+  const checkout = async () => {
     if (!cart.length) return
-    if (spend(cartTotal, `Order · ${cart.length} ${cart.length === 1 ? 'item' : 'items'}`)) {
+    if (await spend(cartTotal, `Order · ${cart.length} ${cart.length === 1 ? 'item' : 'items'}`)) {
       clearCart()
       setCartOpen(false)
     }
@@ -88,13 +99,13 @@ export default function CartSheet() {
             <PopButton size="sm" onClick={clearCart}>
               Clear
             </PopButton>
-            <PopButton size="sm" variant="gold" onClick={checkout}>
-              Pay from wallet
+            <PopButton size="sm" variant="gold" disabled={spending} onClick={checkout}>
+              {spending ? 'Paying…' : 'Pay from wallet'}
             </PopButton>
           </div>
 
           <p className="mt-4 text-center text-meta t-faint">
-            Prototype — the wallet balance moves, nothing is actually ordered.
+            The wallet is real. Nothing is shipped — fulfilment is phase 10.
           </p>
         </>
       )}

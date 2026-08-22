@@ -1,12 +1,12 @@
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { days, sessionHistory, walletTransactions } from '../data/mock.js'
+import { days, sessionHistory } from '../data/mock.js'
 import { LANGS } from '../data/i18n.js'
 import { TopBar } from '../components/Chrome.jsx'
 import ChartWheel from '../components/ChartWheel.jsx'
 import { ChartNorth, ChartSouth } from '../components/ChartSquare.jsx'
 import { Kicker, PopAvatar, PopBar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
 import { Acts, Row, Segmented, Ticks } from '../components/Primitives.jsx'
-import { useStore, useProfileFields } from '../store.jsx'
+import { rupees, useStore, useProfileFields } from '../store.jsx'
 
 const TABS = [
   { key: 'overview', label: 'Overview' },
@@ -321,7 +321,11 @@ function HoroscopeTab() {
 /** A compact wallet summary. The full screen lives at `/profile/wallet`. */
 function WalletTab() {
   const { balance, ledger, questionsLeft } = useStore()
-  const rows = [...ledger, ...walletTransactions].slice(0, 5)
+  /* The seeded transactions are gone. They were denominated in rupees while
+     real rows are paise, and a list mixing the two is off by a hundred on
+     half its lines. The wallet starts with your own history and nothing
+     else — the same call as showing 0 followers rather than 84,200. */
+  const rows = ledger.slice(0, 5)
 
   return (
     <>
@@ -329,7 +333,7 @@ function WalletTab() {
         <PopCard raised className="p-5">
           <p className="caps-sm t-faint">Available balance</p>
           <p className="mt-2 font-display text-display leading-none tnum t-heading">
-            ₹{balance.toLocaleString('en-IN')}
+            {balance === null ? '—' : `₹${rupees(balance)}`}
           </p>
           <div className="mt-6 flex gap-3">
             <PopButton size="sm" to="/wallet" variant="gold">
@@ -368,10 +372,13 @@ function WalletTab() {
               <span
                 className={`flex-none text-meta tnum ${t.kind === 'credit' ? 'text-ok' : 't-sub'}`}
               >
-                {t.kind === 'credit' ? '+' : '−'}₹{t.amount.toLocaleString('en-IN')}
+                {t.kind === 'credit' ? '+' : '−'}₹{rupees(t.amountPaise)}
               </span>
             </li>
           ))}
+          {rows.length === 0 && (
+            <li className="py-4 text-meta t-faint">Nothing yet.</li>
+          )}
         </ul>
       </section>
     </>

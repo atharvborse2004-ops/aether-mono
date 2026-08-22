@@ -90,7 +90,7 @@ Status is honest: **UI** means the screen exists and is wired to mock data;
 | Reports | UI | **Charges the wallet for real** |
 | Premium tiers | UI | Shows a price, grants nothing |
 | Academy — courses, events, downloads | UI | Enrol toasts. Course links go to YouTube *search* URLs |
-| Wallet — balance, top-up, ledger | UI | Real arithmetic, in the browser |
+| Wallet — balance and ledger | **Real** | Server-owned. Debits only — top-up waits for payments |
 | Payments | **None** | Payment-method tags are decorative |
 | People / synastry | UI | Fixed |
 | Notifications | UI | No read state, no deep links |
@@ -193,11 +193,19 @@ requested capability with **no upload path in the app today**.
 
 Everything is paid from a wallet rather than per transaction.
 
-Top-up presets **₹500 · ₹1,000 · ₹2,000 · ₹5,000**; custom amounts **₹100 to
-₹1,00,000**. A "+2% cashback" label appears on ₹2,000 and above and **is never
-applied** — either implement it or remove it before real money moves.
+The balance and the ledger are real and live on the server. **Money can only
+leave.** There is no way to add any from inside the app until Razorpay lands,
+so the top-up presets and the custom-amount sheet are not in the product right
+now; when they return the presets are **₹500 · ₹1,000 · ₹2,000 · ₹5,000** with
+custom amounts **₹100 to ₹1,00,000**.
 
-Opening demo balance: ₹1,240.
+The **"+2% cashback" label is deleted**, not deferred. It appeared on ₹2,000
+and above and was never applied, and an unimplemented discount promise must not
+be on screen the day real money starts moving. Reinstating it means pricing it
+first, here.
+
+There is no opening demo balance. A new account starts at **₹0**, the same
+call as showing a consultant 0 followers rather than a fabricated 84,200.
 
 ### 4.9 Referrals
 
@@ -206,9 +214,12 @@ product and it currently has no fraud control.
 
 ### 4.10 Where money actually moves today
 
-Five paths, all client-side:
+Four paths, all decided on the server:
 
-Cart checkout · Shop *Buy now* · Reports *Buy now* · Tarot pull · Wallet top-up.
+Cart checkout · Shop *Buy now* · Reports *Buy now* · Tarot pull.
+
+Top-up was a fifth and was the only one that added money. It is withdrawn until
+there is a payment behind it.
 
 Everything else that displays a price charges nothing — including **every booking
 flow**, which is the primary revenue line.
@@ -386,6 +397,22 @@ consultants.
   words. Two are currently incomplete and are flagged as such rather than
   reconstructed — a plausible wrong shloka is undetectable to the person it
   misleads.
+- **The place search is on a non-commercial licence, and this product is
+  commercial.** Birth places are geocoded through Open-Meteo's free geocoding
+  API, picked because it returns the IANA timezone with each result — the one
+  field `birth_zone` cannot be guessed later. Their terms restrict the free tier
+  to non-commercial use and name "apps that have subscriptions or display
+  advertisements" and "integrating our service into commercial products" as
+  commercial. Namo sells consults, so **the free tier does not cover this app in
+  production.** The free tier also caps at 10,000 calls/day and carries a CC-BY
+  4.0 attribution obligation.
+
+  **Open, and it blocks revenue, not the build:** either take Open-Meteo's paid
+  tier, or move to a geocoder whose licence permits commercial use *and* that
+  supplies a timezone — GeoNames (CC-BY, has a timezone endpoint), or a
+  self-hosted city dump with offline zone lookup, which removes the runtime
+  dependency altogether. Do not swap to a geocoder that returns only lat/lon; it
+  would reintroduce the guessed-zone failure.
 - **Email is collected at signup and its purpose is not yet settled.** Onboarding
   requires an address alongside the phone. It is never used to sign in and is
   never verified — it is held for reaching people later, marketing included.

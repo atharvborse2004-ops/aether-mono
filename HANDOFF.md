@@ -3,7 +3,7 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 21 Aug 2026.
+Updated 22 Aug 2026.
 
 This file describes **state**. It does not describe the system — that is what
 `docs/` is for, and repeating it here is how the two drift apart.
@@ -30,12 +30,18 @@ This file describes **state**. It does not describe the system — that is what
 `react-router-dom` 6.28 · plain JSX. Three runtime dependencies. No icon
 library, no state library, no UI kit, **no linter, no type checker, no tests.**
 
-41 routes, two sides in one codebase. Every value on screen still comes from
-`src/data/mock.js` (51 exports) and `src/data/bhaktamar.js` — **except**
-identity and birth details, which are real now (phase 1, below): the four
-onboarding questions plus phone verification write a `profiles` row, and
-Profile/Chart/Horoscope read it back. Everything else still evaporates on
-reload, deliberately.
+41 routes, two sides in one codebase. Most values on screen still come from
+`src/data/mock.js` (51 exports) and `src/data/bhaktamar.js`. Two things are
+real:
+
+- **Identity and birth details** (phase 1). The four onboarding questions plus
+  phone verification write a `profiles` row; Profile/Chart/Horoscope read it
+  back.
+- **The wallet** (phase 2). Balance and ledger are server rows read under RLS,
+  and every debit is decided by a server function. Nothing in the browser can
+  move either.
+
+Everything else still evaporates on reload, deliberately.
 
 ```bash
 npm run dev          # any free port: npm run dev -- --port 5260
@@ -65,12 +71,25 @@ needs no config for sub-routes.
   the real profile with the mock user for the fields the backend doesn't
   compute yet (sun/moon/rising need the ephemeris service, phase 7). Don't
   read `data/mock.js`'s `user` directly in a screen that shows identity.
+- **`spend()` returns a promise.** It used to return a boolean and every caller
+  used it as one. `if (spend(...))` is truthy whatever the server said, so a
+  missed `await` is a purchase that was refused and went through anyway. All
+  four charging call sites await it. There is a second guard in the store — a
+  ref, because two taps land in the same tick and state set by the first has
+  not applied by the second — so a button that forgets its pending state still
+  cannot double charge.
+- **`balance` is PAISE and it is `null` until loaded.** Rupees live only in
+  `mock.js` and in what the user reads; `rupees()` is exported from `store.jsx`
+  and is the one place money becomes text. A screen comparing `balance` to a
+  mock price needs the hundred — `Tarot.jsx:55` is the one that does. `null`
+  renders as an em dash, deliberately: a wallet flashing ₹0 at someone who has
+  money is worse than showing nothing yet.
 
 ---
 
 ## 2. Backend
 
-**Phase 1 is built and running.** A Supabase project exists
+**Phases 1 and 2 are built and running.** A Supabase project exists
 (`talqzgolttfgdzcoaqno`). The `profiles` table is live with the exact shape in
 `docs/05-BACKEND-SCHEMA.md` §4.1, migrations at `backend/schema/001_profiles.sql`
 and `002_profiles_email.sql` (applied via the Supabase MCP, not the CLI —
@@ -118,15 +137,81 @@ sign-up → verify → the `profiles` row gets its details by `UPDATE` → close
 reads the original signup instant, which is the trigger-creates / client-updates
 split in §7 holding up under a real run.
 
-**Second done-condition is not walked.** A second account seeing only its own
-data is proven at the database level — acting as a different `auth.uid()`,
-`profiles` returns zero rows, and the column grant refuses `admin = true` even
-on the caller's own row — but nobody has done it through the UI with a real
-second account, because there is only one SIM here. That check cannot catch a
-front-end bug where a screen reads the wrong user, which is the class this repo
-has no linter to catch. **Owner: partner, after deploy.**
+**Second done-condition: mostly closed, and it found a bug.**
 
-**Next action:** that second-account walk. Then phase 2 — wallet.
+There are now **four real accounts**, created on real numbers with real SMS —
+the partner's testing, not a second SIM here. Three completed the full
+`/otp` → `/verify` → Login flow; the fourth (`Raghu`) stopped after `/otp`,
+which is why that row has a name and no birth details. Auth logs across the
+window are clean: no errors, every request 200.
+
+- **Isolation is proven with a real second account, not a synthetic one.**
+  Acting as Rahul Jain's `auth.uid()`, `profiles` returns exactly one row —
+  his — and `wallets` one, and `ledger` zero. He cannot see Atharv's ₹1,240.
+- **The write path is proven by the data.** Three accounts hold three distinct
+  and correct birth records — Pune/2004, Delhi/1984, Mumbai/1994. Nothing
+  overwrote anything.
+- **The read path was audited rather than walked, and it was not clean.**
+  `/people/:id` rendered the mock user's initial under the label "You", so a
+  signed-in Rahul saw Atharv's `A`. Fixed on 22 Aug — `Synastry.jsx` now reads
+  `useProfileFields()`. **This is the exact bug class this condition exists to
+  catch, and it was caught by grepping every identity read rather than by
+  looking at a screen.** Worth repeating as a technique: the audit is cheaper
+  than the walk and it does not need a second SIM.
+
+What is still owed is the visual walk, and it is owed to the browser blocker in
+§4 rather than to a missing phone.
+
+### Phase 2 — wallet
+
+`wallets` and `ledger` are live, migration at `backend/schema/003_wallets_ledger.sql`
+(plus `004_refuse_mutation_search_path.sql`, a one-function lint fix that could
+not be an edit to 003 because 003 had run). Shapes and constraints are in
+`docs/05-BACKEND-SCHEMA.md` §4.6. `earnings_ledger` is deliberately **not**
+here — it references consultants and bookings and ships inside phase 5's
+booking transaction.
+
+Three things about it are worth knowing before touching it:
+
+- **The balance cache is maintained by an `after insert` trigger on `ledger`**,
+  not by whoever writes the row. This was not in the plan; it is there because
+  a cache each writer must remember to update is a cache that eventually
+  disagrees. It also means a hand-typed credit in the SQL editor is correct by
+  construction, which is how test wallets get funded — the recipe is at the
+  foot of `003`.
+- **Neither table has a write policy for anybody**, and `authenticated` has no
+  `INSERT`/`UPDATE`/`DELETE` grant on either. Only `wallet_debit()` writes.
+- **`wallet_debit()` takes the amount from the client.** That is within rule 3,
+  which bans a number the *user benefits from* — a debit is not one. It is
+  shaped this way because there is no server-side catalogue until phases 8 and
+  10. Phase 5's booking is the first purchase whose price the server looks up
+  for itself, and this is the hole it closes.
+
+**There is no credit path at all.** Top-up needed Razorpay, which is phase 3,
+and a client-callable credit function before then is a mint. So `addMoney()` is
+deleted from the store and the top-up sheet, the quick-recharge grid and the
+payment-method tags are out of `Wallet.jsx` rather than left looking live. The
+**"+2% cashback" label is deleted**, one phase earlier than the plan asked,
+because it was on a screen being rewritten anyway and it must not be on screen
+the day money starts moving.
+
+A new account now starts at **₹0**, not the mock's ₹1,240.
+
+**All four done-conditions pass, three of them by machine.**
+`backend/schema/003_wallets_ledger_check.sql` is the runnable check — eight
+assertions covering the balance cache, a refused overdraft, the immutability
+trigger, the negative-balance constraint, the client's absent grants, and the
+one that matters: replaying the ledger from zero reproduces the stored balance.
+It rolls itself back by raising on its last line, so it is safe to re-run at
+any time. Passing prints `ERROR: PHASE 2 CHECKS PASSED`, which reads like a
+failure and is not.
+
+Double-tap is the fourth condition and is the one **not** proven by that
+script — it is a client concern, and it is guarded by the ref in `store.jsx`
+described in §1. It needs the browser walk below.
+
+**Next action:** the browser walk (§4), then the second-account walk. Then
+phase 3 — payments in.
 
 ### Decisions made
 
@@ -157,6 +242,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
+| Whether top-up presets and the cashback rate come back, and at what rate | Phase 3 |
 | Session duration ladder — flat 20 min, tiered, or per-minute | Phases 4–5 |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Refund and cancellation policy | Phase 5 |
@@ -170,7 +256,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 ---
 
-## 3. Changed on 19–21 Aug 2026
+## 3. Changed on 19–22 Aug 2026
 
 | Change | Note |
 |---|---|
@@ -191,10 +277,19 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **Phase 1 (auth and profile) built** | `profiles` table + RLS + `handle_new_user` trigger, applied via Supabase MCP — see §2 above |
 | **Onboarding gains two screens**, `AskPhone` and `VerifyOtp`, between place and compute | `signInWithOtp` / `verifyOtp`; `Computing.jsx` writes the `profiles` row by `UPDATE`, not insert, once the account exists |
 | **Profile, Chart and Horoscope read the signed-in user** | `useProfileFields()` in `store.jsx`, merging the real `profiles` row with mock data for the fields the backend can't compute yet (phase 7) |
+| **21 Aug — birth place is worldwide, not four cities** | `AskPlace.jsx` searches Open-Meteo's geocoder, debounced 300ms and aborted per keystroke so a stale response can't replace a newer list. Each result carries its **IANA zone**, which is why that geocoder was picked over Nominatim/Photon — `birth_zone` was hardcoded `Asia/Kolkata`, survivable only while every option was Indian. The four Indian cities remain as the pre-typing default, so the common case costs no round trip. **Licence problem: the free tier is non-commercial and this product is not — see `docs/01-PRD.md` §8 before launch** |
 | **21 Aug — onboarding asks for an email with the phone** | Required to continue, shape-checked only, never verified and never an auth factor. `AskPhone.jsx` now carries both fields; the screen's question changed from *"What's your number?"* to *"Where do we reach you?"*. Column and reasoning in `docs/05-BACKEND-SCHEMA.md` §4.1; the purpose question is `docs/01-PRD.md` §8 |
 | **21 Aug — the onboarding draft survives a reload** | `sessionStorage`, in `store.jsx`. It was memory-only, and reading the SMS means leaving the app: an evicted page created an account with no birth details, silently. This is what actually caused the first live signup to land an empty row |
 | **21 Aug — `Computing.jsx` stops failing silently** | A lost draft routes back to re-answer; a failed write shows the error with a retry. Both used to land on the reveal, which looks identical whether or not anything was saved |
 | **A session gate added to `App.jsx`** | Redirects a signed-out visitor to `/onboarding` on load; the `/pro` side is exempt (phase 4 territory). Caught and fixed during the browser walk: the first version used `pathname.startsWith('/pro')`, which also matches `/profile` — rewritten to a segment-boundary check |
+
+| **22 Aug — phase 2 built: the wallet is real** | `wallets` + `ledger` + `wallet_debit()`, applied via Supabase MCP. Balance and history read under RLS; the client has no write grant on either table. See §2 |
+| **22 Aug — `spend()` and `buyNow()` are async** | All four charging call sites converted in one commit — `CartSheet.jsx`, `Tarot.jsx`, `Reports.jsx`, `Shop.jsx` (×2). A missed `await` would be a purchase the server refused going through anyway, so they could not be split across commits |
+| **22 Aug — top-up is withdrawn, not deferred** | `addMoney()` deleted from the store; the top-up sheet, quick-recharge grid and payment tags out of `Wallet.jsx`. There is no payment provider until phase 3 and a credit RPC before then is a mint. The **"+2% cashback" label is deleted** with it |
+| **22 Aug — the seeded wallet transactions are gone** | `walletTransactions` is no longer read by `Wallet.jsx` or `Profile.jsx`. It held rupees while real rows hold paise, and a list mixing the two is off by a hundred on half its lines. Wallets now start empty and honest |
+| **22 Aug — `/people/:id` showed the wrong person's initial** | `Synastry.jsx` rendered the mock `user.initials` under the label "You". Now `useProfileFields()`. Found by auditing every identity read against `data/mock.js`, which is the cheap substitute for the second-account UI walk |
+| **22 Aug — the Chrome extension blocker is diagnosed** | Installed on Default and Profile 3; the Claude Code account is on Profile 1, which has neither. §4 |
+| **22 Aug — Phase 0's "reconcile the tree" is closed** | The 21 Aug onboarding work is committed. An earlier version of §5 claimed the tree also held pro-nav and deity-image work; it did not, that was already committed |
 
 **The `ChatPanel` crash listed under 15 Aug was introduced by the consultant-inbox
 change and fixed by someone else.** `isPro` is now destructured at the top of the
@@ -211,11 +306,32 @@ a prop threaded through four components, defined in none of them, green build.
   They were deliberately not reconstructed: a plausible wrong shloka in a
   devotional deck is undetectable to the person it misleads.
 - **The 48 card faces carry no attribution at all.** The murtis now do.
-- **Nobody has walked the deity-image and pro-nav changes in a browser.** The
-  build passes, which here proves almost nothing — the Chrome extension used
-  for in-session browser QA has not been connected for two sessions running.
-  The phase 1 signup path has now been walked by hand on a real device, end to
-  end with real SMS; the rest of the app has not.
+- **Nobody has walked the deity-image, pro-nav or phase 2 wallet changes in a
+  browser.** The build passes, which here proves almost nothing. **The Chrome
+  extension has now failed to connect for three sessions running** and is the
+  single longest-standing blocker in this file. **The cause is now known.**
+  Chrome here has five profiles, and the Claude extension
+  (`fcoeoabgfenejglbffodgkkbkcdhcgfn`) is installed on only two of them:
+
+  | Profile | Google account | Extension |
+  |---|---|---|
+  | Default | atharv@sleepycat.in | yes, v1.0.85 |
+  | **Profile 1** | **atharvborse2004@gmail.com** | **no** |
+  | Profile 3 | none signed in | yes, v1.0.75 |
+  | Profile 4 | abzzo.india@gmail.com | no |
+  | Profile 5 | marketplaces@sleepycat.in | no |
+
+  `atharvborse2004@gmail.com` is the Claude Code account and it lives on
+  Profile 1, which has no extension. Either install it on Profile 1 from
+  claude.ai/chrome, or sign that account into claude.ai on Default. Restart
+  Chrome afterwards. Until then in-session browser QA is unavailable and every
+  phase's last step is owed the moment it is written.
+
+  What that leaves unproven for phase 2, specifically: **the double-tap
+  done-condition**, which is guarded in `store.jsx` by a ref and cannot be
+  checked from SQL. Everything server-side is proven by
+  `003_wallets_ledger_check.sql`. The phase 1 signup path was walked by hand on
+  a real device with real SMS; nothing since has been.
 - **The second-account check needs a second SIM.** Proven at the database
   level, not through the UI. See §2 — owner is the partner, after deploy.
 
@@ -249,9 +365,25 @@ persistence should be logged against a phase before it is built.
 
 ## 5. What's in flight
 
-Phase 1 is done bar one check that needs a second SIM (§2). Migrations applied,
-RLS on and verified, phone auth live through Twilio Verify, front end wired and
-walked on a real device with real SMS.
+**Phase 1 is done** bar one check that needs a second SIM (§2). Migrations
+applied, RLS on and verified, phone auth live through Twilio Verify, front end
+wired and walked on a real device with real SMS.
+
+**Phase 2 is done bar the browser walk** (§2, §4). Schema, RLS, the debit
+function and the runnable check all pass; the four charging call sites are
+converted; the client cannot write a balance. What is not proven is the
+double-tap condition, which lives in the browser and needs the extension
+blocker in §4 cleared.
+
+One thing is owed, and it is not code.
+
+**Connect the Chrome extension** (§4). Three sessions blocked, and it is the
+reason two phases in a row end with an unwalked route.
+
+The other two are closed. The repository secrets were never missing — see
+below. The second-account condition is proven at the database level with a
+real second account and its one front-end defect is fixed (§2); only the
+visual walk remains, and that is the same browser blocker.
 
 **Not yet deployed, and the deploy needs one manual step first.** Everything
 above was verified against `localhost:5260`. Vite inlines `VITE_*` at build
@@ -260,14 +392,19 @@ time and `.env.local` is gitignored, so CI had neither value — the workflow ra
 `createClient(undefined, undefined)` and served a white screen. `deploy.yml` now
 passes both through.
 
-**Someone has to add the two repository secrets** — Settings → Secrets and
-variables → Actions → `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, values
-from `.env.local`. Until they exist the deployed site is blank, and it is blank
-in a way the build does not complain about.
+**The two repository secrets already existed.** An earlier version of this
+section said they were missing and that the deployed site was blank. Both were
+wrong: the 20 Aug run passed the workflow's `Verify Supabase env is present`
+step, which exits 1 on an empty value, and the live bundle has the right
+project ref inlined. They were re-set on 22 Aug from `.env.local` — same
+values, confirmed by the deployed bundle's project ref matching.
 
-Separately, the working tree also carries uncommitted front-end work this
-session did not make — the pro-nav redesign and the deity-image toggle
-recorded in §3's table (`Pooja.jsx`, and per that table's own entries,
-`mock.js`, `Tarot.jsx`, `bhaktamar.js`, `Consult.jsx`). Whoever picks this up
-next should reconcile with whoever holds that context before committing
-either side.
+The working tree is clean and Phase 0's "reconcile the tree" item is closed.
+
+**Nothing deployed yet still carries the phase 2 wallet**, and that matters
+more than it did for phase 1: the deployed site talks to the same Supabase
+project as local. There is one real wallet per real account, not one per
+environment. `backend/INSTRUCTIONS.md` §3 says never point a dev front end at
+production data — that rule is currently being broken, knowingly, because
+there is one project and no money in it. **It has to stop being true before
+phase 3**, which is the phase where the rupees are real.
