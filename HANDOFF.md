@@ -191,6 +191,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **Phase 1 (auth and profile) built** | `profiles` table + RLS + `handle_new_user` trigger, applied via Supabase MCP — see §2 above |
 | **Onboarding gains two screens**, `AskPhone` and `VerifyOtp`, between place and compute | `signInWithOtp` / `verifyOtp`; `Computing.jsx` writes the `profiles` row by `UPDATE`, not insert, once the account exists |
 | **Profile, Chart and Horoscope read the signed-in user** | `useProfileFields()` in `store.jsx`, merging the real `profiles` row with mock data for the fields the backend can't compute yet (phase 7) |
+| **21 Aug — birth place is worldwide, not four cities** | `AskPlace.jsx` searches Open-Meteo's geocoder, debounced 300ms and aborted per keystroke so a stale response can't replace a newer list. Each result carries its **IANA zone**, which is why that geocoder was picked over Nominatim/Photon — `birth_zone` was hardcoded `Asia/Kolkata`, survivable only while every option was Indian. The four Indian cities remain as the pre-typing default, so the common case costs no round trip. **Licence problem: the free tier is non-commercial and this product is not — see `docs/01-PRD.md` §8 before launch** |
 | **21 Aug — onboarding asks for an email with the phone** | Required to continue, shape-checked only, never verified and never an auth factor. `AskPhone.jsx` now carries both fields; the screen's question changed from *"What's your number?"* to *"Where do we reach you?"*. Column and reasoning in `docs/05-BACKEND-SCHEMA.md` §4.1; the purpose question is `docs/01-PRD.md` §8 |
 | **21 Aug — the onboarding draft survives a reload** | `sessionStorage`, in `store.jsx`. It was memory-only, and reading the SMS means leaving the app: an evicted page created an account with no birth details, silently. This is what actually caused the first live signup to land an empty row |
 | **21 Aug — `Computing.jsx` stops failing silently** | A lost draft routes back to re-answer; a failed write shows the error with a retry. Both used to land on the reveal, which looks identical whether or not anything was saved |
@@ -265,9 +266,7 @@ variables → Actions → `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, valu
 from `.env.local`. Until they exist the deployed site is blank, and it is blank
 in a way the build does not complain about.
 
-Separately, the working tree also carries uncommitted front-end work this
-session did not make — the pro-nav redesign and the deity-image toggle
-recorded in §3's table (`Pooja.jsx`, and per that table's own entries,
-`mock.js`, `Tarot.jsx`, `bhaktamar.js`, `Consult.jsx`). Whoever picks this up
-next should reconcile with whoever holds that context before committing
-either side.
+The working tree is clean. The pro-nav redesign and the deity-image toggle in
+§3's table were already committed; an earlier version of this section claimed
+they were still loose, and they were not. Phase 0's "reconcile the tree" item
+is closed.

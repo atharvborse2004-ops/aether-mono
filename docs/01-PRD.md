@@ -386,6 +386,22 @@ consultants.
   words. Two are currently incomplete and are flagged as such rather than
   reconstructed — a plausible wrong shloka is undetectable to the person it
   misleads.
+- **The place search is on a non-commercial licence, and this product is
+  commercial.** Birth places are geocoded through Open-Meteo's free geocoding
+  API, picked because it returns the IANA timezone with each result — the one
+  field `birth_zone` cannot be guessed later. Their terms restrict the free tier
+  to non-commercial use and name "apps that have subscriptions or display
+  advertisements" and "integrating our service into commercial products" as
+  commercial. Namo sells consults, so **the free tier does not cover this app in
+  production.** The free tier also caps at 10,000 calls/day and carries a CC-BY
+  4.0 attribution obligation.
+
+  **Open, and it blocks revenue, not the build:** either take Open-Meteo's paid
+  tier, or move to a geocoder whose licence permits commercial use *and* that
+  supplies a timezone — GeoNames (CC-BY, has a timezone endpoint), or a
+  self-hosted city dump with offline zone lookup, which removes the runtime
+  dependency altogether. Do not swap to a geocoder that returns only lat/lon; it
+  would reintroduce the guessed-zone failure.
 - **Email is collected at signup and its purpose is not yet settled.** Onboarding
   requires an address alongside the phone. It is never used to sign in and is
   never verified — it is held for reaching people later, marketing included.

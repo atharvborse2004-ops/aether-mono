@@ -47,11 +47,12 @@ export default function Computing() {
   const [attempt, setAttempt] = useState(0)
   const written = useRef(false)
 
-  /* Every field the write formats, not just the date. `to24Hour('')` returns
-     the string '00:undefined:00', which Postgres rejects as a `time` — so a
-     half-filled draft used to reach the database and come back as a cryptic
-     22007 instead of being caught here. */
-  const draftComplete = Boolean(birth.date && birth.time && birth.place)
+  /* Every field the write needs, not just the date. Two reasons: `to24Hour('')`
+     returns the string '00:undefined:00', which Postgres rejects as a `time`;
+     and a draft saved before the place search carried zones has no `zone`, which
+     would write a null birth_zone and quietly cost the chart its offset. Both
+     route back to re-answer instead. */
+  const draftComplete = Boolean(birth.date && birth.time && birth.place && birth.zone)
 
   /* The account exists but there is nothing complete to write and nothing
      already stored — the draft was lost between the questions and the code.
@@ -87,7 +88,11 @@ export default function Computing() {
         birth_place: birth.place,
         birth_lat: birth.lat,
         birth_lon: birth.lon,
-        birth_zone: 'Asia/Kolkata',
+        // The birth place's zone, carried from AskPlace. Hardcoding this was
+        // survivable only while the place list was four Indian cities; with
+        // worldwide search it would store India's zone against a London birth
+        // and shift every cusp with no error raised anywhere.
+        birth_zone: birth.zone,
       })
       .eq('id', session.user.id)
       .then(({ error }) => {

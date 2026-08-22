@@ -34,6 +34,9 @@ const EMPTY_BIRTH = {
   place: '',
   lat: null,
   lon: null,
+  // IANA name of the birth place's zone, from the geocoder in AskPlace. Never
+  // defaulted and never an offset — docs/05-BACKEND-SCHEMA.md §4.1.
+  zone: '',
   phone: '',
   email: '',
 }

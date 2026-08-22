@@ -116,7 +116,7 @@ In file order, which is also resolution order.
 | 3 | `/onboarding/name` | What to call you | non-empty | `/onboarding/date` |
 | 4 | `/onboarding/date` | Birth date — D / M / Y | 1–31, 1–12, ≥ 1900 | `/onboarding/time` |
 | 5 | `/onboarding/time` | Birth time — H : M, AM/PM | 1–12, 0–59 | `/onboarding/place` |
-| 6 | `/onboarding/place` | Birth place | one of **four hardcoded cities** | `/onboarding/phone` |
+| 6 | `/onboarding/place` | Birth place — worldwide search, debounced 300ms | a result must be **picked**, not typed; the pick carries lat, lon and IANA zone | `/onboarding/phone` |
 | 7 | `/onboarding/phone` | Mobile number and email, together | number matches `[6-9]` + 9 digits; email matches a shape check. **Both required** | `/onboarding/verify` |
 | 8 | `/onboarding/verify` | Six-digit code, with a resend | six digits, accepted by Supabase | `/onboarding/computing` |
 | 9 | `/onboarding/computing` | Two beats: loading lines, then the reveal. Writes the profile | — | `/home` |
@@ -135,6 +135,22 @@ you are on, so the choice cannot disagree with where you are.
 
 What it does not do: gate anything. Anyone typing `/pro/studio` is a consultant.
 Consultant approval (§8.3) is the fix.
+
+### Why the place step carries a timezone
+
+Step 6 is the only moment anyone knows the zone of the birth *place*, so it is
+where `birth_zone` is captured — from the geocoder, alongside lat and lon, never
+defaulted and never derived later. While the list was four Indian cities a
+hardcoded `Asia/Kolkata` was survivable; with worldwide search it would file a
+London birth under India's zone and shift every cusp with no error raised
+anywhere (`docs/05-BACKEND-SCHEMA.md` §4.1).
+
+This is why the step requires a **picked result** rather than typed text, and
+why the zone is shown on each row before it is committed. Two places called
+London differ by four hours, and that difference is invisible once stored.
+
+A draft saved before this step carried zones has no zone, so it is treated as
+incomplete and routed back to re-answer rather than written with a null.
 
 ### The draft, and where it becomes real
 
