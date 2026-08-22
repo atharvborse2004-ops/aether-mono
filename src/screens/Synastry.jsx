@@ -1,10 +1,14 @@
 import { Navigate, useParams } from 'react-router-dom'
-import { people, user } from '../data/mock.js'
+import { people } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import { Avatar, Button, Row, Ruler, Section, Stub } from '../components/Primitives.jsx'
+import { useProfileFields } from '../store.jsx'
 
 export default function Synastry() {
   const { id } = useParams()
+  /* Above the early return: hooks cannot be conditional, and this screen bails
+     to /people when the id is unknown. */
+  const me = useProfileFields()
   const p = people.find((x) => x.id === id)
   if (!p) return <Navigate to="/people" replace />
 
@@ -15,7 +19,7 @@ export default function Synastry() {
       <section className="section pt-10">
         <div className="flex items-center justify-center gap-6">
           <div className="text-center">
-            <Avatar initials={user.initials} size={48} />
+            <Avatar initials={me.initials} size={48} />
             <p className="mt-2 text-micro uppercase tracking-caps text-t3">You</p>
           </div>
           <span className="text-body text-t4">×</span>

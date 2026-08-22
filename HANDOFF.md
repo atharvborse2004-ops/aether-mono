@@ -137,13 +137,30 @@ sign-up → verify → the `profiles` row gets its details by `UPDATE` → close
 reads the original signup instant, which is the trigger-creates / client-updates
 split in §7 holding up under a real run.
 
-**Second done-condition is not walked.** A second account seeing only its own
-data is proven at the database level — acting as a different `auth.uid()`,
-`profiles` returns zero rows, and the column grant refuses `admin = true` even
-on the caller's own row — but nobody has done it through the UI with a real
-second account, because there is only one SIM here. That check cannot catch a
-front-end bug where a screen reads the wrong user, which is the class this repo
-has no linter to catch. **Owner: partner, after deploy.**
+**Second done-condition: mostly closed, and it found a bug.**
+
+There are now **four real accounts**, created on real numbers with real SMS —
+the partner's testing, not a second SIM here. Three completed the full
+`/otp` → `/verify` → Login flow; the fourth (`Raghu`) stopped after `/otp`,
+which is why that row has a name and no birth details. Auth logs across the
+window are clean: no errors, every request 200.
+
+- **Isolation is proven with a real second account, not a synthetic one.**
+  Acting as Rahul Jain's `auth.uid()`, `profiles` returns exactly one row —
+  his — and `wallets` one, and `ledger` zero. He cannot see Atharv's ₹1,240.
+- **The write path is proven by the data.** Three accounts hold three distinct
+  and correct birth records — Pune/2004, Delhi/1984, Mumbai/1994. Nothing
+  overwrote anything.
+- **The read path was audited rather than walked, and it was not clean.**
+  `/people/:id` rendered the mock user's initial under the label "You", so a
+  signed-in Rahul saw Atharv's `A`. Fixed on 22 Aug — `Synastry.jsx` now reads
+  `useProfileFields()`. **This is the exact bug class this condition exists to
+  catch, and it was caught by grepping every identity read rather than by
+  looking at a screen.** Worth repeating as a technique: the audit is cheaper
+  than the walk and it does not need a second SIM.
+
+What is still owed is the visual walk, and it is owed to the browser blocker in
+§4 rather than to a missing phone.
 
 ### Phase 2 — wallet
 
@@ -270,6 +287,8 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **22 Aug — `spend()` and `buyNow()` are async** | All four charging call sites converted in one commit — `CartSheet.jsx`, `Tarot.jsx`, `Reports.jsx`, `Shop.jsx` (×2). A missed `await` would be a purchase the server refused going through anyway, so they could not be split across commits |
 | **22 Aug — top-up is withdrawn, not deferred** | `addMoney()` deleted from the store; the top-up sheet, quick-recharge grid and payment tags out of `Wallet.jsx`. There is no payment provider until phase 3 and a credit RPC before then is a mint. The **"+2% cashback" label is deleted** with it |
 | **22 Aug — the seeded wallet transactions are gone** | `walletTransactions` is no longer read by `Wallet.jsx` or `Profile.jsx`. It held rupees while real rows hold paise, and a list mixing the two is off by a hundred on half its lines. Wallets now start empty and honest |
+| **22 Aug — `/people/:id` showed the wrong person's initial** | `Synastry.jsx` rendered the mock `user.initials` under the label "You". Now `useProfileFields()`. Found by auditing every identity read against `data/mock.js`, which is the cheap substitute for the second-account UI walk |
+| **22 Aug — the Chrome extension blocker is diagnosed** | Installed on Default and Profile 3; the Claude Code account is on Profile 1, which has neither. §4 |
 | **22 Aug — Phase 0's "reconcile the tree" is closed** | The 21 Aug onboarding work is committed. An earlier version of §5 claimed the tree also held pro-nav and deity-image work; it did not, that was already committed |
 
 **The `ChatPanel` crash listed under 15 Aug was introduced by the consultant-inbox
@@ -290,12 +309,23 @@ a prop threaded through four components, defined in none of them, green build.
 - **Nobody has walked the deity-image, pro-nav or phase 2 wallet changes in a
   browser.** The build passes, which here proves almost nothing. **The Chrome
   extension has now failed to connect for three sessions running** and is the
-  single longest-standing blocker in this file — it reports "extension is not
-  connected" against a running dev server on 5260. It needs someone to open
-  Chrome, confirm the extension at claude.ai/chrome is installed and signed
-  into the same account, and restart Chrome. Until then in-session browser QA
-  is not available to anyone working here, and every phase's last step is owed
-  the moment it is written.
+  single longest-standing blocker in this file. **The cause is now known.**
+  Chrome here has five profiles, and the Claude extension
+  (`fcoeoabgfenejglbffodgkkbkcdhcgfn`) is installed on only two of them:
+
+  | Profile | Google account | Extension |
+  |---|---|---|
+  | Default | atharv@sleepycat.in | yes, v1.0.85 |
+  | **Profile 1** | **atharvborse2004@gmail.com** | **no** |
+  | Profile 3 | none signed in | yes, v1.0.75 |
+  | Profile 4 | abzzo.india@gmail.com | no |
+  | Profile 5 | marketplaces@sleepycat.in | no |
+
+  `atharvborse2004@gmail.com` is the Claude Code account and it lives on
+  Profile 1, which has no extension. Either install it on Profile 1 from
+  claude.ai/chrome, or sign that account into claude.ai on Default. Restart
+  Chrome afterwards. Until then in-session browser QA is unavailable and every
+  phase's last step is owed the moment it is written.
 
   What that leaves unproven for phase 2, specifically: **the double-tap
   done-condition**, which is guarded in `store.jsx` by a ref and cannot be
@@ -345,13 +375,15 @@ converted; the client cannot write a balance. What is not proven is the
 double-tap condition, which lives in the browser and needs the extension
 blocker in §4 cleared.
 
-Three things are owed and none of them is code. In the order they cost:
+One thing is owed, and it is not code.
 
-1. **Connect the Chrome extension** (§4). Three sessions blocked. It is the
-   reason two phases in a row end with an unwalked route.
-2. **Add the two repository secrets** — below. Until they exist the deployed
-   site is blank.
-3. **The second-account walk** (§2). Needs a second SIM. Owner: partner.
+**Connect the Chrome extension** (§4). Three sessions blocked, and it is the
+reason two phases in a row end with an unwalked route.
+
+The other two are closed. The repository secrets were never missing — see
+below. The second-account condition is proven at the database level with a
+real second account and its one front-end defect is fixed (§2); only the
+visual walk remains, and that is the same browser blocker.
 
 **Not yet deployed, and the deploy needs one manual step first.** Everything
 above was verified against `localhost:5260`. Vite inlines `VITE_*` at build
@@ -360,10 +392,12 @@ time and `.env.local` is gitignored, so CI had neither value — the workflow ra
 `createClient(undefined, undefined)` and served a white screen. `deploy.yml` now
 passes both through.
 
-**Someone has to add the two repository secrets** — Settings → Secrets and
-variables → Actions → `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, values
-from `.env.local`. Until they exist the deployed site is blank, and it is blank
-in a way the build does not complain about.
+**The two repository secrets already existed.** An earlier version of this
+section said they were missing and that the deployed site was blank. Both were
+wrong: the 20 Aug run passed the workflow's `Verify Supabase env is present`
+step, which exits 1 on an empty value, and the live bundle has the right
+project ref inlined. They were re-set on 22 Aug from `.env.local` — same
+values, confirmed by the deployed bundle's project ref matching.
 
 The working tree is clean and Phase 0's "reconcile the tree" item is closed.
 
