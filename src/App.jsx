@@ -98,6 +98,14 @@ function PlainLayout() {
  * valid session never flashes onboarding first. The `/pro` side is exempt —
  * consultant identity isn't built yet (phase 4), so nothing there requires a
  * seeker session.
+ *
+ * So are the two seeker routes the `/pro` side links *out* to: ProConsult
+ * opens `/chart?name=…` for a booking, and ProProfile opens `/consult/:id` to
+ * preview a public page. Both read mock data and neither needs a session, so
+ * bouncing them to onboarding just breaks the consultant's own screens. The
+ * third cross-link, ProProfile's "Switch to seeking" → `/home`, is NOT exempt:
+ * that one is genuinely asking for the seeker app, and onboarding is the right
+ * answer when nobody is signed in.
  */
 function SessionGate() {
   const { session, sessionReady } = useStore()
@@ -110,7 +118,8 @@ function SessionGate() {
     // segment-boundary check, not startsWith('/pro') — that swallowed the
     // seeker's own profile route into the consultant exemption.
     const onPro = pathname === '/pro' || pathname.startsWith('/pro/')
-    if (pathname.startsWith('/onboarding') || onPro) return
+    const fromPro = pathname === '/chart' || pathname.startsWith('/consult/')
+    if (pathname.startsWith('/onboarding') || onPro || fromPro) return
     navigate('/onboarding', { replace: true })
   }, [session, sessionReady, pathname, navigate])
 

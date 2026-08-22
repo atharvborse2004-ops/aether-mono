@@ -17,6 +17,9 @@ declare
   v_replay  integer;
   v_rows    integer;
   v_raised  boolean;
+  v_type    text;
+  v_open    integer;   -- balance before this check touched anything
+  v_openrows integer;
 begin
   select id into v_uid from public.profiles order by created_at limit 1;
   if v_uid is null then
@@ -28,6 +31,14 @@ begin
                      json_build_object('sub', v_uid, 'role', 'authenticated')::text,
                      true);
 
+  -- Every assertion below is RELATIVE to whatever this wallet already holds.
+  -- An earlier version asserted absolute figures, which only passed while the
+  -- wallet happened to be empty — the first real credit made the check itself
+  -- fail and say the wallet was broken. A check that cannot run twice is not a
+  -- check.
+  select balance_paise into v_open from public.wallets where profile_id = v_uid;
+  select count(*) into v_openrows from public.ledger where wallet_id = v_uid;
+
   ---------------------------------------------------------------------------
   -- 1. The balance cache follows the ledger, with no writer maintaining it.
   ---------------------------------------------------------------------------
@@ -35,8 +46,8 @@ begin
   values (v_uid, 124000, 'Added money', 'adjustment', 'check');
 
   select balance_paise into v_balance from public.wallets where profile_id = v_uid;
-  if v_balance <> 124000 then
-    raise exception '1. credit did not reach the balance: expected 124000, got %', v_balance;
+  if v_balance <> v_open + 124000 then
+    raise exception '1. credit did not reach the balance: expected %, got %', v_open + 124000, v_balance;
   end if;
 
   ---------------------------------------------------------------------------
@@ -48,15 +59,27 @@ begin
   end if;
 
   select balance_paise into v_balance from public.wallets where profile_id = v_uid;
-  if v_balance <> 119100 then
-    raise exception '2. balance after debit: expected 119100, got %', v_balance;
+  if v_balance <> v_open + 119100 then
+    raise exception '2. balance after debit: expected %, got %', v_open + 119100, v_balance;
+  end if;
+
+  -- The row it wrote is an order, and cannot be anything else. 005 removed the
+  -- client-supplied `p_ref_type`; this is what notices if it comes back.
+  select ref_type into v_type
+    from public.ledger
+   where wallet_id = v_uid and kind = 'Tarot · Bhaktamar'
+   order by created_at desc limit 1;
+  if v_type <> 'order' then
+    raise exception '2. wallet_debit wrote ref_type %, expected order', v_type;
   end if;
 
   ---------------------------------------------------------------------------
   -- 3. A debit larger than the balance is refused BY THE SERVER, with the
   --    exact string the front end has always shown, and writes nothing.
   ---------------------------------------------------------------------------
-  v_res := public.wallet_debit(500000, 'Report · Career');
+  -- Also relative: a fixed 500000 is affordable once the wallet holds more
+  -- than that, and this assertion needs an amount that is always too large.
+  v_res := public.wallet_debit(500000 + v_open, 'Report · Career');
   if (v_res ->> 'ok')::boolean is not false then
     raise exception '3. an unaffordable debit was allowed through';
   end if;
@@ -65,13 +88,13 @@ begin
   end if;
 
   select balance_paise into v_balance from public.wallets where profile_id = v_uid;
-  if v_balance <> 119100 then
+  if v_balance <> v_open + 119100 then
     raise exception '3. a refused debit moved the balance to %', v_balance;
   end if;
 
   select count(*) into v_rows from public.ledger where wallet_id = v_uid;
-  if v_rows <> 2 then
-    raise exception '3. a refused debit left a ledger row: % rows, expected 2', v_rows;
+  if v_rows <> v_openrows + 2 then
+    raise exception '3. a refused debit left a ledger row: % rows, expected %', v_rows, v_openrows + 2;
   end if;
 
   ---------------------------------------------------------------------------
@@ -115,7 +138,7 @@ begin
   v_raised := false;
   begin
     insert into public.ledger (wallet_id, delta_paise, kind, ref_type)
-    values (v_uid, -999999, 'Overdraft', 'adjustment');
+    values (v_uid, -(v_open + 999999), 'Overdraft', 'adjustment');
   exception when others then
     v_raised := true;
   end;

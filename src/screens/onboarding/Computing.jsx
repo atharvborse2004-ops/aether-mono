@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { loadingLines, user } from '../../data/mock.js'
 import ChartWheel from '../../components/ChartWheel.jsx'
 import { Button, Field, Stub } from '../../components/Primitives.jsx'
-import { useStore } from '../../store.jsx'
+import { clearBirthDraft, useStore } from '../../store.jsx'
 import { supabase } from '../../lib/supabase.js'
 
 /** '14/11/1996' -> '1996-11-14'. The onboarding Slot fields are already
@@ -128,6 +128,7 @@ export default function Computing() {
           setSaveError(error.message)
           return undefined
         }
+        clearBirthDraft()
         return refreshProfile(session.user.id)
       })
   }, [session, birth, draftComplete, profile, profileLoading, refreshProfile, attempt])
@@ -145,8 +146,12 @@ export default function Computing() {
         <p className="mx-auto mt-4 max-w-measure text-meta text-live">{saveError}</p>
         <div className="mt-12">
           <Button
-            onClick={() => {
+            onClick={async () => {
               setSaveError('')
+              // Refetch first. When the failure was the profile read rather
+              // than the write, nothing else refreshes it, and retrying the
+              // effect alone just re-raises the same error forever.
+              if (session) await refreshProfile(session.user.id)
               setAttempt((a) => a + 1)
             }}
             variant="solid"

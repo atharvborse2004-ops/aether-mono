@@ -52,6 +52,17 @@ const EMPTY_BIRTH = {
    localStorage, so an abandoned signup clears itself with the tab. */
 const BIRTH_KEY = 'namo:birth-draft'
 
+/** Dropped once the draft has become a real `profiles` row. Exported rather
+ *  than the key itself: a second copy of the string in another file is the
+ *  kind of duplicate that survives a rename and silently stops clearing. */
+export function clearBirthDraft() {
+  try {
+    sessionStorage.removeItem(BIRTH_KEY)
+  } catch {
+    /* Storage denied. The draft dies with the tab anyway. */
+  }
+}
+
 function readBirthDraft() {
   try {
     return { ...EMPTY_BIRTH, ...JSON.parse(sessionStorage.getItem(BIRTH_KEY) || '{}') }
@@ -128,28 +139,43 @@ export function AppProvider({ children }) {
       supabase.from('wallets').select('balance_paise').single(),
       supabase.from('ledger').select('*').order('created_at', { ascending: false }).limit(50),
     ])
-    if (wallet.error) {
-      console.error('[wallet] load failed:', wallet.error.message)
-      return
-    }
-    setBalance(wallet.data.balance_paise)
-    setLedger((rows.data ?? []).map(toLedgerRow))
+    /* Two reads, applied independently. Bailing on the wallet error also threw
+       away a ledger that had loaded fine, and left `balance` at null with
+       nothing to bring it back — the wallet then shows an em dash for the life
+       of the tab and every Buy button stays disabled, because `canAfford`
+       compares against null. Apply what arrived, and let the caller retry. */
+    if (wallet.error) console.error('[wallet] load failed:', wallet.error.message)
+    else setBalance(wallet.data.balance_paise)
+
+    if (rows.error) console.error('[ledger] load failed:', rows.error.message)
+    else setLedger(rows.data.map(toLedgerRow))
   }, [])
 
   useEffect(() => {
     let active = true
 
-    supabase.auth.getSession().then(({ data: { session: initial } }) => {
-      if (!active) return
-      setSession(initial)
-      setSessionReady(true)
-      if (initial) {
-        refreshProfile(initial.user.id)
-        refreshWallet(initial.user.id)
-      }
-    })
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: initial } }) => {
+        if (!active) return
+        setSession(initial)
+        if (initial) {
+          refreshProfile(initial.user.id)
+          refreshWallet(initial.user.id)
+        }
+      })
+      .catch((err) => console.error('[auth] getSession failed:', err.message))
+      // In `finally`, not in `then`. Blocked storage or a boot-time network
+      // failure rejects this, and a `sessionReady` that never flips means
+      // SessionGate never runs — a signed-out visitor then browses the seeker
+      // screens on seed data indefinitely. Failing to read the session is not
+      // the same as having one.
+      .finally(() => {
+        if (active) setSessionReady(true)
+      })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      if (!active) return
       setSession(next)
       if (next) {
         refreshProfile(next.user.id)
@@ -187,7 +213,6 @@ export function AppProvider({ children }) {
      reads South Indian reads it everywhere, and finding the wheel again on
      Profile after choosing it on /chart is the app forgetting who you are. */
   const [chartSystem, setChartSystem] = useState('vedic')
-
 
   /* The chat panel — a right-side overlay rather than a route, so it can be
      opened from any tab and from the floating button without navigating. */
@@ -304,7 +329,14 @@ export function AppProvider({ children }) {
    */
   const spend = useCallback(
     async (amount, label) => {
-      if (spendingRef.current) return false
+      /* Says so. Every caller treats a `false` as "already explained to the
+         user", so a silent refusal here reads as a dead button — the second
+         tap of a double-tap, or a Buy pressed while the cart is checking out,
+         does nothing at all and gives no reason. */
+      if (spendingRef.current) {
+        showToast('One payment at a time.')
+        return false
+      }
       spendingRef.current = true
       setSpending(true)
       try {
@@ -325,8 +357,12 @@ export function AppProvider({ children }) {
           return false
         }
         setBalance(data.balance_paise)
-        // The row itself — id and timestamp — only exists on the server.
-        refreshWallet(session?.user?.id)
+        // Awaited, and inside the guard. The row's id and timestamp only exist
+        // on the server, so this read is needed — but two unawaited reads from
+        // two quick purchases have no ordering, and the older response landing
+        // second repaints a balance one purchase too high. Holding the guard
+        // until it settles is what makes the sequence safe.
+        await refreshWallet(session?.user?.id)
         return true
       } finally {
         spendingRef.current = false
@@ -396,7 +432,6 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
-      refreshWallet,
       chatOpen,
       setChatOpen,
       chatTab,
@@ -440,7 +475,6 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
-      refreshWallet,
       chatOpen,
       chatTab,
       openChat,
@@ -526,14 +560,24 @@ function initialsOf(name) {
  * moment a profile exists.
  */
 export function useProfileFields() {
-  const { profile } = useStore()
+  const { profile, session } = useStore()
+
+  /* Seed identity is the right answer when signed out — that is the demo, and
+     it is what the screens were built against. It is the wrong answer the
+     moment someone is signed in: they see the seed person's name and birth
+     details as their own for the length of the profile fetch, and permanently
+     if that fetch fails, with Chart drawing a wheel for a birth that is not
+     theirs. Blank is honest; a confident wrong chart is not. */
+  const seed = (value) => (session ? '' : value)
 
   return {
-    name: profile?.name || user.name,
-    initials: profile ? initialsOf(profile.name) : user.initials,
-    birthDate: profile?.birth_date ? formatIsoDate(profile.birth_date) : user.birthDate,
-    birthTime: profile?.birth_time ? formatSqlTime(profile.birth_time) : user.birthTime,
-    birthPlace: profile?.birth_place || user.birthPlace,
+    name: profile?.name || seed(user.name),
+    initials: profile ? initialsOf(profile.name) : seed(user.initials),
+    birthDate: profile?.birth_date ? formatIsoDate(profile.birth_date) : seed(user.birthDate),
+    birthTime: profile?.birth_time ? formatSqlTime(profile.birth_time) : seed(user.birthTime),
+    birthPlace: profile?.birth_place || seed(user.birthPlace),
+    // Phase 7 computes these. Until then they are the same for everyone by
+    // design rather than by accident — docs/03-APP-FLOW.md §10.
     sunSign: user.sunSign,
     moonSign: user.moonSign,
     risingSign: user.risingSign,

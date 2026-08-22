@@ -10,7 +10,20 @@ export default function AskDate() {
   const [m, setM] = useState('')
   const [y, setY] = useState('')
 
-  const valid = +d >= 1 && +d <= 31 && +m >= 1 && +m <= 12 && y.length === 4 && +y >= 1900
+  /* A real calendar check, not a range check. `31/02/1997` passed the old one
+     and reached Postgres as `1997-02-31`, which a `date` column rejects — and
+     since phase 1 that rejection lands on the reveal screen as a raw driver
+     message, after the account and wallet already exist. Constructing the date
+     and reading it back is the shortest thing that cannot be fooled by a short
+     month or a non-leap February. */
+  const valid = (() => {
+    if (y.length !== 4) return false
+    const [dd, mm, yy] = [+d, +m, +y]
+    if (!(yy >= 1900 && yy <= new Date().getFullYear())) return false
+    if (!(mm >= 1 && mm <= 12) || !(dd >= 1 && dd <= 31)) return false
+    const at = new Date(yy, mm - 1, dd)
+    return at.getFullYear() === yy && at.getMonth() === mm - 1 && at.getDate() === dd
+  })()
 
   return (
     <QuestionFrame

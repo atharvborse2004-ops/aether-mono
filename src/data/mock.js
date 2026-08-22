@@ -1316,20 +1316,17 @@ export const loadingLines = [
 ]
 
 /* ══════════════════════════════════════════════════════════════════════════
-   WALLET — balance, ledger and top-up presets. Prototype state only; the
-   balance lives in the store and resets on reload.
+   WALLET — top-up presets only. The balance and the ledger are real from
+   phase 2: they are server rows, read under RLS. The seeded transaction list
+   that used to live here is gone — it was denominated in rupees where real
+   entries are paise, its w1–w6 ids collided with `warnings` (see
+   docs/05-BACKEND-SCHEMA.md §1.4), and nothing reads it any more.
+
+   `topUpAmounts` stays because the consultant withdraw sheet still uses it,
+   and phase 3 restores it on the seeker side.
    ══════════════════════════════════════════════════════════════════════════ */
 
 export const topUpAmounts = [500, 1000, 2000, 5000]
-
-export const walletTransactions = [
-  { id: 'w1', label: 'Ritu Kashyap · 30 min', kind: 'debit', amount: 1499, date: '28 Jul', method: 'Wallet' },
-  { id: 'w2', label: 'Added money', kind: 'credit', amount: 2000, date: '27 Jul', method: 'UPI' },
-  { id: 'w3', label: 'Question pack · 12', kind: 'debit', amount: 349, date: '24 Jul', method: 'Wallet' },
-  { id: 'w4', label: 'Meher Bano · 15 min', kind: 'debit', amount: 899, date: '19 Jul', method: 'Wallet' },
-  { id: 'w5', label: 'Cashback · first session', kind: 'credit', amount: 150, date: '19 Jul', method: 'Promo' },
-  { id: 'w6', label: 'Added money', kind: 'credit', amount: 1000, date: '11 Jul', method: 'Card' },
-]
 
 /* ══════════════════════════════════════════════════════════════════════════
    ACADEMY — courses, live events and saved downloads.
