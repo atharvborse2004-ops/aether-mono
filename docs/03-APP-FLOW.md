@@ -136,6 +136,35 @@ you are on, so the choice cannot disagree with where you are.
 What it does not do: gate anything. Anyone typing `/pro/studio` is a consultant.
 Consultant approval (§8.3) is the fix.
 
+### The two session gates
+
+`SessionGate` in `App.jsx` runs on every route and enforces two things, both
+waiting for the session to resolve first so a reload never flashes onboarding.
+
+1. **Signed out** → `/onboarding`.
+2. **Signed in, but the stored profile has no birth date** → `/onboarding/date`,
+   to finish the questions.
+
+The second exists because an account is created the moment the phone is
+verified, while the write that fills in everything else happens a step later and
+can be refused. A wrong device clock is enough to cause it. Anyone left in that
+state used to land on `/home`, where every screen fills its gaps from `mock.js`
+— so they were shown a stranger's birth date and sun sign as their own, with
+nothing indicating anything had failed.
+
+It fires only on a profile row that **loaded and genuinely has no birth date.**
+A row still in flight, or one whose fetch failed, leaves people where they are:
+redirecting on either would throw someone out of the app on a weak connection.
+
+Consequences elsewhere in the flow, both because the person is already
+authenticated:
+
+- **Step 6 skips step 7 for them.** A signed-in visitor goes from place straight
+  to the write. Sending them through the phone step would text a second code for
+  an account they are already inside.
+- **Skipping step 7 means no email is typed**, so the write falls back to the
+  address already stored rather than overwriting it with an empty draft.
+
 ### Why the place step carries a timezone
 
 Step 6 is the only moment anyone knows the zone of the birth *place*, so it is

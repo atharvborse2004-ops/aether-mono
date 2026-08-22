@@ -99,7 +99,11 @@ export default function Computing() {
       .from('profiles')
       .update({
         name: birth.name,
-        email: (birth.email ?? '').trim() || null,
+        // Falls back to what is already stored. Someone sent back to finish a
+        // half-written profile skips the email step, so the draft has none —
+        // and writing that empty draft straight through would erase an address
+        // they had already given.
+        email: (birth.email ?? '').trim() || profile?.email || null,
         birth_date: toIsoDate(birth.date),
         birth_time: to24Hour(birth.time),
         birth_time_known: true,
@@ -124,7 +128,7 @@ export default function Computing() {
         }
         return refreshProfile(session.user.id)
       })
-  }, [session, birth, draftComplete, refreshProfile, attempt])
+  }, [session, birth, draftComplete, profile, refreshProfile, attempt])
 
   /* Resending a rejected token gets the same rejection, so the retry replaces
      the session before trying again. Without this the button loops forever on a

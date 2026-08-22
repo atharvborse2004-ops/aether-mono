@@ -47,7 +47,7 @@ function coordLabel(r) {
 
 export default function AskPlace() {
   const navigate = useNavigate()
-  const { setBirthField } = useStore()
+  const { setBirthField, session } = useStore()
   const [q, setQ] = useState('')
   const [picked, setPicked] = useState(null)
   const [results, setResults] = useState(null)
@@ -110,7 +110,11 @@ export default function AskPlace() {
         setBirthField('lon', picked.longitude)
         // The whole reason this geocoder was chosen. Never defaulted.
         setBirthField('zone', picked.timezone)
-        navigate('/onboarding/phone')
+        /* Someone already signed in is here to finish a profile that never got
+           its birth details, not to make an account. Sending them through the
+           phone step again would text them a second code for an account they
+           are already inside. */
+        navigate(session ? '/onboarding/computing' : '/onboarding/phone')
       }}
     >
       <input
