@@ -2,7 +2,7 @@ import { REPORT_MULTIPLIER, reports } from '../data/mock.js'
 import { TopBar } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopButton, PopCard, PopTag } from '../components/Pop.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useStore } from '../store.jsx'
 
 /**
  * Reports — the paid long-form artefacts.
@@ -16,7 +16,7 @@ import { useStore } from '../store.jsx'
  * `mock.js` — so if the reference numbers turn up, one constant changes.
  */
 export default function Reports() {
-  const { showToast, addToCart, buyNow, balance } = useStore()
+  const { showToast, addToCart, buyNow, spending, balance } = useStore()
 
   return (
     <>
@@ -30,7 +30,9 @@ export default function Reports() {
           A session is an hour and a memory. A report is the same reading you can go back to in
           March, when you have forgotten what was said.
         </p>
-        <p className="mt-4 caps-sm t-faint tnum">Wallet · ₹{balance.toLocaleString('en-IN')}</p>
+        <p className="mt-4 caps-sm t-faint tnum">
+          Wallet · {balance === null ? '—' : `₹${rupees(balance)}`}
+        </p>
       </section>
 
       <section className="px-5 py-6">
@@ -77,7 +79,13 @@ export default function Reports() {
                     <PopButton size="sm" full={false} onClick={() => addToCart(r)}>
                       Add to cart
                     </PopButton>
-                    <PopButton size="sm" full={false} variant="gold" onClick={() => buyNow(r)}>
+                    <PopButton
+                      size="sm"
+                      full={false}
+                      variant="gold"
+                      disabled={spending}
+                      onClick={() => buyNow(r)}
+                    >
                       Buy now
                     </PopButton>
                   </div>

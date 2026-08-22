@@ -286,9 +286,15 @@ most of the app. Settings holds **Switch to consultant → `/pro/feed`**, which 
 an ordinary link because the side is not state.
 
 ### `/wallet`
-Balance, quick-recharge presets, and a top-up sheet with a validated custom
-amount and a live new-balance preview. **The only credit path in the app.**
-Payment-method tags are decorative.
+Balance and history, both read from the server. **Nothing on this screen adds
+money.** The quick-recharge presets, the top-up sheet and the payment-method
+tags are gone: there is no payment provider until phase 3, and a control that
+moves a real balance with nothing behind it is the one thing a wallet must not
+offer. *Add money* is present but disabled, and says when it opens.
+
+The seeded transaction list is gone too, here and on the profile wallet tab.
+It was denominated in rupees while real entries are paise, and a list mixing
+the two is off by a hundred on half its lines.
 
 ### Others
 `/reports` charges for real but **has no way to open the cart** — the only route
@@ -363,8 +369,8 @@ and open only from their own screen.
 
 ## 7. Money paths
 
-**Stated once, here.** Five paths move the wallet today. All five are
-client-side arithmetic.
+**Stated once, here.** Four paths move the wallet, and none of them is
+arithmetic in the browser any more.
 
 | # | Path | Effect |
 |---|---|---|
@@ -372,11 +378,20 @@ client-side arithmetic.
 | 2 | Shop *Buy now* | Debits the product price |
 | 3 | Reports *Buy now* | Debits the report price |
 | 4 | Tarot paid pull | Debits the per-pull price |
-| 5 | Wallet top-up | **Credits** — the only credit path |
 
-Debits run through one guard that refuses when the balance is short and toasts
-the reason. That refusal path already exists and already has copy, which is the
-one piece of money logic the prototype gets right.
+**There is no credit path.** Top-up was the fifth and it is withdrawn until
+phase 3 gives it a payment behind it.
+
+All four debits go through one function on the server, which decides under a
+row lock and refuses in the app's own words when the balance is short. The
+client compares nothing: the balance it holds is a read of a cache, and a
+screen that decided for itself would be deciding on a number devtools can
+edit.
+
+**Every caller awaits it.** The debit returns a promise, and `if (promise)` is
+truthy — a caller that forgets lets through a purchase the server refused. A
+second guard sits in the store rather than on the buttons, so a re-entrant tap
+is refused even if a button forgets its pending state.
 
 ### Displayed but never charged
 
@@ -452,11 +467,15 @@ stored** — a persisted role could disagree with the address bar. Also: the act
 profile tab, the visible reel, and every drill-in identity.
 
 ### The store
-One context, no persistence, everything resets on reload.
+One context. Most of it still resets on reload.
 
-Birth draft · wallet balance and ledger · cart lines · questions remaining ·
-chat panel open state and tab · horoscope panel state · cart sheet state ·
-language · toast · and the flag set.
+Server-backed, and therefore surviving a reload: the session, the profile, and
+the **wallet balance and ledger**.
+
+Still local, still evaporating: cart lines · questions remaining · chat panel
+open state and tab · horoscope panel state · cart sheet state · language ·
+toast · and the flag set. The birth draft is the one exception — it survives in
+`sessionStorage` for the length of the signup.
 
 ### The flag set
 One flat `Set` of namespaced strings, which is the prototype's best idea:

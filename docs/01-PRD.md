@@ -90,7 +90,7 @@ Status is honest: **UI** means the screen exists and is wired to mock data;
 | Reports | UI | **Charges the wallet for real** |
 | Premium tiers | UI | Shows a price, grants nothing |
 | Academy — courses, events, downloads | UI | Enrol toasts. Course links go to YouTube *search* URLs |
-| Wallet — balance, top-up, ledger | UI | Real arithmetic, in the browser |
+| Wallet — balance and ledger | **Real** | Server-owned. Debits only — top-up waits for payments |
 | Payments | **None** | Payment-method tags are decorative |
 | People / synastry | UI | Fixed |
 | Notifications | UI | No read state, no deep links |
@@ -193,11 +193,19 @@ requested capability with **no upload path in the app today**.
 
 Everything is paid from a wallet rather than per transaction.
 
-Top-up presets **₹500 · ₹1,000 · ₹2,000 · ₹5,000**; custom amounts **₹100 to
-₹1,00,000**. A "+2% cashback" label appears on ₹2,000 and above and **is never
-applied** — either implement it or remove it before real money moves.
+The balance and the ledger are real and live on the server. **Money can only
+leave.** There is no way to add any from inside the app until Razorpay lands,
+so the top-up presets and the custom-amount sheet are not in the product right
+now; when they return the presets are **₹500 · ₹1,000 · ₹2,000 · ₹5,000** with
+custom amounts **₹100 to ₹1,00,000**.
 
-Opening demo balance: ₹1,240.
+The **"+2% cashback" label is deleted**, not deferred. It appeared on ₹2,000
+and above and was never applied, and an unimplemented discount promise must not
+be on screen the day real money starts moving. Reinstating it means pricing it
+first, here.
+
+There is no opening demo balance. A new account starts at **₹0**, the same
+call as showing a consultant 0 followers rather than a fabricated 84,200.
 
 ### 4.9 Referrals
 
@@ -206,9 +214,12 @@ product and it currently has no fraud control.
 
 ### 4.10 Where money actually moves today
 
-Five paths, all client-side:
+Four paths, all decided on the server:
 
-Cart checkout · Shop *Buy now* · Reports *Buy now* · Tarot pull · Wallet top-up.
+Cart checkout · Shop *Buy now* · Reports *Buy now* · Tarot pull.
+
+Top-up was a fifth and was the only one that added money. It is withdrawn until
+there is a payment behind it.
 
 Everything else that displays a price charges nothing — including **every booking
 flow**, which is the primary revenue line.

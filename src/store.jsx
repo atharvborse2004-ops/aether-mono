@@ -13,12 +13,16 @@ import { translate } from './data/i18n.js'
 import { supabase } from './lib/supabase.js'
 
 /**
- * In-memory store for prototype state (cart count, remaining AI questions,
- * toast messages — still nothing persisted, nothing fetched) plus two things
- * that now are real: `session` and `profile`, backed by Supabase auth and the
- * `profiles` table (phase 1). `birth` stays the in-progress onboarding draft
- * before it is written; once a profile exists, screens read `profile`, not
- * `birth`.
+ * In-memory store for prototype state (cart, remaining AI questions, toast
+ * messages — still nothing persisted, nothing fetched) plus the parts that
+ * are now real: `session` and `profile` from Supabase auth and the `profiles`
+ * table (phase 1), and `balance`, `ledger` and `spend` from `wallets` and
+ * `ledger` (phase 2). `birth` stays the in-progress onboarding draft before
+ * it is written; once a profile exists, screens read `profile`, not `birth`.
+ *
+ * `spend` returns a PROMISE. It used to return a boolean, and `if (promise)`
+ * is always truthy — a caller that forgets to await it lets through a purchase
+ * the server refused.
  *
  * Which side of the app you are on is NOT state. HashRouter is mounted above
  * AppProvider in main.jsx, so the provider can read the URL — and the URL is
@@ -79,6 +83,25 @@ export function AppProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
 
+  /* Wallet — real from phase 2, and the first thing in this store the browser
+     cannot lie about. `balance` is PAISE, read back from the server under RLS.
+     The client has no write policy anywhere near `wallets` or `ledger`, so
+     devtools can move the number on screen and the next read puts it back.
+
+     `null` means not loaded yet, and it is deliberately not 0 — a wallet
+     briefly showing ₹0 to someone who has money is worse than showing nothing.
+
+     `spending` stops a double-tap becoming a double-charge. It is a ref as
+     well as state because two taps land in the same tick and state set by the
+     first has not applied by the second. The ref is what refuses; the state is
+     only what greys the button out. Guarding here rather than at each button
+     means a call site that forgets its pending state still cannot double
+     charge — there are five of them and the plan expects one to be missed. */
+  const [balance, setBalance] = useState(null)
+  const [ledger, setLedger] = useState([])
+  const [spending, setSpending] = useState(false)
+  const spendingRef = useRef(false)
+
   const refreshProfile = useCallback(async (userId) => {
     if (!userId) return setProfile(null)
     setProfileLoading(true)
@@ -92,6 +115,27 @@ export function AppProvider({ children }) {
     setProfileLoading(false)
   }, [])
 
+  /* Both reads are scoped by RLS to the caller's own rows, so neither carries
+     a user id in its filter — asking for someone else's wallet returns an
+     empty result rather than a refusal (docs/05-BACKEND-SCHEMA.md §7). */
+  const refreshWallet = useCallback(async (userId) => {
+    if (!userId) {
+      setBalance(null)
+      setLedger([])
+      return
+    }
+    const [wallet, rows] = await Promise.all([
+      supabase.from('wallets').select('balance_paise').single(),
+      supabase.from('ledger').select('*').order('created_at', { ascending: false }).limit(50),
+    ])
+    if (wallet.error) {
+      console.error('[wallet] load failed:', wallet.error.message)
+      return
+    }
+    setBalance(wallet.data.balance_paise)
+    setLedger((rows.data ?? []).map(toLedgerRow))
+  }, [])
+
   useEffect(() => {
     let active = true
 
@@ -99,20 +143,28 @@ export function AppProvider({ children }) {
       if (!active) return
       setSession(initial)
       setSessionReady(true)
-      if (initial) refreshProfile(initial.user.id)
+      if (initial) {
+        refreshProfile(initial.user.id)
+        refreshWallet(initial.user.id)
+      }
     })
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next)
-      if (next) refreshProfile(next.user.id)
-      else setProfile(null)
+      if (next) {
+        refreshProfile(next.user.id)
+        refreshWallet(next.user.id)
+      } else {
+        setProfile(null)
+        refreshWallet(null)
+      }
     })
 
     return () => {
       active = false
       sub.subscription.unsubscribe()
     }
-  }, [refreshProfile])
+  }, [refreshProfile, refreshWallet])
 
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
@@ -136,11 +188,6 @@ export function AppProvider({ children }) {
      Profile after choosing it on /chart is the app forgetting who you are. */
   const [chartSystem, setChartSystem] = useState('vedic')
 
-  /* Wallet. The opening balance matches the `user` record so Profile and the
-     wallet never disagree on load; every spend and top-up moves this one
-     number, and the ledger is prepended to. */
-  const [balance, setBalance] = useState(1240)
-  const [ledger, setLedger] = useState([])
 
   /* The chat panel — a right-side overlay rather than a route, so it can be
      opened from any tab and from the floating button without navigating. */
@@ -239,37 +286,54 @@ export function AppProvider({ children }) {
     [showToast],
   )
 
-  const addMoney = useCallback(
-    (amount) => {
-      setBalance((b) => b + amount)
-      setLedger((l) => [
-        { id: `t${l.length}-${amount}`, label: 'Added money', kind: 'credit', amount, date: 'Just now', method: 'UPI' },
-        ...l,
-      ])
-      showToast(`₹${amount.toLocaleString('en-IN')} added`)
-    },
-    [showToast],
-  )
-
   /**
-   * Spend against the wallet. Returns false and says why when the balance is
-   * short, so callers can stop rather than silently going negative — the one
-   * piece of money logic in the prototype that has to be right.
+   * Spend against the wallet. Same name and same single home as before, and
+   * the same `false` when it refuses — but it is now a PROMISE, so every
+   * caller must `await` it. `if (spend(...))` is always truthy and would let
+   * through a purchase the server refused.
+   *
+   * `amount` stays in rupees because that is what the catalogue in mock.js is
+   * denominated in. It is converted to paise here, once, at the only place
+   * that talks to the server. Nothing above this line ever sees paise and
+   * nothing below it ever sees rupees.
+   *
+   * The server decides. This function never compares against `balance` — that
+   * number is a read of a cache and a devtools-editable one at that; the
+   * refusal comes from wallet_debit() under a row lock, and the toast below
+   * shows the reason the server gave.
    */
   const spend = useCallback(
-    (amount, label) => {
-      if (amount > balance) {
-        showToast('Not enough balance')
-        return false
+    async (amount, label) => {
+      if (spendingRef.current) return false
+      spendingRef.current = true
+      setSpending(true)
+      try {
+        const { data, error } = await supabase.rpc('wallet_debit', {
+          p_amount_paise: Math.round(amount * 100),
+          p_kind: label,
+        })
+        if (error) {
+          console.error('[wallet] debit failed:', error.message)
+          showToast('Could not reach the wallet. Try again.')
+          return false
+        }
+        if (!data?.ok) {
+          showToast(data?.reason ?? 'Could not take that payment.')
+          // A refusal can carry the real balance — take it, in case the number
+          // on screen was the thing that was wrong.
+          if (typeof data?.balance_paise === 'number') setBalance(data.balance_paise)
+          return false
+        }
+        setBalance(data.balance_paise)
+        // The row itself — id and timestamp — only exists on the server.
+        refreshWallet(session?.user?.id)
+        return true
+      } finally {
+        spendingRef.current = false
+        setSpending(false)
       }
-      setBalance((b) => b - amount)
-      setLedger((l) => [
-        { id: `t${l.length}-${amount}`, label, kind: 'debit', amount, date: 'Just now', method: 'Wallet' },
-        ...l,
-      ])
-      return true
     },
-    [balance, showToast],
+    [showToast, refreshWallet, session],
   )
 
   const openChat = useCallback((tab = 'ai') => {
@@ -277,10 +341,11 @@ export function AppProvider({ children }) {
     setChatOpen(true)
   }, [])
 
-  /** Buy now — charge the wallet directly and skip the cart entirely. */
+  /** Buy now — charge the wallet directly and skip the cart entirely.
+   *  Async, because `spend` is. Callers must await it too. */
   const buyNow = useCallback(
-    (product) => {
-      if (spend(product.price, product.name)) {
+    async (product) => {
+      if (await spend(product.price, product.name)) {
         showToast(`Ordered · ${product.name}`)
         return true
       }
@@ -329,8 +394,9 @@ export function AppProvider({ children }) {
       toggleFlag,
       balance,
       ledger,
-      addMoney,
       spend,
+      spending,
+      refreshWallet,
       chatOpen,
       setChatOpen,
       chatTab,
@@ -372,8 +438,9 @@ export function AppProvider({ children }) {
       toggleFlag,
       balance,
       ledger,
-      addMoney,
       spend,
+      spending,
+      refreshWallet,
       chatOpen,
       chatTab,
       openChat,
@@ -393,6 +460,41 @@ export function useStore() {
   const ctx = useContext(AppStore)
   if (!ctx) throw new Error('useStore must be used inside <AppProvider>')
   return ctx
+}
+
+/**
+ * Paise to a rupee string. The only place in the app where money becomes
+ * text, which is what keeps the division from spreading — every other layer
+ * holds integers (backend/INSTRUCTIONS.md rule 1).
+ */
+export function rupees(paise) {
+  return (paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })
+}
+
+/**
+ * A `ledger` row in the shape the wallet and profile screens already read.
+ * `amountPaise` rather than `amount` on purpose: the old field held rupees,
+ * and a row carrying the same name with a hundred-fold different value is the
+ * bug this rename exists to make impossible.
+ */
+function toLedgerRow(row) {
+  return {
+    id: row.id,
+    label: row.kind,
+    kind: row.delta_paise > 0 ? 'credit' : 'debit',
+    amountPaise: Math.abs(row.delta_paise),
+    date: formatLedgerDate(row.created_at),
+    method: row.ref_type === 'payment' ? 'UPI' : 'Wallet',
+  }
+}
+
+function formatLedgerDate(iso) {
+  const at = new Date(iso)
+  const mins = Math.round((Date.now() - at) / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  if (mins < 1440) return `${Math.round(mins / 60)}h ago`
+  return at.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 }
 
 const MONTHS = [

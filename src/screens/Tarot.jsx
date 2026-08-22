@@ -42,7 +42,7 @@ const FREE_PULLS = 2
 const FREE_KEYS = ['tarot:free1', 'tarot:free2']
 
 export default function Tarot() {
-  const { showToast, hasFlag, toggleFlag, spend, balance, lang, t } = useStore()
+  const { showToast, hasFlag, toggleFlag, spend, spending, balance, lang, t } = useStore()
   const [deck, setDeck] = useState(null)
   const [card, setCard] = useState(null)
   const [step, setStep] = useState('deck')
@@ -52,14 +52,19 @@ export default function Tarot() {
   const usedFree = FREE_KEYS.filter(hasFlag).length
   const freeLeft = FREE_PULLS - usedFree
   const paying = freeLeft <= 0
-  const canAfford = !paying || balance >= TAROT_PRICE
+  /* `balance` is paise and TAROT_PRICE is rupees, so the comparison needs the
+     hundred. `balance` is also null until the wallet loads, and null fails
+     this test — which disables the button rather than offering a pull that
+     would be refused a moment later. */
+  const canAfford = !paying || balance >= TAROT_PRICE * 100
   const tradition = (d) => (lang === 'hi' ? d.traditionHi : d.tradition)
 
-  const pull = () => {
-    // Two a week are free; after that each card is charged, and spend()
-    // returns false when the wallet cannot cover it.
+  const pull = async () => {
+    // Two a week are free; after that each card is charged. spend() is a
+    // promise now — without the await, `!promise` is always false and every
+    // pull would go through, paid or not.
     if (paying) {
-      if (!spend(TAROT_PRICE, `Tarot · ${deck.name}`)) return
+      if (!(await spend(TAROT_PRICE, `Tarot · ${deck.name}`))) return
     } else {
       toggleFlag(FREE_KEYS[usedFree])
       showToast(t(freeLeft === 1 ? 'tarot.lastFree' : 'tarot.oneMore'))
@@ -188,10 +193,14 @@ export default function Tarot() {
           <PopButton
             variant="gold"
             className="mt-6"
-            disabled={!canAfford}
+            disabled={!canAfford || spending}
             onClick={pull}
           >
-            {paying ? `${t('tarot.pull')} · ₹${TAROT_PRICE}` : t('tarot.pull')}
+            {spending
+              ? '…'
+              : paying
+                ? `${t('tarot.pull')} · ₹${TAROT_PRICE}`
+                : t('tarot.pull')}
           </PopButton>
           {/* Only someone who has already paid once sees the terms here. */}
           {paying && (
