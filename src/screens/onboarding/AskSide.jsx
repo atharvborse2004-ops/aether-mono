@@ -62,7 +62,7 @@ export default function AskSide() {
       </div>
 
       <p className="mt-auto pt-10 text-center text-micro uppercase tracking-caps text-t3">
-        Prototype · no account required
+        Takes about a minute
       </p>
     </div>
   )

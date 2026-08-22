@@ -17,7 +17,7 @@ export default function AskName() {
   return (
     <QuestionFrame
       question="What should we call you?"
-      hint="It appears at the top of every reading. Nothing is sent anywhere."
+      hint="It appears at the top of every reading, and on your account."
       canContinue={valid}
       onNext={() => {
         setBirthField('name', name.trim())

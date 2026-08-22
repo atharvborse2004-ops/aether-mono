@@ -24,7 +24,7 @@ export default function Intro() {
           Begin
         </Button>
         <p className="mt-6 text-center text-micro uppercase tracking-caps text-t3">
-          Prototype · no account required
+          Takes about a minute
         </p>
       </div>
     </div>

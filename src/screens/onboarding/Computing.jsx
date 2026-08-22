@@ -75,6 +75,30 @@ export default function Computing() {
 
   useEffect(() => {
     if (written.current || !session || !draftComplete) return
+
+    /* Decide nothing until the profile has actually loaded. `profile` is null
+       while it is in flight, which is indistinguishable from "nothing stored"
+       — and guessing wrong here overwrites a real birth record. */
+    if (profileLoading) return
+    if (!profile) {
+      // The trigger guarantees a row for every session, so a null profile
+      // after loading is a failed read, not an absent record. Say so rather
+      // than writing blind or silently doing nothing.
+      setSaveError('Could not load your profile. Check your connection and try again.')
+      return
+    }
+
+    /* A returning user must not lose what is already stored. There is no
+       sign-in-only route yet — onboarding is the only way back to a session,
+       and it arrives here with a freshly typed draft every time. Writing it
+       would replace a real birth record with whatever was retyped to get past
+       the questions, and every downstream cusp with it. Sign them in and
+       leave the row alone. */
+    if (profile.birth_date) {
+      written.current = true
+      return
+    }
+
     written.current = true
 
     supabase
@@ -106,7 +130,7 @@ export default function Computing() {
         }
         return refreshProfile(session.user.id)
       })
-  }, [session, birth, draftComplete, refreshProfile, attempt])
+  }, [session, birth, draftComplete, profile, profileLoading, refreshProfile, attempt])
 
   if (saveError) {
     return (
