@@ -24,6 +24,23 @@ function to24Hour(hhmmAmpm) {
 }
 
 /**
+ * A token refused on *timing* rather than on identity. Supabase rejects a JWT
+ * whose issued-at or expiry does not line up with the server's clock, and the
+ * message arrives as raw API text — "JWT issued at future" — which tells the
+ * person holding the phone nothing at all.
+ *
+ * Nearly always a device clock set by hand or left on the wrong zone. The rest
+ * is brief skew between Supabase's own nodes. Both clear with a fresh token,
+ * which is why the retry below replaces the session rather than resending it.
+ */
+function isClockSkew(message = '') {
+  // The whitespace is optional on purpose: the same condition arrives as both
+  // "JWT issued at future" and "JWSError JWTNotYetValid" depending on which
+  // layer refuses it.
+  return /jwt/i.test(message) && /(future|expired|not\s*yet\s*valid|issued\s*at|\biat\b)/i.test(message)
+}
+
+/**
  * Two beats on one screen: the compute, then the reveal.
  *
  * The loading state does real brand work — naming the data source turns a
@@ -45,6 +62,7 @@ export default function Computing() {
   // the error alone changes none of its other dependencies — the retry would
   // dismiss the message and land on the reveal without writing anything.
   const [attempt, setAttempt] = useState(0)
+  const [retrying, setRetrying] = useState(false)
   const written = useRef(false)
 
   /* Every field the write needs, not just the date. Two reasons: `to24Hour('')`
@@ -108,26 +126,47 @@ export default function Computing() {
       })
   }, [session, birth, draftComplete, refreshProfile, attempt])
 
+  /* Resending a rejected token gets the same rejection, so the retry replaces
+     the session before trying again. Without this the button loops forever on a
+     clock-skew failure — which is exactly how it behaved in the wild. */
+  const retry = async () => {
+    if (retrying) return
+    setRetrying(true)
+    try {
+      await supabase.auth.refreshSession()
+    } catch {
+      /* Offline, or the refresh token is gone too. Let the write below fail on
+         its own terms rather than swallowing the reason here. */
+    }
+    setSaveError('')
+    setRetrying(false)
+    setAttempt((a) => a + 1)
+  }
+
   if (saveError) {
+    const skew = isClockSkew(saveError)
     return (
       <div className="flex min-h-full animate-fade flex-col justify-center px-6 pb-10 text-center">
         <p className="text-micro uppercase tracking-caps text-t3">Not saved</p>
         <h1 className="mx-auto mt-5 max-w-[16ch] text-display font-light">
-          Your details didn&apos;t reach us.
+          {skew ? 'This phone’s clock is wrong.' : 'Your details didn’t reach us.'}
         </h1>
         <p className="prose-c mt-6">
-          You&apos;re signed in, but the birth details are still on this device. Try again.
+          {skew
+            ? 'Your sign-in was refused because this device has the wrong time. Open Settings, set date and time to automatic, then try again.'
+            : 'You’re signed in, but the birth details are still on this device. Try again.'}
         </p>
-        <p className="mx-auto mt-4 max-w-measure text-meta text-live">{saveError}</p>
+        <p className="prose-c mt-4">Your answers are still here. Nothing was lost.</p>
+
+        {/* Kept, but demoted. This is a diagnostic for whoever reads the bug
+            report, not an instruction for the person stuck on the screen. */}
+        <p className="mx-auto mt-6 max-w-measure text-micro uppercase tracking-caps text-t3">
+          {saveError}
+        </p>
+
         <div className="mt-12">
-          <Button
-            onClick={() => {
-              setSaveError('')
-              setAttempt((a) => a + 1)
-            }}
-            variant="solid"
-          >
-            Try again
+          <Button onClick={retry} variant="solid">
+            {retrying ? 'Retrying…' : 'Try again'}
           </Button>
         </div>
       </div>

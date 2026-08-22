@@ -171,6 +171,17 @@ reveal screen looks identical whether or not the write landed:
 - **Draft lost and no details already stored** → back to step 4 to re-answer.
 - **The write itself fails** → a "not saved" screen carrying the error, with a
   retry. Never the reveal.
+- **The token is refused on timing** → the same screen, but it names the cause
+  and what to do: the device clock is wrong, set date and time to automatic.
+
+**The retry replaces the session, it does not resend it.** A token refused for
+its issued-at or expiry stays refused however many times it is sent, so a plain
+resend loops forever — which is how it behaved for the first outside tester,
+who saw only the raw string `JWT issued at future` and a button that did
+nothing. The retry now refreshes the session first.
+
+Raw API error text stays on the screen but demoted to a diagnostic line. It is
+for whoever reads the bug report, not for the person stuck on the screen.
 
 Re-entry points: *Run onboarding again* restarts at step 1; *Edit birth details*
 jumps to step 4 and continues through the rest of the flow, so there is no
