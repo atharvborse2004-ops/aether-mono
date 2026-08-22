@@ -181,11 +181,18 @@ Three things about it are worth knowing before touching it:
   foot of `003`.
 - **Neither table has a write policy for anybody**, and `authenticated` has no
   `INSERT`/`UPDATE`/`DELETE` grant on either. Only `wallet_debit()` writes.
-- **`wallet_debit()` takes the amount from the client.** That is within rule 3,
-  which bans a number the *user benefits from* — a debit is not one. It is
-  shaped this way because there is no server-side catalogue until phases 8 and
-  10. Phase 5's booking is the first purchase whose price the server looks up
-  for itself, and this is the hole it closes.
+- **`wallet_debit()` takes the amount and the label from the client, and
+  nothing else.** The amount is within rule 3, which bans a number the *user
+  benefits from* — a debit is not one. It is shaped this way because there is
+  no server-side catalogue until phases 8 and 10. Phase 5's booking is the
+  first purchase whose price the server looks up for itself, and this is the
+  hole it closes.
+- **`ref_type` is fixed at `'order'`, not passed.** `003` shipped it as a
+  defaulted third parameter, which no caller ever used and which any signed-in
+  client could therefore set to `'payment'` or `'refund'` by calling the RPC
+  directly. No money moves either way, but a client-chosen `ref_type` renders
+  as method "UPI" in the wallet and is what phase 3 reconciles settlements
+  against. `005` drops the parameter.
 
 **There is no credit path at all.** Top-up needed Razorpay, which is phase 3,
 and a client-callable credit function before then is a mint. So `addMoney()` is
@@ -289,8 +296,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **21 Aug — onboarding asks for an email with the phone** | Required to continue, shape-checked only, never verified and never an auth factor. `AskPhone.jsx` now carries both fields; the screen's question changed from *"What's your number?"* to *"Where do we reach you?"*. Column and reasoning in `docs/05-BACKEND-SCHEMA.md` §4.1; the purpose question is `docs/01-PRD.md` §8 |
 | **21 Aug — the onboarding draft survives a reload** | `sessionStorage`, in `store.jsx`. It was memory-only, and reading the SMS means leaving the app: an evicted page created an account with no birth details, silently. This is what actually caused the first live signup to land an empty row |
 | **21 Aug — `Computing.jsx` stops failing silently** | A lost draft routes back to re-answer; a failed write shows the error with a retry. Both used to land on the reveal, which looks identical whether or not anything was saved |
-| **A session gate added to `App.jsx`** | Redirects a signed-out visitor to `/onboarding` on load; the `/pro` side is exempt (phase 4 territory). Caught and fixed during the browser walk: the first version used `pathname.startsWith('/pro')`, which also matches `/profile` — rewritten to a segment-boundary check |
-
+| **A session gate added to `App.jsx`** | Redirects a signed-out visitor to `/onboarding` on load. Exempt: `/onboarding`, the `/pro` side (phase 4 territory), and the two seeker routes `/pro` links *out* to — `/chart` from a ProConsult booking row and `/consult/:id` from ProProfile's "view your public page". Both read mock data and need no session; gating them bounced a consultant out of their own screens. `/home` from "Switch to seeking" is deliberately **not** exempt — that one is asking for the seeker app. Two bugs found here: the first version used `pathname.startsWith('/pro')`, which also matches `/profile` (fixed to a segment-boundary check during the browser walk), and the cross-side links were missed until the phase 1–2 review |
 | **22 Aug — phase 2 built: the wallet is real** | `wallets` + `ledger` + `wallet_debit()`, applied via Supabase MCP. Balance and history read under RLS; the client has no write grant on either table. See §2 |
 | **22 Aug — `spend()` and `buyNow()` are async** | All four charging call sites converted in one commit — `CartSheet.jsx`, `Tarot.jsx`, `Reports.jsx`, `Shop.jsx` (×2). A missed `await` would be a purchase the server refused going through anyway, so they could not be split across commits |
 | **22 Aug — top-up is withdrawn, not deferred** | `addMoney()` deleted from the store; the top-up sheet, quick-recharge grid and payment tags out of `Wallet.jsx`. There is no payment provider until phase 3 and a credit RPC before then is a mint. The **"+2% cashback" label is deleted** with it |
@@ -298,6 +304,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **22 Aug — `/people/:id` showed the wrong person's initial** | `Synastry.jsx` rendered the mock `user.initials` under the label "You". Now `useProfileFields()`. Found by auditing every identity read against `data/mock.js`, which is the cheap substitute for the second-account UI walk |
 | **22 Aug — the app is walked in a browser, first time in four sessions** | 22 routes plus seven drill-ins, zero runtime and zero console errors. Phase 2's four done-conditions all verified. §4 |
 | **22 Aug — Profile's wallet card lost its "Add money" button** | It was gold, it navigated to `/wallet`, and since phase 2 that screen refuses to add money. "Open wallet" already went to the same place, so it is one button now |
+| **22 Aug — phase 1–2 reviewed line by line, twelve fixes** | The ones worth naming: `wallet_debit`'s client-settable `ref_type` (`005`); the session gate bouncing the consultant's own cross-side links; `Computing.jsx`'s "Try again" re-raising the same error forever because nothing refetched the profile; two unawaited `refreshWallet` reads racing so the older one repainted a balance a purchase too high; `useProfileFields()` showing the seed person's name and birth details to a signed-in user for the length of the fetch, and permanently if it failed; `AskDate` accepting `31/02/1997`, which reached Postgres as a `date` and failed *after* the account existed |
 | **22 Aug — two pro-nav rows in this table were wrong** | They claimed three tabs with Earnings folded into Profile. `Chrome.jsx:52` has five, Earnings first. Rewritten in place |
 | **22 Aug — the Chrome extension blocker is diagnosed** | Installed on Default and Profile 3; the Claude Code account is on Profile 1, which has neither. §4 |
 | **22 Aug — Phase 0's "reconcile the tree" is closed** | The 21 Aug onboarding work is committed. An earlier version of §5 claimed the tree also held pro-nav and deity-image work; it did not, that was already committed |
