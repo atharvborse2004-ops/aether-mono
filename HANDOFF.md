@@ -3,7 +3,7 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 22 Aug 2026.
+Updated 23 Aug 2026.
 
 This file describes **state**. It does not describe the system — that is what
 `docs/` is for, and repeating it here is how the two drift apart.
@@ -159,8 +159,11 @@ window are clean: no errors, every request 200.
   looking at a screen.** Worth repeating as a technique: the audit is cheaper
   than the walk and it does not need a second SIM.
 
-What is still owed is the visual walk, and it is owed to the browser blocker in
-§4 rather than to a missing phone.
+**Closed completely on 23 Aug.** Two accounts now exist on the dev project
+through test OTP, and account 2 sees exactly one profile — its own — with the
+other's id returning `[]` when asked for directly. It never needed a second
+SIM; it needed a project where fake numbers are allowed, which is what the
+environment split (§5) provided.
 
 ### Phase 2 — wallet
 
@@ -297,6 +300,9 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 | **21 Aug — the onboarding draft survives a reload** | `sessionStorage`, in `store.jsx`. It was memory-only, and reading the SMS means leaving the app: an evicted page created an account with no birth details, silently. This is what actually caused the first live signup to land an empty row |
 | **21 Aug — `Computing.jsx` stops failing silently** | A lost draft routes back to re-answer; a failed write shows the error with a retry. Both used to land on the reveal, which looks identical whether or not anything was saved |
 | **A session gate added to `App.jsx`** | Redirects a signed-out visitor to `/onboarding` on load. Exempt: `/onboarding`, the `/pro` side (phase 4 territory), and the two seeker routes `/pro` links *out* to — `/chart` from a ProConsult booking row and `/consult/:id` from ProProfile's "view your public page". Both read mock data and need no session; gating them bounced a consultant out of their own screens. `/home` from "Switch to seeking" is deliberately **not** exempt — that one is asking for the seeker app. Two bugs found here: the first version used `pathname.startsWith('/pro')`, which also matches `/profile` (fixed to a segment-boundary check during the browser walk), and the cross-side links were missed until the phase 1–2 review |
+| **23 Aug — dev and production are separate projects** | `namo-dev` (`mrjsatelbuiypodeulcx`) built by replaying `backend/schema/` into an empty database — the first proof those files reproduce the system from nothing. `.env.local` and `.mcp.json` point at it; the Actions secrets stay on production. Rules in `backend/INSTRUCTIONS.md` §3, state in §5 |
+| **23 Aug — dev signs in with test OTP** | `+919999900001` / `+919999900002`, code `123456`, no SMS and no Twilio. Two accounts on demand, which closed the second-account condition that had been owed since phase 1. Never to be added to production |
+| **23 Aug — phases 1 and 2 deployed** | Run `32631686638`. The bundle was inspected, not assumed: project ref inlined, `wallet_debit` present, deleted seed rows absent |
 | **22 Aug — phase 2 built: the wallet is real** | `wallets` + `ledger` + `wallet_debit()`, applied via Supabase MCP. Balance and history read under RLS; the client has no write grant on either table. See §2 |
 | **22 Aug — `spend()` and `buyNow()` are async** | All four charging call sites converted in one commit — `CartSheet.jsx`, `Tarot.jsx`, `Reports.jsx`, `Shop.jsx` (×2). A missed `await` would be a purchase the server refused going through anyway, so they could not be split across commits |
 | **22 Aug — top-up is withdrawn, not deferred** | `addMoney()` deleted from the store; the top-up sheet, quick-recharge grid and payment tags out of `Wallet.jsx`. There is no payment provider until phase 3 and a credit RPC before then is a mint. The **"+2% cashback" label is deleted** with it |
@@ -341,8 +347,10 @@ a prop threaded through four components, defined in none of them, green build.
   double-tap condition — it is a stricter one, since three clicks can be fired
   in a single tick, which no human tap can do.
 
-- **The second-account check needs a second SIM.** Proven at the database
-  level, not through the UI. See §2 — owner is the partner, after deploy.
+- ~~The second-account check needs a second SIM.~~ **Closed 23 Aug.** It never
+  needed a SIM; it needed a dev project where fake numbers are allowed. Two
+  accounts now exist on dev through Supabase's test OTP, and each sees only its
+  own rows — asking for the other's profile by explicit id returns `[]`. §2.
 
 ### Front-end defects, all recorded in `docs/03-APP-FLOW.md` §10
 
@@ -374,42 +382,54 @@ persistence should be logged against a phase before it is built.
 
 ## 5. What's in flight
 
-**Phase 1 is done** bar one check that needs a second SIM (§2). Migrations
-applied, RLS on and verified, phone auth live through Twilio Verify, front end
-wired and walked on a real device with real SMS.
+**Phases 1 and 2 are done and deployed.** Every done-condition for both is
+verified, including the two that needed a browser (§2) and the second-account
+check that was owed from the start (§4).
 
-**Phase 2 is done bar the browser walk** (§2, §4). Schema, RLS, the debit
-function and the runnable check all pass; the four charging call sites are
-converted; the client cannot write a balance. What is not proven is the
-double-tap condition, which lives in the browser and needs the extension
-blocker in §4 cleared.
+Live at https://atharvborse2004-ops.github.io/aether-mono/#/home — pushed
+23 Aug, run `32631686638`, green in ~40s. The deployed bundle was checked
+rather than assumed: the project ref is inlined, `wallet_debit` is present,
+and the deleted seed transactions are absent. A green build has served a white
+screen here twice, so the bundle gets inspected every time.
 
-**Nothing is owed on phases 1 and 2.** All three items that were open this
-morning are closed: the Chrome extension is connected and the app is walked
-(§4), the repository secrets were never actually missing (below), and the
-second-account condition is proven with a real second account, with the one
-front-end defect it exposed fixed (§2).
+### The environments are split, as of 23 Aug
 
-**Not yet deployed, and the deploy needs one manual step first.** Everything
-above was verified against `localhost:5260`. Vite inlines `VITE_*` at build
-time and `.env.local` is gitignored, so CI had neither value — the workflow ran
-`npm run build` with no `env:` block at all, which would have shipped
-`createClient(undefined, undefined)` and served a white screen. `deploy.yml` now
-passes both through.
+This was the last thing standing between here and phase 3, and it is done.
 
-**The two repository secrets already existed.** An earlier version of this
-section said they were missing and that the deployed site was blank. Both were
-wrong: the 20 Aug run passed the workflow's `Verify Supabase env is present`
-step, which exits 1 on an empty value, and the live bundle has the right
-project ref inlined. They were re-set on 22 Aug from `.env.local` — same
-values, confirmed by the deployed bundle's project ref matching.
+| | Project | Reached by | Holds |
+|---|---|---|---|
+| **Production** | `talqzgolttfgdzcoaqno` | the deployed site only | four real accounts, real money soon |
+| **Dev** | `mrjsatelbuiypodeulcx` (`namo-dev`) | `npm run dev`, `.mcp.json`, agents | throwaway |
 
-The working tree is clean and Phase 0's "reconcile the tree" item is closed.
+`.env.local` and `.mcp.json` both point at dev; the GitHub Actions secrets are
+the only place production credentials live. The rules are in
+`backend/INSTRUCTIONS.md` §3, which is where they belong.
 
-**Nothing deployed yet still carries the phase 2 wallet**, and that matters
-more than it did for phase 1: the deployed site talks to the same Supabase
-project as local. There is one real wallet per real account, not one per
-environment. `backend/INSTRUCTIONS.md` §3 says never point a dev front end at
-production data — that rule is currently being broken, knowingly, because
-there is one project and no money in it. **It has to stop being true before
-phase 3**, which is the phase where the rupees are real.
+**Dev was built by replaying `backend/schema/` into an empty project**, and
+that is the first real proof those files reproduce the system from nothing:
+a fresh signup got a `profiles` row *and* a `wallets` row from the trigger,
+and every boundary refused what it refuses in production — self-granting
+`admin` 403, writing a balance 403, inserting a ledger row 403, a legitimate
+name change 204, and `wallet_debit` returning `Not enough balance` against a
+zero balance.
+
+**Dev uses test OTP, not Twilio.** `+919999900001` and `+919999900002`, both
+with code `123456`. No SMS, no cost, and two accounts on demand — which is what
+finally closed the second-account condition. **These must never be added to
+production**, where they would be a way into a real wallet.
+
+### Owed before phase 3 ships
+
+- **Razorpay does not exist yet** — no account, no keys, no webhook secret.
+  Test-mode keys unblock all the building; live mode needs business KYC and is
+  the long pole, so start it early. Only live mode can satisfy "a real ₹1
+  payment credits the wallet exactly once".
+- **The server runtime is unnamed.** `docs/02-TRD.md` says "Supabase, plus a
+  small set of server functions" without saying where they run. Supabase Edge
+  Functions is the obvious answer — the webhook needs a public URL and a
+  verified signature — but the TRD owns that decision and does not record it yet.
+- **Dev has no data.** Two empty accounts. Anything that needs a balance needs
+  a ledger row inserted by hand; the recipe is at the foot of
+  `backend/schema/003_wallets_ledger.sql`.
+- **Today's review fixes have not been walked**, on either project. The logic
+  is checked and the build is green; nobody has clicked them.

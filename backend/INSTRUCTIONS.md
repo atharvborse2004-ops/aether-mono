@@ -119,7 +119,7 @@ a dev laptop was free to truncate.
 | | Project | Used by | Holds |
 |---|---|---|---|
 | **Production** | `talqzgolttfgdzcoaqno` | the deployed site only | real people, real money |
-| **Dev** | see `.env.local` | `npm run dev`, and every agent session | throwaway data |
+| **Dev** | `mrjsatelbuiypodeulcx` (`namo-dev`) | `npm run dev`, `.mcp.json`, every agent session | throwaway data |
 
 The rules that keep them apart:
 
@@ -135,6 +135,10 @@ The rules that keep them apart:
   the safe thing the default rather than something to remember.
 - **Migrations run against dev first, then production.** Same file, same order,
   no edits between. A migration that has run anywhere is history (§2).
+- **Dev signs in with test OTP, production with Twilio Verify.** Dev has
+  `+919999900001` and `+919999900002`, both code `123456`: no SMS, no cost, and
+  two accounts whenever a test needs them. **Never configure those numbers on
+  production** — there they are a way into a real wallet.
 
 ### Replaying the schema into a fresh project
 
