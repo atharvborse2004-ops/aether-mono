@@ -108,15 +108,55 @@ affected routes in a browser.**
 
 ## 3. Local development
 
-Not set up yet. When it is, this section holds the actual commands. The shape:
+**Two Supabase projects. Never one.**
 
-- The front end stays `npm run dev` on any free port, unchanged.
-- The API runs separately; the client points at it through **one env var**, so
-  switching between local and deployed is a one-line change.
-- Secrets live in `.env.local`, gitignored, with a committed `.env.example`
-  carrying the keys and no values.
-- **Never point a dev front end at production data.** The first destructive
-  mistake is always this one.
+Until 23 Aug there was one, and both `localhost` and the deployed site talked
+to it. That was survivable only while the wallet held nothing. It stopped being
+survivable the moment phase 3 put real rupees through it, and it was already
+wrong before that: real accounts created by real people sat in the same tables
+a dev laptop was free to truncate.
+
+| | Project | Used by | Holds |
+|---|---|---|---|
+| **Production** | `talqzgolttfgdzcoaqno` | the deployed site only | real people, real money |
+| **Dev** | see `.env.local` | `npm run dev`, and every agent session | throwaway data |
+
+The rules that keep them apart:
+
+- **`.env.local` points at DEV.** Always. It is gitignored; `.env.example`
+  carries the key names and no values.
+- **The GitHub Actions secrets point at PRODUCTION.** `VITE_SUPABASE_URL` and
+  `VITE_SUPABASE_ANON_KEY` under Settings → Secrets and variables → Actions.
+  They are the only place production credentials live, and the deploy workflow
+  fails loudly if either is empty rather than shipping a white screen.
+- **`.mcp.json` points at DEV.** This is the one that matters for agents: an
+  MCP server pinned to the production ref means every `apply_migration` and
+  `execute_sql` in every session lands on real data. Pointing it at dev makes
+  the safe thing the default rather than something to remember.
+- **Migrations run against dev first, then production.** Same file, same order,
+  no edits between. A migration that has run anywhere is history (§2).
+
+### Replaying the schema into a fresh project
+
+Everything in `schema/` is forward-only and ordered, so a fresh database is
+just the numbered files in sequence:
+
+```bash
+cat backend/schema/001_*.sql backend/schema/002_*.sql backend/schema/003_wallets_ledger.sql     backend/schema/004_*.sql backend/schema/005_*.sql > /tmp/bootstrap.sql
+```
+
+Paste that into the new project's SQL editor. Note `003_wallets_ledger.sql`
+is named explicitly — `003_wallets_ledger_check.sql` is a **test**, not a
+migration, and must not be in the replay.
+
+Then run the check on its own. It passes by raising
+`ERROR: PHASE 2 CHECKS PASSED`, which reads like a failure and is not.
+
+### The front end
+
+`npm run dev` on any free port, unchanged. Vite inlines `VITE_*` at build
+time, so **changing `.env.local` needs a dev-server restart** — a hot reload
+keeps the old value and the mismatch is invisible.
 
 ---
 
