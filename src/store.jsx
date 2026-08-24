@@ -108,10 +108,22 @@ export function AppProvider({ children }) {
      only what greys the button out. Guarding here rather than at each button
      means a call site that forgets its pending state still cannot double
      charge — there are five of them and the plan expects one to be missed. */
-  const [balance, setBalance] = useState(null)
+  const [balance, setBalanceState] = useState(null)
   const [ledger, setLedger] = useState([])
   const [spending, setSpending] = useState(false)
   const spendingRef = useRef(false)
+  const [toppingUp, setToppingUp] = useState(false)
+  const toppingUpRef = useRef(false)
+
+  /* `balance` read inside a running callback is the value that callback closed
+     over. `topup` polls across several awaits waiting for a webhook to land,
+     so it needs the current number, not the one from the render that started
+     it. Every setter goes through here so the two cannot separate. */
+  const balanceRef = useRef(null)
+  const setBalance = useCallback((next) => {
+    balanceRef.current = next
+    setBalanceState(next)
+  }, [])
 
   const refreshProfile = useCallback(async (userId) => {
     if (!userId) return setProfile(null)
@@ -372,6 +384,101 @@ export function AppProvider({ children }) {
     [showToast, refreshWallet, session],
   )
 
+  /**
+   * Add money. The mirror of `spend`, and deliberately not its equal: nothing
+   * here credits anything. This opens a Razorpay order, hands the browser to
+   * Razorpay's checkout, and stops. The wallet moves when Razorpay's webhook
+   * reaches the server and the signature verifies, which is the only path a
+   * rupee has into `ledger`.
+   *
+   * So the balance arriving is not something this function can await — the
+   * credit happens somewhere else, milliseconds to seconds later. It polls
+   * instead, and says so on screen rather than freezing a spinner over a
+   * number it does not control.
+   *
+   * `amountPaise`, not rupees, because this one is not reading a price out of
+   * mock.js — the person typed it, and the server re-checks the band anyway.
+   */
+  const topup = useCallback(
+    async (amountPaise) => {
+      if (toppingUpRef.current) return false
+      toppingUpRef.current = true
+      setToppingUp(true)
+      try {
+        const { data, error } = await supabase.functions.invoke('razorpay-order', {
+          body: { amount_paise: amountPaise },
+        })
+        /* invoke() throws its own error on a non-2xx, so the refusal string the
+           function wrote is inside the response body, not in `error.message`.
+           Dig it out — the server's job is to give a reason the interface can
+           show, and dropping it here wastes that. */
+        if (error) {
+          console.error('[topup] order failed:', error.message)
+          let reason = null
+          try {
+            reason = (await error.context.json()).reason
+          } catch {
+            /* Nothing readable came back — the network, not a refusal. */
+          }
+          showToast(reason ?? 'Could not start that payment. Try again.')
+          return false
+        }
+
+        try {
+          await loadCheckout()
+        } catch (err) {
+          console.error('[topup] checkout script:', err.message)
+          showToast('Could not load checkout. Check your connection.')
+          return false
+        }
+
+        const paid = await new Promise((resolve) => {
+          const rzp = new window.Razorpay({
+            key: data.key_id,
+            order_id: data.order_id,
+            amount: data.amount_paise,
+            currency: 'INR',
+            name: 'Namo',
+            description: 'Wallet top-up',
+            prefill: {
+              name: profile?.name ?? '',
+              email: profile?.email ?? '',
+              contact: session?.user?.phone ?? '',
+            },
+            theme: { color: '#1a1a1a' },
+            handler: () => resolve(true),
+            modal: { ondismiss: () => resolve(false) },
+          })
+          /* A card declined at the bank is not a dismissal and not a success —
+             without this the promise never settles and the button stays dead. */
+          rzp.on('payment.failed', () => resolve(false))
+          rzp.open()
+        })
+
+        if (!paid) return false
+
+        showToast('Payment received. Adding it to your wallet.')
+        /* The webhook is a separate request on a separate connection and it
+           may land after this line. Poll rather than guess a delay: stop the
+           moment the balance moves, give up after about twelve seconds and
+           leave the money where it is — it is in `ledger` either way, and a
+           reload will show it. */
+        const before = balanceRef.current
+        for (let i = 0; i < 8; i++) {
+          await new Promise((r) => setTimeout(r, 1500))
+          await refreshWallet(session?.user?.id)
+          if (balanceRef.current !== before) return true
+        }
+        showToast('Payment is still settling. Pull down in a moment.')
+        return true
+      } finally {
+        toppingUpRef.current = false
+        setToppingUp(false)
+      }
+    },
+    [showToast, refreshWallet, session, profile],
+  )
+
   const openChat = useCallback((tab = 'ai') => {
     setChatTab(tab)
     setChatOpen(true)
@@ -432,6 +539,8 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
+      topup,
+      toppingUp,
       chatOpen,
       setChatOpen,
       chatTab,
@@ -475,6 +584,8 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
+      topup,
+      toppingUp,
       chatOpen,
       chatTab,
       openChat,
@@ -494,6 +605,31 @@ export function useStore() {
   const ctx = useContext(AppStore)
   if (!ctx) throw new Error('useStore must be used inside <AppProvider>')
   return ctx
+}
+
+/**
+ * Razorpay's checkout script, fetched the first time somebody adds money and
+ * never again. Not in `index.html`: a third-party script on every route, for a
+ * sheet most sessions never open, is a tax on every other screen.
+ */
+let checkoutLoad = null
+function loadCheckout() {
+  if (window.Razorpay) return Promise.resolve()
+  if (!checkoutLoad) {
+    checkoutLoad = new Promise((resolve, reject) => {
+      const el = document.createElement('script')
+      el.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      el.onload = resolve
+      el.onerror = () => {
+        // Cleared, so a second attempt actually retries rather than awaiting
+        // the promise that already rejected.
+        checkoutLoad = null
+        reject(new Error('checkout script failed to load'))
+      }
+      document.head.appendChild(el)
+    })
+  }
+  return checkoutLoad
 }
 
 /**

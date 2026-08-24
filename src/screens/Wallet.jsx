@@ -1,5 +1,8 @@
-import { TopBar } from '../components/Chrome.jsx'
+import { useState } from 'react'
+
+import { Sheet, TopBar } from '../components/Chrome.jsx'
 import { Kicker, PopButton, PopCard } from '../components/Pop.jsx'
+import { topUpAmounts } from '../data/mock.js'
 import { rupees, useStore } from '../store.jsx'
 
 /**
@@ -10,15 +13,31 @@ import { rupees, useStore } from '../store.jsx'
  * flat.
  *
  * Since phase 2 the balance and the history are real, read back from the
- * server. Adding money is not: there is no payment provider until phase 3,
- * and a client-callable credit before then is a mint. So the top-up sheet,
- * the quick-recharge grid and the cashback label are gone rather than
- * pretending — a button that moves a real balance with no money behind it is
- * the one thing this screen must not do. To fund a test wallet, see the note
- * at the foot of backend/schema/003_wallets_ledger.sql.
+ * server. Since phase 3 so is adding to it: the sheet below opens a Razorpay
+ * order and hands off to their checkout, and the money appears when the
+ * webhook lands — not when this screen says so. Nothing here credits anything.
+ *
+ * The "+2% cashback" label that used to sit on the larger presets is gone and
+ * stays gone (docs/01-PRD.md §4.8). It was never applied, and an unimplemented
+ * discount promise must not be on screen the day real money starts moving.
  */
 export default function Wallet() {
-  const { balance, ledger, showToast } = useStore()
+  const { balance, ledger, showToast, topup, toppingUp } = useStore()
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [custom, setCustom] = useState('')
+
+  /* Rupees on this screen because that is what the person is typing. It
+     becomes paise once, on the way out, and the server re-checks the band —
+     this copy of it only exists so the refusal arrives before the card form. */
+  const amount = Number(custom)
+  const valid = Number.isFinite(amount) && amount >= 100 && amount <= 100000
+
+  const add = async (rupeeAmount) => {
+    if (await topup(Math.round(rupeeAmount * 100))) {
+      setSheetOpen(false)
+      setCustom('')
+    }
+  }
 
   return (
     <>
@@ -36,16 +55,18 @@ export default function Wallet() {
           </p>
 
           <div className="mt-6 flex gap-3">
-            <PopButton size="sm" variant="gold" disabled>
-              Add money
+            <PopButton
+              size="sm"
+              variant="gold"
+              disabled={toppingUp}
+              onClick={() => setSheetOpen(true)}
+            >
+              {toppingUp ? 'Working…' : 'Add money'}
             </PopButton>
             <PopButton onClick={() => showToast('Statement — not built yet')}>
               Statement
             </PopButton>
           </div>
-          <p className="mt-4 text-meta t-faint">
-            Adding money opens when payments do, in phase 3.
-          </p>
         </PopCard>
       </section>
 
@@ -91,6 +112,44 @@ export default function Wallet() {
 
       <div className="h-8" />
 
+      <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="Add money">
+        <div className="grid grid-cols-2 gap-3">
+          {topUpAmounts.map((a) => (
+            <PopButton key={a} disabled={toppingUp} onClick={() => add(a)}>
+              ₹{a.toLocaleString('en-IN')}
+            </PopButton>
+          ))}
+        </div>
+
+        <p className="mt-7 caps-sm t-faint">Or another amount</p>
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-body t-heading">₹</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min="100"
+            max="100000"
+            placeholder="100 to 1,00,000"
+            value={custom}
+            onChange={(e) => setCustom(e.target.value)}
+            className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body tnum placeholder-t-faint focus:border-ink focus:outline-none"
+          />
+        </div>
+
+        <PopButton
+          variant="gold"
+          className="mt-4 w-full"
+          disabled={!valid || toppingUp}
+          onClick={() => add(amount)}
+        >
+          {toppingUp ? 'Opening checkout…' : 'Continue'}
+        </PopButton>
+
+        <p className="mt-5 text-meta t-faint">
+          Payment is handled by Razorpay. Your balance updates when they confirm
+          it, which is a moment after you pay.
+        </p>
+      </Sheet>
     </>
   )
 }

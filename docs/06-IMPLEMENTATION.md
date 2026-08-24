@@ -119,8 +119,11 @@ payment-method tags either become real or come out.
 an application-level "have I seen this?" check — that check races with its own
 write.
 
-**Also here:** the unimplemented cashback label on larger top-ups either becomes
-real or is deleted. It must not survive into real money.
+**Not here:** the "+2% cashback" label stays deleted. It was never applied, and
+an unimplemented discount promise must not be on screen the day real money
+starts moving. Reinstating it means pricing it first, in `docs/01-PRD.md` §4.8.
+
+The top-up presets do return, at the amounts the PRD names.
 
 ---
 

@@ -3,7 +3,10 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 23 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is next.**
+Updated 24 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built on dev and
+not yet finished** — three of its four done-conditions are demonstrated, the
+fourth needs a real card and therefore live-mode KYC. Nothing is on production.
+§2 says exactly where the line is.
 
 This file describes **state**. It does not describe the system — that is
 `docs/` — and it is not a changelog. History lives in `git log`, which is
@@ -30,7 +33,9 @@ npm run build                  # proves less than you think
 | **Dev** | `mrjsatelbuiypodeulcx` (`namo-dev`) | `npm run dev`, `.mcp.json`, agents | throwaway |
 
 `.env.local` (gitignored) and `.mcp.json` both point at **dev**. Production
-credentials live only in the GitHub Actions secrets. If `.env.local` is
+credentials live only in the GitHub Actions secrets. A **third** store arrived
+with phase 3: each project's Edge Function secrets, holding everything a server
+function needs and the browser must never see. Nothing moves between the three. If `.env.local` is
 missing, copy `.env.example` and fill it from the dev project's Settings → API.
 
 **Signing in on dev costs nothing.** Test OTP is configured: phone
@@ -45,9 +50,11 @@ needs no config for sub-routes.
 ### Verifying the money layer
 
 The thing to run after touching anything near the wallet. Paste
-`backend/schema/003_wallets_ledger_check.sql` into the dev SQL editor.
+`backend/schema/003_wallets_ledger_check.sql` into the dev SQL editor, and
+`006_payments_check.sql` after it if payments are in scope.
 
-**Passing looks like a failure:** `ERROR: PHASE 2 CHECKS PASSED`. It raises on
+**Passing looks like a failure:** `ERROR: PHASE 2 CHECKS PASSED`, and
+`ERROR: PHASE 3 CHECKS PASSED` from the other. It raises on
 its last line to roll back every row it wrote, because the ledger is
 append-only and a check that inserted real rows could not clean up after
 itself. Any other error names the assertion that broke. It needs at least one
@@ -171,8 +178,11 @@ what ran, not the thing that ran it.
 | `003_wallets_ledger_check.sql` | **a test, not a migration** — never in a replay |
 | `004_refuse_mutation_search_path.sql` | lint fix; 003 had already run |
 | `005_wallet_debit_drop_client_ref_type.sql` | removed a client-settable `ref_type` |
+| `006_payments.sql` | `payments`, RLS, `payment_capture` |
+| `006_payments_check.sql` | **a test, not a migration** — never in a replay |
 
-**A fresh project is these files in order.** Dev was built that way, which is
+**A fresh project is these files in order**, minus the two `_check` files.
+Dev was built that way, which is
 the first real proof they reproduce the system from nothing rather than merely
 describing what once happened.
 
@@ -247,17 +257,163 @@ Four things to know before touching it:
   from* — a debit is not one. It is shaped this way because there is no
   server-side catalogue until phases 8 and 10; phase 5's booking is the first
   purchase whose price the server looks up for itself.
-- **There is no credit path at all.** Top-up needs Razorpay (phase 3), and a
-  client-callable credit before then is a mint. So `addMoney()` is gone, and the
-  top-up sheet, quick-recharge grid and payment tags are out of `Wallet.jsx`
-  rather than left looking live. The **cashback label is deleted** — it was
-  never applied and must not be on screen when real money moves.
+- **Phase 2 shipped no credit path at all**, because a client-callable credit
+  before a payment provider is a mint. Phase 3 opened one, and it is still not
+  client-callable: see below. The payment-method tags stay out of `Wallet.jsx`,
+  and the **cashback label is deleted** rather than deferred — it was never
+  applied and must not be on screen when real money moves.
 
 **All four done-conditions pass.** Devtools cannot change a balance — every
 write returns 403 at the grant level. An over-balance debit is refused *by the
 server* with the string the UI already showed. The ledger replays to the stored
 balance exactly. And three clicks fired in a single tick produced exactly one
 ledger row, a stricter test than a human double-tap.
+
+### Phase 3 — payments in
+
+**Built on dev. Not finished, and not on production.** The code is written, the
+migration is applied, and the SQL-level checks pass. What has not happened is
+anyone putting a card through it.
+
+`payments` per `docs/05-BACKEND-SCHEMA.md` §4.8, plus two Edge Functions in
+`backend/functions/` — the first server functions in the project.
+
+| | |
+|---|---|
+| `razorpay-order` | `verify_jwt = true`. Validates the band, opens a Razorpay order, writes the `created` row |
+| `razorpay-webhook` | `verify_jwt = false`. Verifies the HMAC, then calls `payment_capture()` |
+
+- **`payments` holds one row per event, not per payment.** Both unique columns
+  are nullable so the `created` row can carry neither id yet, and Postgres lets
+  nulls repeat in a unique index. The row carrying a `provider_payment_id` is a
+  terminal outcome and there can only be one per Razorpay payment.
+- **Idempotency is the unique index, and it is load-bearing in an unusual way.**
+  `payment_capture()` inserts the event row and the ledger row in one block. A
+  retried delivery violates the index, the handler catches it, and plpgsql
+  rolls the whole block back — *including the credit that had already run
+  inside it*. There is no window between checking and crediting because there
+  is no check. It returns `ok: true, duplicate: true` so Razorpay stops
+  retrying.
+- **The wallet is found through the `created` row**, matched on the order id,
+  never through the payload's `notes` — those round-trip through the client.
+  A payment that matches no order raises rather than guessing. That means the
+  webhook returns 500 and Razorpay retries an unattributable payment for a
+  while, which is the loud half of the mistake and the right half.
+- **The amount credited is Razorpay's**, read from a payload whose signature
+  was checked first. The browser chooses what to *pay*; it never influences
+  what is credited. That is what keeps the custom-amount field inside rule 3.
+- **`payment_capture()` is not granted to `authenticated`** — only to
+  `service_role`. The security advisor confirms it: it flags `wallet_debit` as
+  callable by signed-in users, which is intended, and does not flag this one.
+- **The balance is untouched by any of it.** The phase 2 trigger on `ledger`
+  moves it, so a credit and the cache cannot disagree.
+
+**Front end:** the top-up sheet is back in `Wallet.jsx` — four presets and a
+custom amount — and `topup()` sits next to `spend()` in the store. It is the
+one money path that does not end inside the tap that started it: the credit
+arrives via a webhook on a different connection, so `topup()` polls the balance
+for about twelve seconds and then says the payment is settling. Razorpay's
+checkout script is fetched on first use rather than from `index.html`.
+
+**What is verified, and what is not:**
+
+| Done-condition | State |
+|---|---|
+| A real ₹1 payment credits exactly once | **No.** Needs live mode, which needs KYC |
+| The identical webhook payload twice credits once | **Yes**, hand-replayed 24 Aug, and confirmed against real Razorpay deliveries 25 Aug |
+| A failed payment leaves a `payments` row and no ledger row | **Yes**, same |
+
+The replay was done by replaying, not by reasoning. A signed `payment.captured`
+body was POSTed to the deployed function **three times, byte for byte
+identical**: the first returned `duplicate: false`, the other two
+`duplicate: true`, and the wallet holds one credit row. A signed
+`payment.failed` for ₹500 wrote a `payments` row with status `failed` and no
+ledger row at all. The ledger sums to the stored balance in both cases.
+
+Signature verification was checked in both directions from the same probe: an
+invalid signature returns **401 with the body never parsed**, and a valid
+signature for an order that does not exist returns **500** — `payment_capture()`
+refusing to guess a wallet, and 500 is the retry signal rather than a swallowed
+error.
+
+**Dev wallet `2ad16f66` now holds ₹1**, from that replay. It is a real ledger
+row and the ledger is append-only, so it stays. The `order_REPLAY_TEST` and
+`order_FAIL_TEST` rows in `payments` are left alongside it deliberately — a
+ledger entry whose payment rows were deleted is an entry nobody can explain.
+
+**`/wallet` has been walked**, 24 Aug, and it renders: balance ₹1, the replay's
+ledger row reading `Added money · UPI · +₹1`, and the sheet opening with the
+four presets, the custom field and no cashback label. Two things came out of it.
+
+- **The CORS header list was wrong and it would have failed in production too.**
+  `razorpay-order` allowed `authorization, content-type`, but `supabase-js`
+  sends `x-client-info` and `apikey` on every `functions.invoke()`. The
+  preflight failed, so the request never left the browser, and it surfaces as
+  `Failed to send a request to the Edge Function` — which reads like the
+  function is down. Fixed and redeployed. **Any future function needs all four
+  in the list.**
+- **A missing `RAZORPAY_KEY_ID` surfaced correctly**, before it was set, as
+  "Payments are not configured yet." The refusal contract works: the server's
+  string reached the toast unchanged. The log line now names *which* secret is
+  missing rather than listing both — that ambiguity cost a round trip once.
+
+**With all three secrets set, the order path works end to end.** Tapping ₹500
+loads Razorpay's script, opens their checkout in test mode, and writes a real
+`created` row — `order_TTKMKbGPw6Itcp`, 50000 paise. `toppingUp` greys the
+button and reads "Opening checkout…" while it happens.
+
+**The webhook is registered**, and with two faults worth fixing:
+
+- **It is registered twice**, both entries enabled on the same URL, so every
+  event is delivered twice. Idempotency absorbs it — that is what it is for —
+  but it doubles the traffic and makes the logs read like a retry storm.
+  **Delete one.**
+- **Both subscribe to all 51 events.** Only `payment.captured` and
+  `payment.failed` are handled; the rest return 200 and are ignored, so this is
+  noise rather than danger. Narrow it anyway.
+
+**A real Razorpay test payment credited correctly on 25 Aug.** ₹500 through
+their checkout, one `[webhook] captured pay_TTjAR9ky5Ij9WB duplicate=false`
+line, balance ₹1 → ₹501, ledger replaying to the stored balance exactly. The
+whole path works: sheet, order, checkout, signature, capture, credit.
+
+**Getting there cost two configuration mistakes worth remembering.** The
+webhook was registered twice — since deleted, and note that Razorpay's Status
+toggle in the details panel *deletes* rather than disables. And its secret was
+the **key id** rather than the webhook secret, which produced
+`signature did not match; body ignored` on every delivery for eighteen minutes.
+Razorpay never shows a saved secret, only overwrites it, so the only way to
+rule this out is to retype it.
+
+**A captured payment can be lost, and one was.** `order_TTiovPCUcREweJ` is a
+real ₹500 Razorpay captured while the secret was wrong. Every delivery bounced
+off the signature check, Razorpay gave up, and the row still sits at `created`
+with no credit. In test mode that is nothing; **in production that is a person
+who paid and received nothing, with no alert and no way back.** The webhook is
+currently the only route from payment to credit, so any window where it is
+misconfigured, deployed broken, or down past Razorpay's retry schedule
+swallows real money silently.
+
+The fix is a reconciliation sweep, not a change to the payment path: find
+`payments` rows stuck at `created` past some age, ask Razorpay's API what
+became of each, and feed the captured ones back through `payment_capture()`.
+That function is already idempotent, so a sweep racing a late webhook is safe
+by construction. **Not built. It must exist before live mode.**
+
+**Two steps of the walk could not be driven from an agent session**: entering a
+test card, and dismissing the overlay. Both controls live inside
+`api.razorpay.com`'s cross-origin iframe, and CDP input dispatch times out on
+this machine besides. **They need a person, and until one does them the
+`handler` / `ondismiss` / `payment.failed` branches of `topup()` and the balance
+polling have never run.** Abandoning an open order changes nothing: after the
+attempt above the balance was still ₹1 on one ledger row, with the order left
+`created` and no terminal row.
+
+**Seen once, unexplained:** `[profile] load failed: JWT issued at future`,
+while the wallet read on the same token succeeded. It appeared under a session
+minted by hand in the browser console, so it is most likely an artefact of that
+rather than a defect. **Watch for it on a real sign-in** before treating it as
+either.
 
 ---
 
@@ -285,6 +441,10 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 - **Swiss Ephemeris** for charts, as its own Python service.
 - **Payouts and KYC last.** Most regulated, least urgent.
 - **Dev and production are separate Supabase projects**, as of 23 Aug.
+- **Server functions run on Supabase Edge Functions.** Deno, next to the
+  database they write. The ephemeris is the exception — Python, own service.
+- **The cashback label is deleted, not deferred.** Reinstating it means pricing
+  it first, in `docs/01-PRD.md` §4.8.
 
 ---
 
@@ -292,8 +452,6 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
-| Where server functions run — the TRD says "a small set of server functions" without naming a runtime. Supabase Edge Functions is the obvious answer | **Phase 3** |
-| Whether top-up presets and a cashback rate return, and at what rate | **Phase 3** |
 | Session duration ladder — flat 20 min, tiered, or per-minute | Phases 4-5 |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Refund and cancellation policy | Phase 5 |
@@ -315,9 +473,11 @@ Recorded so they are not re-argued. Reasoning is in the documents.
   Deliberately not reconstructed: a plausible wrong shloka in a devotional deck
   is undetectable to the person it misleads.
 - **The 48 card faces carry no attribution at all.** The murtis now do.
-- **Razorpay does not exist yet.** No account, no keys, no webhook secret.
-  Test-mode keys unblock the building; live mode needs business KYC and is the
-  long pole. Only live mode can satisfy "a real one rupee payment credits once".
+- **Razorpay is test mode only.** Key id `rzp_test_TTJTVbFWD1ehHQ`, in
+  `.env.local` and needed as a function secret too. Live mode needs business
+  KYC and is the long pole — **start it now if it has not begun.** Only live
+  mode can satisfy "a real one rupee payment credits once", so phase 3 cannot
+  close without it.
 
 ### Front-end defects, all recorded in `docs/03-APP-FLOW.md` §10
 
@@ -358,33 +518,38 @@ it is built.
 
 ---
 
-## 6. Next — phase 3, payments in
+## 6. Next — finish phase 3
 
-Full spec in `docs/06-IMPLEMENTATION.md`. The shape:
+The building is done (§2). What is left is proving it, in this order, because
+each step unblocks the next.
 
-**Build** — `payments`. Razorpay order creation. A webhook that verifies the
-signature before trusting anything, then credits the ledger.
+1. **Clear the three stale `created` rows** in `payments` — `order_REPLAY_TEST`,
+   `order_FAIL_TEST` and `order_TTKMKbGPw6Itcp`, the last being an abandoned
+   real order. They are harmless but they are not payments, and they will
+   confuse the first reconciliation. Leave `order_REPLAY_TEST` if its ledger
+   credit is still the only thing funding the dev wallet.
+2. **Delete the duplicate webhook** and narrow the survivor to
+   `payment.captured` and `payment.failed`.
+3. **Run a Razorpay test card through the sheet by hand**, watch the balance
+   land, then dismiss the overlay mid-payment and confirm nothing moved. This
+   cannot be done from an agent session (§2) and is the only thing that
+   exercises `topup()` past the order call.
+4. **Live-mode KYC**, which is the only route to "a real ₹1 payment credits
+   exactly once". Days, not hours. Everything above can happen while it runs.
+5. **Replay onto production** once dev is proven — `006_payments.sql` only,
+   same file, no edits (`backend/INSTRUCTIONS.md` §3), then deploy both
+   functions there and set that project's own three secrets to **live** keys.
+   **Generate a fresh webhook secret for production**: the dev one was chosen
+   in an agent session and is not private.
 
-**Front end** — the top-up sheet comes back and opens real checkout. The
-decorative payment-method tags become real or stay deleted.
+**Watch:** `topup()` polls the balance across several awaits and reads it from
+a ref rather than from the closed-over state, which is the kind of thing that
+is correct on paper and wrong in a browser. The Razorpay overlay is a third
+party's iframe over this app's own sheet, and nothing has ever rendered the
+two together.
 
-**Done when** a real one rupee payment credits exactly once; **firing the
-identical webhook payload twice still credits once**, verified by replaying it
-rather than by reasoning about it; and a failed payment leaves a `payments` row
-and **no ledger row.**
-
-**Watch:** idempotency is the unique index on the provider's own identifier,
-never an application-level "have I seen this?" check — that races with its own
-write.
-
-### Before writing any of it
-
-1. **Razorpay test keys.** The key id may reach the browser; the key secret
-   must not — it belongs in the server function's secrets.
-2. **Name the runtime in `docs/02-TRD.md`**, which owns that decision.
-3. **Start live-mode KYC now** if it has not begun. Days, not hours.
-4. **Fund a dev wallet** if a balance is needed — two accounts exist there with
-   nothing in them. Recipe at the foot of `003`.
+**Fund a dev wallet** if a balance is needed before any of this — two accounts
+exist there with nothing in them. Recipe at the foot of `003`.
 
 ### Owed, not blocking
 

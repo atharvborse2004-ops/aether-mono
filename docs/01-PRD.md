@@ -193,11 +193,14 @@ requested capability with **no upload path in the app today**.
 
 Everything is paid from a wallet rather than per transaction.
 
-The balance and the ledger are real and live on the server. **Money can only
-leave.** There is no way to add any from inside the app until Razorpay lands,
-so the top-up presets and the custom-amount sheet are not in the product right
-now; when they return the presets are **₹500 · ₹1,000 · ₹2,000 · ₹5,000** with
-custom amounts **₹100 to ₹1,00,000**.
+The balance and the ledger are real and live on the server, and since phase 3
+money can move both ways. The top-up presets are **₹500 · ₹1,000 · ₹2,000 ·
+₹5,000**, with custom amounts **₹100 to ₹1,00,000**. The band is enforced on
+the server; the copy of it in the browser only exists so the refusal arrives
+before the card form does.
+
+Money is credited on Razorpay's word, never the browser's — the amount that
+reaches the wallet is the amount the provider reports it captured.
 
 The **"+2% cashback" label is deleted**, not deferred. It appeared on ₹2,000
 and above and was never applied, and an unimplemented discount promise must not

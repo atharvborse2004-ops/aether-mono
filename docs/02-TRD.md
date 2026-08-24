@@ -112,6 +112,23 @@ Firebase is the same shape if preferred, but the wallet ledger and the booking
 conflict check both want SQL transactions and a partial unique index, which
 Firestore does not give you cheaply.
 
+### The functions run on Supabase Edge Functions
+
+Deno, deployed per project, one folder each under `backend/functions/`. Decided
+in phase 3, which is the first phase that needs a server function at all.
+
+Vercel and Cloudflare Workers both run this code. Neither earns a second deploy
+target, a second secret store and a second set of CORS rules for what is a
+handful of functions sitting next to the database they exist to write. The
+webhook needs the service-role key, which already lives here.
+
+**Function secrets are a third store**, alongside `.env.local` and the GitHub
+Actions secrets — set per Supabase project, so the dev project holds test
+payment keys and production holds live ones with no path between them. §11.
+
+**The exception is the ephemeris**, which is Python and does not fit a Deno
+runtime. It stays a separate service.
+
 ### What must be a function rather than a policy
 
 RLS answers "may this row be read or written by this caller". It cannot answer
@@ -179,11 +196,15 @@ moves money or claims a resource is an explicit endpoint.
 
 | Endpoint | Sends | Returns | Notes |
 |---|---|---|---|
-| `POST /wallet/topup-intent` | a preset ID or a validated custom amount | provider checkout payload | The client never sends the amount as authority |
-| `POST /webhooks/razorpay` | — | 200 | Signature verified first. Idempotent by unique index, not by an application check |
+| `POST /functions/v1/razorpay-order` | a validated amount in paise | `{ order_id, amount_paise, key_id }` | The client chooses what to **pay**; the server decides what to **credit**, from the webhook |
+| `POST /functions/v1/razorpay-webhook` | — | 200 | `verify_jwt = false` — the signature is the authentication. Idempotent by unique index, not by an application check |
 | `POST /bookings` | `{ consultantId, serviceId, startsAt }` | booking, or a named refusal | One transaction. See below |
 | `POST /bookings/:id/status` | `{ status }` | booking | Consultant only. Decline writes a reversing ledger entry |
 | `GET /consultants/:id/slots?date=` | — | open slots | The single source for all three callers |
+
+Both payment endpoints shipped in phase 3 and are named for the runtime rather
+than for a REST shape the SPA does not otherwise use. The webhook is the only
+endpoint in the system that answers to an unauthenticated caller.
 
 `POST /bookings` is effectively what v1 *is*; everything else is scaffolding
 around it. It catches the unique-violation error from the slot-claim index and
@@ -385,12 +406,15 @@ exist**. See `04-UI-UX.md`.
 
 | | |
 |---|---|
-| Local | Vite dev server; API base URL in one env var so switching targets is a one-line change |
+| Local | Vite dev server against the dev project. Functions live under that project's URL, so `VITE_SUPABASE_URL` switches the database and the API together — there is no second base URL to keep in step |
 | Staging | Its own Supabase project. **Never point a dev front end at production data** — the first destructive mistake is always this one |
-| Production | GitHub Pages for the SPA; functions and admin deployed separately |
+| Production | GitHub Pages for the SPA; functions deployed to the production Supabase project; admin deployed separately |
 
-Secrets live in `.env.local`, gitignored, with a committed `.env.example`
-carrying the keys and no values.
+Secrets live in three places and never move between them: `.env.local` for the
+dev front end, gitignored, with a committed `.env.example` carrying the keys and
+no values; the GitHub Actions secrets for the production front end; and each
+Supabase project's function secrets for anything a function needs. Payment
+keys, model keys and the service role key only ever appear in the third.
 
 **The Supabase anon key is the one credential meant to be public**, and it is only
 safe because RLS is on. **A table with RLS disabled is a public table.** Service

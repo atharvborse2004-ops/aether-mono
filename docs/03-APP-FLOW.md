@@ -286,11 +286,20 @@ most of the app. Settings holds **Switch to consultant → `/pro/feed`**, which 
 an ordinary link because the side is not state.
 
 ### `/wallet`
-Balance and history, both read from the server. **Nothing on this screen adds
-money.** The quick-recharge presets, the top-up sheet and the payment-method
-tags are gone: there is no payment provider until phase 3, and a control that
-moves a real balance with nothing behind it is the one thing a wallet must not
-offer. *Add money* is present but disabled, and says when it opens.
+Balance and history, both read from the server. Since phase 3 *Add money* opens
+a sheet: four presets and a custom amount, then Razorpay's own checkout in an
+overlay this app does not draw.
+
+**Nothing on this screen credits anything.** The sheet opens an order and
+hands off; the balance moves when the provider's webhook reaches the server and
+its signature verifies. So the screen cannot await the credit — it polls for a
+few seconds, and if the credit has not landed it says the payment is settling
+rather than holding a spinner over a number it does not control. Dismissing
+Razorpay's overlay, or a card the bank declines, both return to the sheet with
+the balance untouched.
+
+The payment-method tags are still gone, and so is the cashback label, which is
+deleted rather than deferred — `01-PRD.md` §4.8.
 
 The seeded transaction list is gone too, here and on the profile wallet tab.
 It was denominated in rupees while real entries are paise, and a list mixing
@@ -378,9 +387,14 @@ arithmetic in the browser any more.
 | 2 | Shop *Buy now* | Debits the product price |
 | 3 | Reports *Buy now* | Debits the report price |
 | 4 | Tarot paid pull | Debits the per-pull price |
+| 5 | Wallet top-up | **Credits**, and only from a verified webhook |
 
-**There is no credit path.** Top-up was the fifth and it is withdrawn until
-phase 3 gives it a payment behind it.
+Path 5 is the odd one and the only one that runs backwards. The other four
+begin and end inside a tap: the person presses Buy, the server decides, the
+balance moves. A top-up begins with a tap and ends somewhere else entirely —
+in a request Razorpay makes to a public URL, minutes later if it has to retry.
+Nothing the browser does credits a wallet, including reporting that the payment
+succeeded. §8.2 is the state machine.
 
 All four debits go through one function on the server, which decides under a
 row lock and refuses in the app's own words when the balance is short. The
