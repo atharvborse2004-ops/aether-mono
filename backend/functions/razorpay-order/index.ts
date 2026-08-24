@@ -14,7 +14,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const MIN_PAISE = 10_000 //     ₹100
+const MIN_PAISE = 100 //        ₹1 — TEMPORARY, for the live ₹1 proof. Revert to 10_000 after.
 const MAX_PAISE = 10_000_000 // ₹1,00,000
 
 const PAGES_ORIGIN = 'https://atharvborse2004-ops.github.io'
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     amountPaise < MIN_PAISE ||
     amountPaise > MAX_PAISE
   ) {
-    return refuse('Add between ₹100 and ₹1,00,000.', 400, headers)
+    return refuse('Add between ₹1 and ₹1,00,000.', 400, headers)
   }
 
   const created = await fetch('https://api.razorpay.com/v1/orders', {

@@ -30,7 +30,7 @@ export default function Wallet() {
      becomes paise once, on the way out, and the server re-checks the band —
      this copy of it only exists so the refusal arrives before the card form. */
   const amount = Number(custom)
-  const valid = Number.isFinite(amount) && amount >= 100 && amount <= 100000
+  const valid = Number.isFinite(amount) && amount >= 1 && amount <= 100000
 
   const add = async (rupeeAmount) => {
     if (await topup(Math.round(rupeeAmount * 100))) {
@@ -127,9 +127,9 @@ export default function Wallet() {
           <input
             type="number"
             inputMode="numeric"
-            min="100"
+            min="1"
             max="100000"
-            placeholder="100 to 1,00,000"
+            placeholder="1 to 1,00,000"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             className="w-full rounded-lg border border-stroke bg-surface px-3 py-2 text-body tnum placeholder-t-faint focus:border-ink focus:outline-none"
