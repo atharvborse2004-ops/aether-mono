@@ -3,10 +3,18 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 24 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built on dev and
-not yet finished** — three of its four done-conditions are demonstrated, the
-fourth needs a real card and therefore live-mode KYC. Nothing is on production.
-§2 says exactly where the line is.
+Updated 25 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built, replayed
+to production, and one done-condition away from finished.** KYC/activation
+cleared (it happened back in Jun 2025, well before this phase started). Both
+Edge Functions are deployed to production with live secrets, `006_payments.sql`
+is applied there, and the front-end top-up sheet is live. The one thing left —
+"a real ₹1 payment credits the wallet exactly once" — is blocked on Razorpay's
+own website verification: `atharvborse2004-ops.github.io` is registered and
+**"Under review," a 24-48h queue on their side**, not work remaining on ours.
+Until it clears, live checkout refuses every method with "Payment blocked as
+website does not match registered website(s)" — this looked like a broken UPI
+QR at first and cost real time before the card error made the actual cause
+legible. §2 says exactly where the line is.
 
 This file describes **state**. It does not describe the system — that is
 `docs/` — and it is not a changelog. History lives in `git log`, which is
@@ -319,7 +327,7 @@ checkout script is fetched on first use rather than from `index.html`.
 
 | Done-condition | State |
 |---|---|
-| A real ₹1 payment credits exactly once | **No.** Needs live mode, which needs KYC |
+| A real ₹1 payment credits exactly once | **Blocked**, not unbuilt. Live mode and KYC are both ready; Razorpay's own website-verification review of `atharvborse2004-ops.github.io` is pending, ETA 24-48h from 25 Aug. Every live-mode checkout — UPI and cards both — is refused with "Payment blocked as website does not match registered website(s)" until it clears |
 | The identical webhook payload twice credits once | **Yes**, hand-replayed 24 Aug, and confirmed against real Razorpay deliveries 25 Aug |
 | A failed payment leaves a `payments` row and no ledger row | **Yes**, same |
 
@@ -398,16 +406,23 @@ The fix is a reconciliation sweep, not a change to the payment path: find
 `payments` rows stuck at `created` past some age, ask Razorpay's API what
 became of each, and feed the captured ones back through `payment_capture()`.
 That function is already idempotent, so a sweep racing a late webhook is safe
-by construction. **Not built. It must exist before live mode.**
+by construction. **No automated sweep exists yet** — `order_TTiovPCUcREweJ`
+itself was reconciled by hand on 25 Aug (its real `pay_TTir3C60oiAFbt` looked
+up in the Razorpay dashboard and fed through `payment_capture()` directly,
+crediting ₹500), which proves the fix works but is not a substitute for the
+sweep existing. **Still owed**, and cheap insurance against the next silent
+loss now that production is live.
 
-**Two steps of the walk could not be driven from an agent session**: entering a
-test card, and dismissing the overlay. Both controls live inside
-`api.razorpay.com`'s cross-origin iframe, and CDP input dispatch times out on
-this machine besides. **They need a person, and until one does them the
-`handler` / `ondismiss` / `payment.failed` branches of `topup()` and the balance
-polling have never run.** Abandoning an open order changes nothing: after the
-attempt above the balance was still ₹1 on one ledger row, with the order left
-`created` and no terminal row.
+**Entering a test card and completing checkout could not be driven from an
+agent session** — both controls live inside `api.razorpay.com`'s cross-origin
+iframe, and CDP input dispatch times out on this machine besides. **A person
+did it by hand** on both dev and production: a real ₹500 and a real ₹1 both
+completed through the sheet, `handler()` fired, and the balance polling picked
+up the credit correctly on both. **The dismiss/cancel path is still
+unexercised** — `ondismiss()` and `payment.failed()` have never run, so it
+remains unproven that abandoning checkout mid-payment leaves the balance and
+the `created` row untouched. Low priority now that the success path is proven
+twice over, but still open.
 
 **Seen once, unexplained:** `[profile] load failed: JWT issued at future`,
 while the wallet read on the same token succeeded. It appeared under a session
@@ -520,36 +535,38 @@ it is built.
 
 ## 6. Next — finish phase 3
 
-The building is done (§2). What is left is proving it, in this order, because
-each step unblocks the next.
+Everything that could be built, deployed, or proven by hand is done (§2).
+**One item is left, and it is a clock, not a task:**
 
-1. **Clear the three stale `created` rows** in `payments` — `order_REPLAY_TEST`,
-   `order_FAIL_TEST` and `order_TTKMKbGPw6Itcp`, the last being an abandoned
-   real order. They are harmless but they are not payments, and they will
-   confuse the first reconciliation. Leave `order_REPLAY_TEST` if its ledger
-   credit is still the only thing funding the dev wallet.
-2. **Delete the duplicate webhook** and narrow the survivor to
-   `payment.captured` and `payment.failed`.
-3. **Run a Razorpay test card through the sheet by hand**, watch the balance
-   land, then dismiss the overlay mid-payment and confirm nothing moved. This
-   cannot be done from an agent session (§2) and is the only thing that
-   exercises `topup()` past the order call.
-4. **Live-mode KYC**, which is the only route to "a real ₹1 payment credits
-   exactly once". Days, not hours. Everything above can happen while it runs.
-5. **Replay onto production** once dev is proven — `006_payments.sql` only,
-   same file, no edits (`backend/INSTRUCTIONS.md` §3), then deploy both
-   functions there and set that project's own three secrets to **live** keys.
-   **Generate a fresh webhook secret for production**: the dev one was chosen
-   in an agent session and is not private.
+1. **Wait for Razorpay's website-verification review** of
+   `atharvborse2004-ops.github.io` to clear — submitted 25 Aug, ETA 24-48h.
+   Nothing on our side unblocks this faster. Once it clears, run one real ₹1
+   live payment through the deployed site and confirm one `payments` row and
+   one `ledger` row land on **production** — that closes phase 3's last
+   done-condition.
+
+**Owed, not blocking v1 close:**
+
+- **The reconciliation sweep is still not built.** The one lost payment
+  (`order_TTiovPCUcREweJ`) was reconciled by hand, which proves the fix works
+  but leaves the next silent loss with no automated catch. Worth building
+  before this gets more real users than it has now.
+- **The checkout-dismiss path** (`ondismiss()` / `payment.failed()` in
+  `topup()`) has never run. The success path is proven twice over on both
+  projects; abandoning mid-payment is not.
+- Front-end review fixes from phases 1-2, listed below, still unwalked.
 
 **Watch:** `topup()` polls the balance across several awaits and reads it from
 a ref rather than from the closed-over state, which is the kind of thing that
 is correct on paper and wrong in a browser. The Razorpay overlay is a third
-party's iframe over this app's own sheet, and nothing has ever rendered the
-two together.
+party's iframe over this app's own sheet, and both have now been seen
+rendered together, successfully, twice.
 
-**Fund a dev wallet** if a balance is needed before any of this — two accounts
-exist there with nothing in them. Recipe at the foot of `003`.
+**If the top-up minimum is ever lowered again for a test payment**, revert it
+in the same session — both `MIN_PAISE` in
+`backend/functions/razorpay-order/index.ts` and the client copy in
+`Wallet.jsx`, redeploy the function, and push. Leaving it lowered is how a
+₹1 minimum ends up live for real users by accident.
 
 ### Owed, not blocking
 
