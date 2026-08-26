@@ -212,7 +212,11 @@ export default function Consult() {
         <span className="scroll-fade" aria-hidden="true" />
       </div>
 
-      {/* ── Unlimited questions, N min — who is online right now ─────────── */}
+      {/* ── The verified rail ─────────────────────────────────────────────
+          Hidden when nobody is verified, which is the normal state early on:
+          approval and verification are different claims, and a heading over an
+          empty rail advertises a shortlist that does not exist. */}
+      {featured.length > 0 && (
       <section className="pt-6">
         <div className="mb-3 flex items-baseline justify-between px-4">
           <p className="font-display text-lead t-heading">
@@ -237,6 +241,7 @@ export default function Consult() {
           ))}
         </div>
       </section>
+      )}
 
       {/* ── Available now — the full roster ───────────────────────────── */}
       <section ref={listRef} className="px-5 pt-8">
@@ -245,7 +250,9 @@ export default function Consult() {
         </p>
 
         <Kicker>
-          {`${list.length} ${list.length === 1 ? 'person' : 'people'} · ${featured.length} verified`}
+          {`${list.length} ${list.length === 1 ? 'person' : 'people'}${
+            featured.length > 0 ? ` · ${featured.length} verified` : ''
+          }`}
         </Kicker>
 
         <ul className="mt-4 space-y-3">
