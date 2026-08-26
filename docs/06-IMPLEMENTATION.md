@@ -451,11 +451,14 @@ Highest first.
 
 ## Decisions blocking specific phases
 
+**Phases 4 and 5 are no longer blocked by any of these.** The session ladder is
+both models (`01-PRD.md` §5.1), and the money movement on a booking is decided
+(§5.4): **charge at booking**, no hold, no self-service cancellation, no refund
+for a session the seeker skipped — and a full reversing credit for a decline, a
+no-show or a platform failure, which are not refunds.
+
 | Decision | Blocks | Default if undecided |
 |---|---|---|
-| Session duration ladder | 4, 5 | Flat 20 minutes at the consultant's band |
-| Refund and cancellation policy | 5 | Debit at booking; no self-service cancellation; refunds as an admin reversing entry |
-| Charge at booking or at session start | 5 | At booking |
 | Chat window semantics | 6 | — |
 | Ephemeris reference chart | 7 | — |
 | Report prices, and the duplicate SKUs | 8, 10 | — |

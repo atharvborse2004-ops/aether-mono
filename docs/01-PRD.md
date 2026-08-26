@@ -291,7 +291,15 @@ catalogue.
 Six real prices get typed once, and the multiplier is deleted before anything
 reaches a database.
 
-### 5.4 Cancellation and refunds — decided, 27 Aug
+### 5.4 Money movement on a booking — decided, 27 Aug
+
+**Charge at booking, not at session start.** The wallet is debited in the same
+transaction that claims the slot. One write, and no hold — a hold is a second
+state that can leak, expire wrongly, or be reconciled against nothing when a
+session never happens.
+
+It also settles what a slot is worth: a claimed slot the seeker has not paid
+for is inventory somebody else could have had.
 
 **No cancellation and no refund on a session the seeker chose not to attend.**
 Booking debits the wallet; the seeker cannot cancel it back and does not get the

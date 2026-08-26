@@ -1127,12 +1127,18 @@ Carried, not guessed at. Each blocks something specific.
 here: the session duration ladder is *both* models — tiered 15/20/30 and
 per-minute, §4.3 — and the slots constants are a 14-day horizon in IST, §4.4.
 
+**Answered 27 Aug, before phase 5**, and owned by `01-PRD.md` §5.4: the wallet
+is debited **at booking**, inside the transaction that claims the slot — no
+hold. There is no self-service cancellation and no refund for a session the
+seeker skipped. A decline, a consultant no-show and a platform failure are not
+refunds and each writes a **full reversing credit**; the booking function
+implements both halves or it implements a consultant keeping a stranger's
+money.
+
 | Open | Blocks | Note |
 |---|---|---|
 | **`REPORT_MULTIPLIER` and duplicate SKUs** | report / premium seed | `01-PRD.md` |
 | **Chat window semantics** | `threads` | `booking_id` or `open_until` — both columns exist so either answer fits |
-| **Refund and cancellation policy** | the booking function | Default if undecided: debit at booking, no self-service cancellation, refunds as an admin-written reversing entry |
-| **Charge at booking or at session start** | the booking function | Recommending at booking — one write, and a hold never becomes a leakable state |
 | **Consultant ranking formula** | `rank_score_cache` | `01-PRD.md` |
 | **Free tarot pull window** | `tarot_pulls` | Leaning rolling seven days from `pulled_at` |
 | **Bhaktamar card provenance** | `tarot_cards` seed | 48 faces with no attribution recorded |

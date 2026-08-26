@@ -578,7 +578,6 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
-| **Charge at booking or at session start** | **Phase 5 — next** |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Chat window — booking-bound or quota-bound | Phase 6 |
 | Ephemeris reference chart | Phase 7 |
@@ -657,23 +656,23 @@ partial unique index already exist; what is missing is `orders`,
 debits a wallet, and the reversing credit a decline owes once a booking carries
 money. Per-minute sessions need their meter here or in phase 11.
 
-**Three things to settle before writing any of it**, and two are decisions, not
-code:
+**One thing left to settle, and it is a queue rather than a task:**
 
-1. **Charge at booking or at session start** (§4). Recommending at booking:
-   one write, and a hold never becomes a leakable state. It is also what the
-   refund decision assumes.
-2. **Razorpay's website review**, which is now a domain move rather than a wait
+1. **Razorpay's website review**, which is now a domain move rather than a wait
    — see below. Until it clears, live checkout is refused, **production wallets
    cannot be funded**, and phase 5's first done-condition — two clients racing
    one slot, one booking, one refusal, no orphaned debit — cannot be exercised
    end to end against real money. Dev is unaffected: fund a dev wallet by hand
    with the recipe at the foot of `003`.
 
-**Refund policy is decided** (27 Aug, `01-PRD.md` §5.4): no cancellation and no
-refund on a session the seeker skipped. **It does not touch the reversing
-credit a decline owes** — a consultant tapping Decline and keeping the money is
-not a policy, and the booking function must implement both halves.
+**Both product decisions are made** (27 Aug, `01-PRD.md` §5.4), so phase 5 is
+unblocked on everything except funding a production wallet:
+
+- **Charge at booking**, inside the transaction that claims the slot. No hold.
+- **No cancellation, no refund** on a session the seeker skipped. **This does
+  not touch the reversing credit a decline owes** — a consultant tapping
+  Decline and keeping the money is not a policy. The booking function
+  implements both halves.
 
 ### The domain move, which is what unblocks Razorpay
 
