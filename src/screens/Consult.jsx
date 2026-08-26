@@ -107,8 +107,14 @@ export default function Consult() {
 
   /* There is no `online` column and no presence yet — that is phase 6, and a
      dot that is always green is worse than no dot. `verified` is a real column
-     on a real row, and it is the claim this rail was always making. */
-  const featured = roster.filter((c) => c.verified)
+     on a real row, and it is the claim this rail was always making.
+
+     Filtered from `list`, not from `roster`. Taken off the whole roster it
+     disagreed with the count beside it — filter to a category holding one
+     person and the line read "1 person · 4 verified", more verified than
+     people — and the rail went on offering verified astrologers to somebody
+     who had just asked for tarot. */
+  const featured = list.filter((c) => c.verified)
 
   /* Nobody approved: the empty state IS the screen, not a line of grey text
      under the furniture. Everything above it — three banners promising
@@ -336,7 +342,11 @@ export default function Consult() {
           <p className="py-10 text-center text-meta text-t3">Reading the roster.</p>
         )}
 
-        {list.length === 0 && (
+        {/* `consultants !== null` matters: while the fetch is in flight both
+            `roster` and `list` are empty, and without it this rendered
+            directly under "Reading the roster." — a load in progress reading
+            as a search that found nobody. */}
+        {consultants !== null && list.length === 0 && (
           <p className="py-10 text-center text-meta text-t3">
             Nobody matches that. Clear the search or pick another category.
           </p>

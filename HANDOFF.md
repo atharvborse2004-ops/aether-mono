@@ -3,24 +3,24 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 26 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built and
+Updated 27 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built and
 replayed to production, one done-condition away from finished — Razorpay's
 website review of `atharvborse2004-ops.github.io` was still queued on their
 side as of 25 Aug, and until it clears every live checkout is refused with
 "Payment blocked as website does not match registered website(s)". §2 says
 exactly where that line is.**
 
-**Phase 4 is built and seeded on both projects. The front end is not deployed
-yet.**
-Consultants, price bands, services, availability, time off, bookings, the slots
-function and the two views exist on both projects, and the phase's own SQL
-check passes on both. Dev also carries the six mock consultants and their seven
-bookings as real rows, and the front end reads all of it on both sides. Production's six are **`pending`** — invisible, unbookable, earning nothing —
-so the live `/consult` will be empty until somebody approves them, which is a
-deliberate one-line edit and not an oversight. What is outstanding is the
-**deploy**: the front end still has to be committed and pushed, and that order
-is the right way round, since deploying first would have pointed the live site
-at tables that did not exist. §6.
+**Phase 4 is done and live on both projects.** Consultants, price bands,
+services, availability, time off, bookings, the slots function and the two
+views exist on dev and production; the phase's SQL check passes on both; the
+front end is deployed. Four commits, `3593b28` through `01b20bf`.
+
+**Production has one real consultant** — the account that applied through
+`/pro/apply` and was approved by hand, which is the whole approval flow until
+phase 13. The six seeded ones stay `pending` by decision (`01-PRD.md` §7): the
+marketplace launches empty rather than furnished with invented people. That
+consultant has **no availability rows yet**, so nothing is bookable until
+somebody taps cells in `/pro/consult`.
 
 This file describes **state**. It does not describe the system — that is
 `docs/` — and it is not a changelog. History lives in `git log`, which is
@@ -301,9 +301,11 @@ ledger row, a stricter test than a human double-tap.
 
 ### Phase 3 — payments in
 
-**Built on dev. Not finished, and not on production.** The code is written, the
-migration is applied, and the SQL-level checks pass. What has not happened is
-anyone putting a card through it.
+**Built, deployed to both projects, and one done-condition short.** The code is
+written, `006` is applied on dev and production, both Edge Functions are
+deployed with live secrets, and the replay and failure checks pass. What has
+not happened is anyone putting a card through it — blocked on Razorpay's
+website review, not on work. The table below says exactly where the line is.
 
 `payments` per `docs/05-BACKEND-SCHEMA.md` §4.8, plus two Edge Functions in
 `backend/functions/` — the first server functions in the project.
@@ -666,45 +668,47 @@ it is built.
 
 ---
 
-## 6. Next — deploy phase 4, then phase 5
+## 6. Next — phase 5, bookings
 
-Phase 4 is built and walked on dev. Three things stand between it and done, in
-this order:
+**Phase 4 is closed.** Migrations applied to dev through the MCP and replayed
+to production by hand, both seeded, front end deployed, routes walked on both.
+Four bugs were found after it was first called done — three by walking
+production, one by the first real person to fill in the application form — and
+all four are fixed and recorded in §2.
 
-1. **Run the seed.** `backend/seed/seed.mjs`, which needs
-   `SUPABASE_SERVICE_ROLE_KEY` — the one credential this repo never holds:
+**Phase 5 is the transaction.** `docs/06-IMPLEMENTATION.md`. `bookings` and its
+partial unique index already exist; what is missing is `orders`,
+`order_items`, `earnings_ledger`, the one transaction that claims a slot and
+debits a wallet, and the reversing credit a decline owes once a booking carries
+money. Per-minute sessions need their meter here or in phase 11.
 
-   ```bash
-   SUPABASE_URL=https://mrjsatelbuiypodeulcx.supabase.co    SUPABASE_SERVICE_ROLE_KEY=…    node backend/seed/seed.mjs --ref=mrjsatelbuiypodeulcx
-   ```
+**Three things to settle before writing any of it**, and two are decisions, not
+code:
 
-   It refuses unless `--ref` matches the URL, it is idempotent on `legacy_id`,
-   and it prints every display-name join that resolved to nothing. **It has
-   never run past that guard** — expect to fix something the first time.
-   Production takes the same command with the production ref, and lands the six
-   `pending` on purpose. Publish them deliberately:
-   `update consultants set status='approved' where legacy_id like 'a_';`
+1. **Refund and cancellation policy** (§4). The booking function cannot be
+   written without it — it decides whether a cancellation is a reversing entry,
+   a partial one, or nothing.
+2. **Charge at booking or at session start** (§4). Recommending at booking:
+   one write, and a hold never becomes a leakable state.
+3. **Razorpay's website review**, which is a clock rather than a task. Until it
+   clears, live checkout is refused, **production wallets cannot be funded**,
+   and phase 5's first done-condition — two clients racing one slot, one
+   booking, one refusal, no orphaned debit — cannot be exercised end to end
+   against real money. Dev is unaffected: fund a dev wallet by hand with the
+   recipe at the foot of `003`.
 
-2. **Replay `007` through `011` to production**, in order, via the MCP.
-   `009_slots_check.sql` is a test and never goes in a replay.
+**Owed on phase 3:** one real ₹1 live payment through the deployed site, once
+that review clears. That closes its last done-condition.
 
-3. **Walk the routes on production** once both are done. `npm run build`
-   passing proves almost nothing.
+Dev carries two hand-made consultants (`legacy_id` `dev:1`, `dev:2`) on the two
+test accounts alongside the six seeded ones. They are fixtures for walking the
+app, not the seed, and the seed does not collide with them.
 
-Dev currently carries two hand-made consultants (`legacy_id` `dev:1` and
-`dev:2`) on the two test accounts, at bands 5 and 2, with two bookings between
-them. They are fixtures for the walk, not the seed, and the seed will not
-collide with them.
-
-**Then phase 5 — bookings.** `docs/06-IMPLEMENTATION.md`. The table and its
-conflict index already exist; what is missing is the transaction that writes a
-row, `orders`, `order_items`, `earnings_ledger`, and the reversing credit a
-decline owes once a booking carries money. Per-minute sessions need their meter
-here or in phase 11.
-
-**Still owed on phase 3, and it is a clock, not a task:** one real ₹1 live
-payment through the deployed site, once Razorpay's website review clears. That
-closes phase 3's last done-condition.
+**Three advisor lints on both projects are intentional.** `consultants_public`
+and `bookings_view` are owner-rights views — they must be, since `profiles` is
+own-row-only and an invoker-rights view would return an empty name for everyone
+but yourself; each restricts itself in its own `WHERE`. `consultant_open_slots`
+is a `security definer` function callable by `anon`, which is the point of it.
 
 **Owed, not blocking:**
 
@@ -716,15 +720,7 @@ closes phase 3's last done-condition.
 - **If the top-up minimum is ever lowered again for a test payment**, revert it
   in the same session — both `MIN_PAISE` in
   `backend/functions/razorpay-order/index.ts` and the client copy in
-  `Wallet.jsx`, redeploy the function, and push. Leaving it lowered is how a
-  ₹1 minimum ends up live for real users by accident.
-
-**Three advisor lints on dev are intentional and will reappear on production.**
-`consultants_public` and `bookings_view` are owner-rights views — they must be,
-since `profiles` is own-row-only and an invoker-rights view would return an
-empty name for everyone but yourself; each restricts itself in its own `WHERE`.
-`consultant_open_slots` is a `security definer` function callable by `anon`,
-which is the entire point of it.
+  `Wallet.jsx`, redeploy the function, and push.
 
 ### Owed, not blocking
 
