@@ -3,24 +3,23 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 27 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built and
-replayed to production, one done-condition away from finished — Razorpay's
-website review of `atharvborse2004-ops.github.io` was still queued on their
-side as of 25 Aug, and until it clears every live checkout is refused with
-"Payment blocked as website does not match registered website(s)". §2 says
-exactly where that line is.**
+Updated 27 Aug 2026.
 
-**Phase 4 is done and live on both projects.** Consultants, price bands,
-services, availability, time off, bookings, the slots function and the two
-views exist on dev and production; the phase's SQL check passes on both; the
-front end is deployed. Four commits, `3593b28` through `01b20bf`.
+| Phase | State |
+|---|---|
+| 0 · pre-work | Done |
+| 1 · auth and profile | Done |
+| 2 · wallet | Done |
+| 3 · payments in | **Built and deployed. One done-condition short**, blocked on Razorpay's website review of `atharvborse2004-ops.github.io`. Until it clears, every live checkout is refused with "Payment blocked as website does not match registered website(s)" — so **production wallets cannot be funded** |
+| 4 · consultants, availability, approval | **Done.** Schema, seed and front end live on both projects; its check passes on both |
+| **5 · bookings** | **Next.** Blocked on two product decisions — §4 and §6 |
 
-**Production has one real consultant** — the account that applied through
-`/pro/apply` and was approved by hand, which is the whole approval flow until
-phase 13. The six seeded ones stay `pending` by decision (`01-PRD.md` §7): the
-marketplace launches empty rather than furnished with invented people. That
-consultant has **no availability rows yet**, so nothing is bookable until
-somebody taps cells in `/pro/consult`.
+**Production has one real consultant**, who applied through `/pro/apply` and was
+approved by hand — the entire approval flow until phase 13. The six seeded
+consultants stay `pending` by decision (`01-PRD.md` §7): the marketplace
+launches empty rather than furnished with invented people. The real one has **no
+availability rows**, so nothing is bookable until somebody taps cells in
+`/pro/consult`.
 
 This file describes **state**. It does not describe the system — that is
 `docs/` — and it is not a changelog. History lives in `git log`, which is
@@ -43,7 +42,7 @@ npm run build                  # proves less than you think
 
 | | Project ref | Reached by | Holds |
 |---|---|---|---|
-| **Production** | `talqzgolttfgdzcoaqno` | the deployed site only | four real accounts |
+| **Production** | `talqzgolttfgdzcoaqno` | the deployed site only | real accounts, real money, one live consultant |
 | **Dev** | `mrjsatelbuiypodeulcx` (`namo-dev`) | `npm run dev`, `.mcp.json`, agents | throwaway |
 
 `.env.local` (gitignored) and `.mcp.json` both point at **dev**. Production
@@ -61,19 +60,25 @@ into the ten-digit field — the `+91` is fixed in the UI. Two numbers, so the
 Pushing to `main` deploys automatically, ~40s. `HashRouter`, so GitHub Pages
 needs no config for sub-routes.
 
-### Verifying the money layer
+### The checks
 
-The thing to run after touching anything near the wallet. Paste
-`backend/schema/003_wallets_ledger_check.sql` into the dev SQL editor, and
-`006_payments_check.sql` after it if payments are in scope.
+Three runnable checks live in `backend/schema/`. Run the ones whose area you
+touched, in the **dev** SQL editor.
 
-**Passing looks like a failure:** `ERROR: PHASE 2 CHECKS PASSED`, and
-`ERROR: PHASE 3 CHECKS PASSED` from the other. It raises on
-its last line to roll back every row it wrote, because the ledger is
-append-only and a check that inserted real rows could not clean up after
-itself. Any other error names the assertion that broke. It needs at least one
-profile to exist, and it measures relative to whatever balance that wallet
-already holds, so it can be run repeatedly.
+| File | Covers |
+|---|---|
+| `003_wallets_ledger_check.sql` | the wallet: balance cache, refusals, replay, double-tap |
+| `006_payments_check.sql` | payments: idempotency, a failure leaving no ledger row |
+| `009_slots_check.sql` | consultants: slots on all seven weekdays, approval, bands, grants |
+
+**Passing looks like a failure:** `ERROR: PHASE 2 CHECKS PASSED`, and the same
+shape from the other two. Each raises on its last line to roll back every row it
+wrote — the ledger is append-only, so a check that inserted real rows could not
+clean up after itself. Any other error names the assertion that broke.
+
+Each needs at least one profile to exist, and each measures **relative** to
+whatever is already there, so they can be run repeatedly against a database
+with real data in it.
 
 ---
 
@@ -98,7 +103,7 @@ already holds, so it can be run repeatedly.
 library, no state library, no UI kit, **no linter, no type checker, no tests.**
 
 Two sides in one codebase. Most values on screen still come from
-`src/data/mock.js` and `src/data/bhaktamar.js`. Two things are real:
+`src/data/mock.js` and `src/data/bhaktamar.js`. Four things are real:
 
 - **Identity and birth details** (phase 1). The onboarding questions plus phone
   verification write a `profiles` row; Profile, Chart and Horoscope read it back.
@@ -146,13 +151,25 @@ Everything else evaporates on reload, deliberately.
   and is the one place money becomes text. A screen comparing `balance` to a
   mock price needs the hundred — `Tarot.jsx` is the one that does. `null`
   renders as an em dash: a wallet flashing zero at someone who has money is
-  worse than showing nothing yet.
+  worse than showing nothing yet. `rupees()` prints whole rupees whole and
+  anything with paise to two digits — ₹2,248.5 is a number that happens to be
+  money, not a price, and it reached a screen once when a band divided unevenly.
 - **`useProfileFields()` is what screens read for identity.** Signed in, it
   returns the real row or blank — never the seed person, because a signed-in
   user seeing the mock name and birth details would get a chart drawn for a
   birth that is not theirs, permanently if the fetch failed. Signed out it
   returns seed, which is the demo. **Never read `mock.js`'s `user` directly in a
   screen that shows identity** — that bug has shipped twice.
+- **`useConsultantFields()` is the same contract on the other side**, added in
+  phase 4 and obeying the same rule: signed in it returns the real
+  `consultants` row or blank, **never `consultants[0]`**. `mock.js` still
+  supplies the fields no table holds yet — followers, rating, published content
+  — and phase 9 takes those. The store's `me` follows it on both sides now; it
+  used to hand a signed-in seeker the seed person's initials on every tab.
+- **`consultantError` is not the same as no row.** A failed read and "you are
+  not a consultant" are different answers, and conflating them sent a working
+  consultant to the application form. Anything gating on `consultant` must
+  check the error first.
 - **Sun, moon and rising are still seed for everyone**, on four screens
   (`Computing.jsx`, `HoroscopePanel.jsx`, `Shop.jsx`, and via the hook). They
   need the ephemeris service. **Phase 7 must change all four**, not just the hook.
@@ -188,33 +205,39 @@ Everything else evaporates on reload, deliberately.
 
 ## 2. Backend — phases 1 to 4
 
-**Both are built, verified and deployed.** Migrations are numbered SQL files in
-`backend/schema/`, forward-only, applied via the Supabase MCP rather than the
-CLI — there is no `supabase/migrations` dir, so those files are the record of
-what ran, not the thing that ran it.
+**All four phases are built and applied to both projects.** Migrations are
+numbered SQL files in `backend/schema/`, forward-only. There is no
+`supabase/migrations` dir, so those files are the record of what ran, not the
+thing that ran it — keep the two in step by hand.
 
 | File | What |
 |---|---|
 | `001_profiles.sql` | `profiles`, RLS, the column grant, `handle_new_user` |
 | `002_profiles_email.sql` | `profiles.email` |
 | `003_wallets_ledger.sql` | `wallets`, `ledger`, both triggers, `wallet_debit` |
-| `003_wallets_ledger_check.sql` | **a test, not a migration** — never in a replay |
 | `004_refuse_mutation_search_path.sql` | lint fix; 003 had already run |
 | `005_wallet_debit_drop_client_ref_type.sql` | removed a client-settable `ref_type` |
-| `006_payments.sql` | `payments`, `payment_capture()` |
+| `006_payments.sql` | `payments`, RLS, `payment_capture()` |
 | `007_consultants.sql` | `price_bands` (seeded), `consultants`, `consultant_services`, `consultant_availability`, `consultant_time_off`, RLS, the column grants, `consultants_public` |
 | `008_bookings.sql` | `bookings`, the partial unique slot claim, read-own and the accept/decline policy |
 | `009_slots.sql` | `consultant_open_slots()` — the one slots source |
-| `009_slots_check.sql` | **a test, not a migration** — nine assertions, never in a replay |
-| `010_bookings_view.sql` | `bookings_view`, which is what carries the other party's name |
+| `010_bookings_view.sql` | `bookings_view`, which carries the other party's name |
 | `011_round_price_bands.sql` | derived band prices to whole rupees; restores the six the PRD names |
-| `006_payments.sql` | `payments`, RLS, `payment_capture` |
-| `006_payments_check.sql` | **a test, not a migration** — never in a replay |
 
-**A fresh project is these files in order**, minus the two `_check` files.
-Dev was built that way, which is
-the first real proof they reproduce the system from nothing rather than merely
-describing what once happened.
+**Three `_check.sql` files sit beside them and are tests, not migrations.**
+`003_wallets_ledger_check`, `006_payments_check`, `009_slots_check`. They never
+appear in a replay. Each raises on its last line to roll back every row it
+wrote, so **passing looks like an error**: `ERROR: PHASE N CHECKS PASSED`.
+
+**A fresh project is the eleven files in order.** Dev was built that way, which
+is the proof they reproduce the system from nothing rather than describing what
+once happened.
+
+**Dev is reached through the MCP; production is not.** `.mcp.json` is pinned to
+dev on purpose, so no agent session can write to real data — `007`–`011` were
+replayed to production by hand in the SQL editor. Production's
+`supabase_migrations` table therefore carries no rows for them. That is
+expected; the files are the record.
 
 ### Phase 1 — identity
 
@@ -351,121 +374,59 @@ checkout script is fetched on first use rather than from `index.html`.
 
 | Done-condition | State |
 |---|---|
-| A real ₹1 payment credits exactly once | **Blocked**, not unbuilt. Live mode and KYC are both ready; Razorpay's own website-verification review of `atharvborse2004-ops.github.io` is pending, ETA 24-48h from 25 Aug. Every live-mode checkout — UPI and cards both — is refused with "Payment blocked as website does not match registered website(s)" until it clears |
-| The identical webhook payload twice credits once | **Yes**, hand-replayed 24 Aug, and confirmed against real Razorpay deliveries 25 Aug |
-| A failed payment leaves a `payments` row and no ledger row | **Yes**, same |
+| A real ₹1 payment credits exactly once | **Blocked**, not unbuilt. Live mode and KYC are ready; Razorpay's website-verification review of `atharvborse2004-ops.github.io` is pending. Until it clears every live checkout — UPI and cards — is refused with "Payment blocked as website does not match registered website(s)" |
+| The identical webhook payload twice credits once | **Yes.** Hand-replayed, then confirmed against real Razorpay deliveries |
+| A failed payment leaves a `payments` row and no ledger row | **Yes**, same probe |
 
-The replay was done by replaying, not by reasoning. A signed `payment.captured`
-body was POSTed to the deployed function **three times, byte for byte
-identical**: the first returned `duplicate: false`, the other two
-`duplicate: true`, and the wallet holds one credit row. A signed
-`payment.failed` for ₹500 wrote a `payments` row with status `failed` and no
-ledger row at all. The ledger sums to the stored balance in both cases.
+The replay was done by replaying, not by reasoning: a signed `payment.captured`
+body POSTed to the deployed function three times byte-for-byte returned
+`duplicate: false` then `true` twice, with one credit row. An invalid signature
+returns **401 with the body never parsed**; a valid signature for an unknown
+order returns **500**, which is `payment_capture()` refusing to guess a wallet
+and asking Razorpay to retry rather than swallowing the event.
 
-Signature verification was checked in both directions from the same probe: an
-invalid signature returns **401 with the body never parsed**, and a valid
-signature for an order that does not exist returns **500** — `payment_capture()`
-refusing to guess a wallet, and 500 is the retry signal rather than a swallowed
-error.
+**A real test payment has been through the whole path by hand** — sheet, order,
+checkout, signature, capture, credit — on both projects. Entering a card cannot
+be driven from an agent session: both controls live inside Razorpay's
+cross-origin iframe.
 
-**Dev wallet `2ad16f66` now holds ₹1**, from that replay. It is a real ledger
-row and the ledger is append-only, so it stays. The `order_REPLAY_TEST` and
-`order_FAIL_TEST` rows in `payments` are left alongside it deliberately — a
-ledger entry whose payment rows were deleted is an entry nobody can explain.
+Four things this phase cost that are worth not paying twice:
 
-**`/wallet` has been walked**, 24 Aug, and it renders: balance ₹1, the replay's
-ledger row reading `Added money · UPI · +₹1`, and the sheet opening with the
-four presets, the custom field and no cashback label. Two things came out of it.
+- **Every Edge Function needs four CORS headers**, not two: `supabase-js` sends
+  `x-client-info` and `apikey` on every `functions.invoke()` alongside
+  `authorization` and `content-type`. Omit them and the preflight fails, the
+  request never leaves the browser, and it surfaces as `Failed to send a
+  request to the Edge Function` — which reads like the function being down.
+- **Razorpay never shows a saved webhook secret, only overwrites it.** Setting
+  the *key id* there instead produces `signature did not match; body ignored`
+  on every delivery, and the only way to rule it out is to retype it. Note also
+  that Razorpay's Status toggle **deletes** a webhook rather than disabling it.
+- **A captured payment can be lost, and one was.** `order_TTiovPCUcREweJ` — a
+  real ₹500 captured while the secret was wrong. Every delivery bounced off the
+  signature check, Razorpay gave up, and the row sat at `created` with no
+  credit. In test mode that is nothing; **in production that is a person who
+  paid and received nothing, with no alert and no way back.** It was reconciled
+  by hand, which proves the fix but is not the fix. **The sweep is still owed**
+  — see §6.
+- **The dismiss path has never run.** `ondismiss()` and `payment.failed()` in
+  `topup()` are unexercised, so abandoning checkout mid-payment is unproven.
 
-- **The CORS header list was wrong and it would have failed in production too.**
-  `razorpay-order` allowed `authorization, content-type`, but `supabase-js`
-  sends `x-client-info` and `apikey` on every `functions.invoke()`. The
-  preflight failed, so the request never left the browser, and it surfaces as
-  `Failed to send a request to the Edge Function` — which reads like the
-  function is down. Fixed and redeployed. **Any future function needs all four
-  in the list.**
-- **A missing `RAZORPAY_KEY_ID` surfaced correctly**, before it was set, as
-  "Payments are not configured yet." The refusal contract works: the server's
-  string reached the toast unchanged. The log line now names *which* secret is
-  missing rather than listing both — that ambiguity cost a round trip once.
-
-**With all three secrets set, the order path works end to end.** Tapping ₹500
-loads Razorpay's script, opens their checkout in test mode, and writes a real
-`created` row — `order_TTKMKbGPw6Itcp`, 50000 paise. `toppingUp` greys the
-button and reads "Opening checkout…" while it happens.
-
-**The webhook is registered**, and with two faults worth fixing:
-
-- **It is registered twice**, both entries enabled on the same URL, so every
-  event is delivered twice. Idempotency absorbs it — that is what it is for —
-  but it doubles the traffic and makes the logs read like a retry storm.
-  **Delete one.**
-- **Both subscribe to all 51 events.** Only `payment.captured` and
-  `payment.failed` are handled; the rest return 200 and are ignored, so this is
-  noise rather than danger. Narrow it anyway.
-
-**A real Razorpay test payment credited correctly on 25 Aug.** ₹500 through
-their checkout, one `[webhook] captured pay_TTjAR9ky5Ij9WB duplicate=false`
-line, balance ₹1 → ₹501, ledger replaying to the stored balance exactly. The
-whole path works: sheet, order, checkout, signature, capture, credit.
-
-**Getting there cost two configuration mistakes worth remembering.** The
-webhook was registered twice — since deleted, and note that Razorpay's Status
-toggle in the details panel *deletes* rather than disables. And its secret was
-the **key id** rather than the webhook secret, which produced
-`signature did not match; body ignored` on every delivery for eighteen minutes.
-Razorpay never shows a saved secret, only overwrites it, so the only way to
-rule this out is to retype it.
-
-**A captured payment can be lost, and one was.** `order_TTiovPCUcREweJ` is a
-real ₹500 Razorpay captured while the secret was wrong. Every delivery bounced
-off the signature check, Razorpay gave up, and the row still sits at `created`
-with no credit. In test mode that is nothing; **in production that is a person
-who paid and received nothing, with no alert and no way back.** The webhook is
-currently the only route from payment to credit, so any window where it is
-misconfigured, deployed broken, or down past Razorpay's retry schedule
-swallows real money silently.
-
-The fix is a reconciliation sweep, not a change to the payment path: find
-`payments` rows stuck at `created` past some age, ask Razorpay's API what
-became of each, and feed the captured ones back through `payment_capture()`.
-That function is already idempotent, so a sweep racing a late webhook is safe
-by construction. **No automated sweep exists yet** — `order_TTiovPCUcREweJ`
-itself was reconciled by hand on 25 Aug (its real `pay_TTir3C60oiAFbt` looked
-up in the Razorpay dashboard and fed through `payment_capture()` directly,
-crediting ₹500), which proves the fix works but is not a substitute for the
-sweep existing. **Still owed**, and cheap insurance against the next silent
-loss now that production is live.
-
-**Entering a test card and completing checkout could not be driven from an
-agent session** — both controls live inside `api.razorpay.com`'s cross-origin
-iframe, and CDP input dispatch times out on this machine besides. **A person
-did it by hand** on both dev and production: a real ₹500 and a real ₹1 both
-completed through the sheet, `handler()` fired, and the balance polling picked
-up the credit correctly on both. **The dismiss/cancel path is still
-unexercised** — `ondismiss()` and `payment.failed()` have never run, so it
-remains unproven that abandoning checkout mid-payment leaves the balance and
-the `created` row untouched. Low priority now that the success path is proven
-twice over, but still open.
-
-**Seen once, unexplained:** `[profile] load failed: JWT issued at future`,
-while the wallet read on the same token succeeded. It appeared under a session
-minted by hand in the browser console, so it is most likely an artefact of that
-rather than a defect. **Watch for it on a real sign-in** before treating it as
-either.
+**Dev wallet `2ad16f66` holds a real balance** from those replays, and the
+`order_REPLAY_TEST` / `order_FAIL_TEST` rows in `payments` are left beside it
+deliberately: a ledger entry whose payment rows were deleted is an entry nobody
+can explain.
 
 ---
 
 ### Phase 4 — consultants, availability, approval
 
-**Built and checked on dev. Not on production, and not seeded.**
-
-Run `backend/schema/009_slots_check.sql` in the dev SQL editor after touching
-anything near slots or prices. Passing looks like
-`ERROR: PHASE 4 CHECKS PASSED` — same trick as the phase 2 check, it raises on
-its last line to roll back every row it wrote. Nine assertions, and assertion 5
-is the one that matters: it runs the subtraction on **all seven weekdays**,
-which is exactly what the old bug passed only on Thursday.
+**Done, seeded and deployed on both projects.** The check to run after
+touching anything near slots or prices is `009_slots_check.sql`. Nine
+assertions; **assertion 5 is the one that matters** — it runs the subtraction on
+all seven weekdays, which is exactly what the old bug passed on one day and
+failed on six. Every count in it is relative, so it survives a database with
+real bookings in it; the first version asserted absolute numbers and broke the
+moment the seed landed.
 
 - **Consultant-ness is the existence of a `consultants` row.** No role column
   anywhere, same reason `isPro` is derived from the URL. `/pro` is no longer
@@ -498,7 +459,9 @@ which is exactly what the old bug passed only on Thursday.
   carries the seeker's birth details to the consultant on that booking, on
   purpose: a reading cannot be done without them.
 
-Three things that cost time and are worth not rediscovering:
+Four things that cost time and are worth not rediscovering. Three were found
+*after* the phase was first called done — by walking production and by the first
+real person to use the application form:
 
 - **The application form was shipped broken and nobody noticed for an hour,
   because the insert omitted `profile_id`.** The policy is
@@ -509,7 +472,6 @@ Three things that cost time and are worth not rediscovering:
   tested landed on "under review" or went straight to the studio. Walking the
   states *around* a form is not walking the form. To test it, free an account
   first: `delete from consultants where legacy_id = 'dev:2';`
-
 - **A weekday derived in the browser from an IST midnight is a day early.**
   `new Date('...T00:00:00+05:30').getUTCDay()` reads the previous UTC day, so
   the availability grid struck out Wednesday for a Thursday booking and every
@@ -526,34 +488,53 @@ Three things that cost time and are worth not rediscovering:
   `ProApply` has a fifth state that says the connection failed and offers a
   retry. Same lesson `refreshProfile` already carried about wallets.
 
-**What has been verified, in a browser, on dev:** two consultants at different
-bands, each seeing only their own grid; a pending consultant unreachable by
-list, by URL and by RPC; the seeker's sheet and the consultant's grid agreeing
-on open slots **on every day of the week**; Accept surviving a reload and not
-undoing itself on a second tap; a grid cell writing and deleting the right
-`(weekday, slot_time)` row; and `/pro/*` signed out landing on the application
-while `/profile` still resolves to the seeker's own.
+**Verified in a browser, on both projects:** two consultants at different bands
+each seeing only their own grid; a pending consultant unreachable by list, by
+URL and by RPC; the seeker's sheet and the consultant's grid agreeing on open
+slots **on every day of the week**; Accept surviving a reload and not undoing
+itself on a second tap; a grid cell writing and deleting the right
+`(weekday, slot_time)` row; `/pro/*` signed out landing on the application while
+`/profile` still resolves to the seeker's own; and a real application submitted,
+approved by hand, and live on `/consult`.
 
-**The seed has run on dev, twice.** Six consultants, four services each, 35
-availability rows each, seven bookings — all seven on `a1` explicitly, which is
-seed trap 1 handled rather than fallen into — and seven placeholder profiles
-for the booking clients the mock names but never defines. The second run
-changed no counts, which is what `legacy_id` idempotency is for.
+### The seed
 
-**Two things it does that are worth knowing.** Booking amounts come from the
-*service* row, not from the mock: the mock charges ₹2,998 for 30 minutes, twice
-the 20-minute rate, where the bands say one and a half times. And seeded people
-get phone numbers starting with 1, which no Indian mobile does — nobody can
-sign in as a seeded consultant by owning their number.
+`backend/seed/seed.mjs`, run with the service-role key and a `--ref` that must
+match the URL. Idempotent on `legacy_id`, so re-running updates rather than
+duplicates. It has run on both projects.
 
-**Production has the schema and the seed.** `007`–`011` were replayed there
-by hand on 26 Aug — pasted into the SQL editor rather than applied through the
-MCP, because `.mcp.json` is pinned to dev on purpose (§3 of
-`backend/INSTRUCTIONS.md`) and no agent session can reach production. So
-production's `supabase_migrations` table carries no rows for them; the numbered
-files are the record, as they always were. The 24 price bands read back
-identical to dev, `009_slots_check.sql` passes there, and the seed ran clean —
-six consultants `pending`, seven bookings, seven placeholder profiles.
+Six consultants, four services each, 35 availability rows each, seven bookings
+and seven placeholder profiles for the booking clients the mock names but never
+defines — the list it prints at the end. All seven bookings are assigned to
+`a1` **explicitly**, which is seed trap 1 handled rather than fallen into.
+
+Three things about it worth knowing:
+
+- **A seeded person needs an auth user first.** `profiles` rows are created by
+  `handle_new_user()` from `auth.users`, and `profiles.phone` is NOT NULL, so
+  the script mints accounts through the admin API.
+- **Their numbers start with 1**, which no Indian mobile does. Nobody can ever
+  sign in as a seeded consultant by owning their number — which also means you
+  cannot sign in as one yourself.
+- **Booking amounts come from the service row, not the mock.** The mock charges
+  ₹2,998 for 30 minutes, twice the 20-minute rate, where the bands say one and
+  a half times. Seeding the mock figure would put a price in the database the
+  catalogue cannot reproduce.
+
+**On production the six are `pending` and stay that way** — the marketplace
+launches empty by decision, `01-PRD.md` §7. Publishing them is one reversible
+statement: `update consultants set status='approved' where legacy_id like 'a_';`
+
+**Production's one real consultant** applied through `/pro/apply` and was
+approved by hand, which is the entire approval flow until phase 13. That
+account has **no availability rows**, so nothing is bookable until somebody taps
+cells in `/pro/consult`.
+
+**Dev also carries two hand-made fixtures**, `legacy_id` `dev:1` and `dev:2`, on
+the two test accounts. They exist for walking the app and do not collide with
+the seed.
+
+---
 
 ## 3. Decisions made
 
@@ -597,10 +578,9 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
-| ~~Session duration ladder~~ | **Answered 26 Aug: both.** Tiered 15/20/30 *and* per-minute, `01-PRD.md` §5.1. Phase 4 models it; phase 5/11 meters it |
+| **Refund and cancellation policy** | **Phase 5 — next** |
+| **Charge at booking or at session start** | **Phase 5 — next** |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
-| Refund and cancellation policy | Phase 5 |
-| Charge at booking or at session start | Phase 5 |
 | Chat window — booking-bound or quota-bound | Phase 6 |
 | Ephemeris reference chart | Phase 7 |
 | Video SDK — 100ms or Agora | Phase 11 |
@@ -618,11 +598,11 @@ Recorded so they are not re-argued. Reasoning is in the documents.
   Deliberately not reconstructed: a plausible wrong shloka in a devotional deck
   is undetectable to the person it misleads.
 - **The 48 card faces carry no attribution at all.** The murtis now do.
-- **Razorpay is test mode only.** Key id `rzp_test_TTJTVbFWD1ehHQ`, in
-  `.env.local` and needed as a function secret too. Live mode needs business
-  KYC and is the long pole — **start it now if it has not begun.** Only live
-  mode can satisfy "a real one rupee payment credits once", so phase 3 cannot
-  close without it.
+- **Razorpay's website verification is pending on their side.** KYC and live
+  mode are done; the review of `atharvborse2004-ops.github.io` is not. Until it
+  clears, no live payment can complete, so phase 3's last done-condition cannot
+  be met and **production wallets cannot be funded** — which is what makes it a
+  phase 5 problem too. Nothing on our side unblocks it faster.
 
 ### Front-end defects, all recorded in `docs/03-APP-FLOW.md` §10
 
@@ -633,10 +613,6 @@ citing them, 88% against 68% · **there is no sign-in-only route**, so a
 returning user must re-answer the onboarding questions to get a session — the
 consultant branch now routes through the same steps to `/pro/apply`, so the
 gap is felt on both sides.
-
-**Closed 26 Aug:** the Thursday-only booked-slot bug. Both sides call
-`consultant_open_slots()`, and `009_slots_check.sql` asserts the subtraction on
-all seven weekdays rather than the one it was written on.
 
 ### Deliberate omissions
 
@@ -700,35 +676,29 @@ code:
 **Owed on phase 3:** one real ₹1 live payment through the deployed site, once
 that review clears. That closes its last done-condition.
 
-Dev carries two hand-made consultants (`legacy_id` `dev:1`, `dev:2`) on the two
-test accounts alongside the six seeded ones. They are fixtures for walking the
-app, not the seed, and the seed does not collide with them.
-
 **Three advisor lints on both projects are intentional.** `consultants_public`
 and `bookings_view` are owner-rights views — they must be, since `profiles` is
 own-row-only and an invoker-rights view would return an empty name for everyone
 but yourself; each restricts itself in its own `WHERE`. `consultant_open_slots`
 is a `security definer` function callable by `anon`, which is the point of it.
 
-**Owed, not blocking:**
-
-- **The reconciliation sweep is still not built.** The one lost payment
-  (`order_TTiovPCUcREweJ`) was reconciled by hand, which proves the fix works
-  but leaves the next silent loss with no automated catch.
-- **The checkout-dismiss path** (`ondismiss()` / `payment.failed()` in
-  `topup()`) has never run.
-- **If the top-up minimum is ever lowered again for a test payment**, revert it
-  in the same session — both `MIN_PAISE` in
-  `backend/functions/razorpay-order/index.ts` and the client copy in
-  `Wallet.jsx`, redeploy the function, and push.
-
 ### Owed, not blocking
 
-The phase 1-2 review fixes have not been walked on either project — twelve
-fixes across the session gate, `Computing.jsx`, `useProfileFields()`, `AskDate`
-and the store. The logic is checked and the build is green; nobody has clicked
-them.
+- **The reconciliation sweep.** `order_TTiovPCUcREweJ` was reconciled by hand,
+  which proves the fix and is not the fix. The next silent loss has no
+  automated catch. Cheap insurance now that production takes real money.
+- **The checkout-dismiss path** — `ondismiss()` and `payment.failed()` in
+  `topup()` have never run.
+- **The seeker onboarding branch has not been walked this session.** Every
+  sign-in went through `?next=pro`, which skips `AskDate`, `AskTime`,
+  `AskPlace` and `Computing` entirely. The phase 1-2 review fixes in those
+  files are checked by reading and by a green build, which is not the same as
+  somebody clicking them.
+- **If the top-up minimum is ever lowered for a test payment**, revert it in
+  the same session — `MIN_PAISE` in
+  `backend/functions/razorpay-order/index.ts` *and* the client copy in
+  `Wallet.jsx`, redeploy the function, and push.
 
 **`npm run build` passing proves almost nothing** — no linter, no type checker,
-an undefined identifier inside JSX compiles cleanly and throws at runtime. It
-has shipped a blank screen twice. Walk the routes.
+and an undefined identifier inside JSX compiles cleanly and throws at runtime.
+It has shipped a blank screen twice. Walk the routes.
