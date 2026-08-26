@@ -79,13 +79,14 @@ In file order, which is also resolution order.
 | `/pooja` | Pooja | **Tab** |
 | `/academy` | Academy | **Tab** |
 | `/shop` | Shop | **Tab** |
-| `/pro/feed` | ProFeed | **Pro** |
-| `/pro/sessions` | ProSessions | Pro |
+| `/pro/apply` | ProApply | Plain |
+| `/pro/consult` | ProConsult | **Pro** |
 | `/pro/studio` | ProStudio | Pro |
+| `/pro/live` | ProGoLive | Pro |
 | `/pro/earnings` | ProEarnings | Pro |
-| `/pro/profile` | ProProfile | Pro |
+| `/pro/profile` · `/pro/profile/:tab` | ProProfile | Pro |
 | `/live` | → `/consult` | — |
-| `/pro/*` | → `/pro/feed` | — |
+| `/pro/*` | → `/pro/studio` | — |
 | `*` | → `/home` | — |
 
 ### Route-order traps
@@ -200,16 +201,25 @@ component**, not by reordering the feed data, so the feed stays a list of
 content.
 
 ### `/consult`
-Four mode circles as local state: Call · Chat · Live · Booking. Live swaps in a
-different body.
+The roster, read from `consultants_public` — so an unapproved practice is
+absent because the server never sent it, not because a filter here dropped it.
+Search and category counts run over what came back.
 
 Per consultant: the row opens their profile; a call knob toasts; a message knob
-opens the chat overlay; both are disabled when the consultant is offline; and
-**Book** opens a sheet.
+opens the chat overlay; Live goes to a real room when one is running. Nothing is
+disabled for being "offline" — there is no presence yet (phase 6), and a dot
+that is always green is worse than no dot. The rail above the list counts
+`verified`, which is a real column.
 
-**The booking sheet is the primary revenue flow and it charges nothing.** Six
-slots, booked ones struck through, a summary with a total, and a confirm that
-fires a toast. Its own footer says so.
+**Its own booking sheet is gone** — deleted as redundant with the one on
+`/consult/:id`, which is the only booking flow.
+
+**With nobody approved, the empty state is the whole screen.** Not a line of
+grey text under the furniture: the banners, the category chips, the verified
+rail and the session line all describe a roster that does not exist, so none of
+them render. What remains says the list is empty because the practice is new,
+and offers `/pro/apply`. The reasoning, and the rejected alternative of
+approving six invented astrologers, is in `01-PRD.md` §7.
 
 ### `/pooja`
 **The one screen that does not scroll.** A fixed-height column: deity row,
@@ -319,15 +329,23 @@ visible reel.
 
 ## 5. Consultant screens
 
-### `/pro/feed`
-Renders the seeker's Home with one swapped header action. **The consultant
-therefore sees the seeker's free-tools row, the daily reading, the panchang and
-a shop card with an add-to-cart button.** Correct for a prototype, wrong for a
-product.
+### `/pro/apply`
+The front door, and the only `/pro` route the gate does not redirect away from.
+Four states in one screen: no session (sign up through the seeker's own name and
+phone steps, carrying `?next=pro`), session but no `consultants` row (the
+application), `pending` or `blocked` (under review), `approved` (straight
+through to the studio).
 
-### `/pro/sessions`
-Requests with accept and decline. Confirmed sessions each get a channel button —
-chat opens the panel, live navigates to a room, call toasts.
+A price is **picked from a band**, never typed, and the row it writes cannot
+carry a status — the column grant does not include one.
+
+### `/pro/consult`
+Requests with accept and decline, now real status writes rather than flag
+toggles: a second tap on Accept changes nothing, because the policy only allows
+the move *out of* pending. Confirmed sessions each get a channel button — chat
+opens the panel, live navigates to a room, call toasts. The availability grid
+below writes `consultant_availability`, one row per open cell, and reads what is
+taken from the same slots function the seeker's booking sheet calls.
 
 An availability grid of weekdays against times; tapping a cell toggles it closed.
 **The same booked-slots data the seeker's booking sheet reads** — except this
@@ -438,7 +456,10 @@ The primary revenue line is in that list.
   original booking and the new one inherits them.
 - `cancelled` depends on a policy that is still open — see `01-PRD.md` §5.4.
 
-Today: `pending → confirmed | declined` exists as a flag toggle. Nothing else.
+Today: `pending → confirmed | declined` is real, written by the consultant and
+validated by the policy. The rest of the machine is phase 5 — and so is the
+reversing credit a decline owes, which nothing seeded yet needs because no
+seeded booking carries money.
 
 ### 8.2 Payment
 
@@ -457,14 +478,23 @@ Refunds are a separate forward transition, never a mutation of the original.
 ### 8.3 Consultant approval
 
 ```
-  signup ──► pending ──► approved ──► (visible, bookable, earning)
-                │             │
-                │             └──► blocked ──► (invisible, unbookable)
-                └──► rejected
+  apply ──► pending ──► approved ──► (visible, bookable, earning)
+                              │
+                              └──► blocked ──► (invisible, unbookable)
 ```
 
 **Pending is invisible**, not merely unlisted: not in search, not bookable, and
-producing no earnings.
+producing no earnings. Verified on the server rather than in a screen — an
+unapproved consultant returns nothing from the list, from a direct id lookup,
+from their prices, from their availability and from their slots.
+
+There is no `rejected` state. This diagram used to show one and the `status`
+CHECK never had it; `blocked` covers both refusing an application and closing a
+practice, and a state nothing can enter is a state that gets forgotten.
+
+**The applicant cannot move any of this.** `status` and `verified` are outside
+the column grant, so approval is an `UPDATE` in the database GUI until the admin
+console exists (phase 13).
 
 **Blocking a consultant who has confirmed bookings and a pending balance is an
 unresolved policy question** — see `01-PRD.md` §6.
@@ -495,7 +525,11 @@ toast · and the flag set. The birth draft is the one exception — it survives 
 One flat `Set` of namespaced strings, which is the prototype's best idea:
 
 `like:` · `save:` · `follow:` · `remind:` · `event:` · `accept:` · `decline:` ·
-`closed:<day>:<time>` · `tarot:free1|free2` · `save:day-<key>`
+`tarot:free1|free2` · `save:day-<key>`
+
+`closed:<day>:<time>`, `accept:<id>` and `decline:<id>` are gone as of phase 4 —
+a closed slot is the absence of a `consultant_availability` row, and a decision
+is a `bookings.status` write.
 
 Sticky toggles and their toasts with no new store surface. It maps cleanly onto a
 real reactions table, which is rare for a prototype shortcut.
@@ -517,7 +551,7 @@ next rather than showing an empty list.
 | Break | Status |
 |---|---|
 | **ChatPanel threw on the first tap of the messages knob** — `isPro` was used but never defined, in two places, with no error boundary | **Fixed** |
-| The consultant's availability view applies booked slots only on Thursday; the two seeker views apply them always. A comment claims they cannot disagree | Open — one endpoint fixes it |
+| The consultant's availability view applied booked slots only on Thursday; the seeker's sheet applied them always and ignored the consultant's own closures | **Closed** — phase 4. Both call `consultant_open_slots()`; there is no second rule left to disagree with, and `009_slots_check.sql` asserts it on all seven weekdays |
 | Reports adds to the cart with no way to open the cart from that screen | Open |
 | Question packs display a price and grant questions free | Open |
 | Ask AI's wallet figure is a hardcoded string, not the live balance | Open |

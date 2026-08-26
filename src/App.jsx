@@ -29,6 +29,7 @@ import ProStudio from './pro/ProStudio.jsx'
 import ProGoLive from './pro/ProGoLive.jsx'
 import ProConsult from './pro/ProConsult.jsx'
 import ProProfile from './pro/ProProfile.jsx'
+import ProApply from './pro/ProApply.jsx'
 
 import Profile from './screens/Profile.jsx'
 import Wallet from './screens/Wallet.jsx'
@@ -95,33 +96,49 @@ function PlainLayout() {
 /**
  * Restores the session on load and sends a signed-out visitor back to
  * onboarding. Waits for `sessionReady` before acting, so a page reload with a
- * valid session never flashes onboarding first. The `/pro` side is exempt —
- * consultant identity isn't built yet (phase 4), so nothing there requires a
- * seeker session.
+ * valid session never flashes onboarding first.
  *
- * So are the two seeker routes the `/pro` side links *out* to: ProConsult
+ * `/pro` used to be exempt, because consultant identity did not exist: anyone
+ * who typed the URL was `consultants[0]`. From phase 4 it is the opposite —
+ * the consultant screens read a real `consultants` row, so reaching them
+ * without one shows a practice belonging to nobody. Signed out, or signed in
+ * with no row, goes to the application at `/pro/apply`; the application screen
+ * itself is what handles both.
+ *
+ * Two seeker routes the `/pro` side links *out* to stay exempt: ProConsult
  * opens `/chart?name=…` for a booking, and ProProfile opens `/consult/:id` to
- * preview a public page. Both read mock data and neither needs a session, so
- * bouncing them to onboarding just breaks the consultant's own screens. The
- * third cross-link, ProProfile's "Switch to seeking" → `/home`, is NOT exempt:
- * that one is genuinely asking for the seeker app, and onboarding is the right
- * answer when nobody is signed in.
+ * preview a public page — the second is now a real page, and previewing your
+ * own is the point of it. The third cross-link, "Switch to seeking" → `/home`,
+ * is NOT exempt: that one is genuinely asking for the seeker app.
  */
 function SessionGate() {
-  const { session, sessionReady } = useStore()
+  const { session, sessionReady, consultant, consultantLoading } = useStore()
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!sessionReady || session) return
+    if (!sessionReady) return
+
     // `/profile` starts with the four characters `/pro`, so this has to be a
     // segment-boundary check, not startsWith('/pro') — that swallowed the
     // seeker's own profile route into the consultant exemption.
     const onPro = pathname === '/pro' || pathname.startsWith('/pro/')
+
+    if (onPro) {
+      if (pathname === '/pro/apply') return
+      // A row that has not arrived yet is not the same as no row. Waiting
+      // costs one paint; guessing bounces a real consultant to the form.
+      if (session && consultantLoading) return
+      if (session && consultant) return
+      navigate('/pro/apply', { replace: true })
+      return
+    }
+
+    if (session) return
     const fromPro = pathname === '/chart' || pathname.startsWith('/consult/')
-    if (pathname.startsWith('/onboarding') || onPro || fromPro) return
+    if (pathname.startsWith('/onboarding') || fromPro) return
     navigate('/onboarding', { replace: true })
-  }, [session, sessionReady, pathname, navigate])
+  }, [session, sessionReady, consultant, consultantLoading, pathname, navigate])
 
   return null
 }
@@ -146,6 +163,11 @@ function Frame() {
             <Route path="/onboarding/phone" element={<AskPhone />} />
             <Route path="/onboarding/verify" element={<VerifyOtp />} />
             <Route path="/onboarding/computing" element={<Computing />} />
+
+            {/* The consultant application. Plain layout, because there is no
+                practice to put a nav bar around yet — and it is the one /pro
+                route the gate does not redirect away from. */}
+            <Route path="/pro/apply" element={<ProApply />} />
 
             {/* Profile carries its tab in the URL so it stays deep-linkable. */}
             <Route path="/profile" element={<Profile />} />

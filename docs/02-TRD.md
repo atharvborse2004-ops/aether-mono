@@ -200,7 +200,7 @@ moves money or claims a resource is an explicit endpoint.
 | `POST /functions/v1/razorpay-webhook` | — | 200 | `verify_jwt = false` — the signature is the authentication. Idempotent by unique index, not by an application check |
 | `POST /bookings` | `{ consultantId, serviceId, startsAt }` | booking, or a named refusal | One transaction. See below |
 | `POST /bookings/:id/status` | `{ status }` | booking | Consultant only. Decline writes a reversing ledger entry |
-| `GET /consultants/:id/slots?date=` | — | open slots | The single source for all three callers |
+| `GET /consultants/:id/slots?date=` | — | open slots | The single source for every caller. Built as `consultant_open_slots(uuid, date)`, a `security definer` Postgres function over RPC rather than an Edge Function: the three-way subtraction is pure SQL over tables next to it, and nothing it decides needs a secret. Definer because it subtracts other people's bookings, which RLS hides from the caller — it returns times, never rows. **Horizon 14 days, times IST**, both named in that function and nowhere else |
 
 Both payment endpoints shipped in phase 3 and are named for the runtime rather
 than for a REST shape the SPA does not otherwise use. The webhook is the only
@@ -339,8 +339,13 @@ has changed its offsets, and applying today's `+05:30` to a 1962 birth shifts
 every house cusp with no error raised. Rationale and the exact columns are in
 `05-BACKEND-SCHEMA.md` §4.1. **Do not "fix" it to a timestamp.**
 
-Booking slots are IST and the horizon is fixed. Both are named in the schema so
-they are not invented separately in three places.
+Booking slots are IST (`Asia/Kolkata`) and the horizon is **14 days**. Both live
+in `consultant_open_slots()` and nowhere else, so they are not invented
+separately in three places.
+
+A weekday derived in the browser is the trap here: an IST-anchored midnight is
+half past six the previous evening in UTC, so reading the day off it is a day
+early. Anchor at noon.
 
 ### Text and i18n
 

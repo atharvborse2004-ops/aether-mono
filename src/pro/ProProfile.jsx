@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { clips, liveSessions, mine, posts, pro, reads } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopTag } from '../components/Pop.jsx'
 import { Avatar, Row, Segmented, Tag, Ticks } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useConsultantFields, useStore } from '../store.jsx'
+import { listServices } from '../lib/consultants.js'
 
 const TABS = [
   { key: 'content', label: 'Content' },
@@ -27,6 +29,17 @@ const published = [
 export default function ProProfile() {
   const { tab = 'content' } = useParams()
   const navigate = useNavigate()
+  const { consultant } = useStore()
+  const [services, setServices] = useState([])
+
+  useEffect(() => {
+    if (consultant?.profile_id) listServices(consultant.profile_id).then(setServices)
+  }, [consultant])
+
+  /* Real identity from phase 4. `pro` is still spread underneath for the
+     fields no table holds yet — followers, rating, published content — but
+     never for the name, the price or what you practise. */
+  const me = useConsultantFields(services)
 
   if (!TABS.some((t) => t.key === tab)) return <Navigate to="/pro/profile" replace />
 
@@ -38,26 +51,30 @@ export default function ProProfile() {
           same inline stats line — so the consultant recognises his own page. */}
       <section className="px-5 pb-6 pt-6">
         <div className="flex items-start gap-4">
-          <Avatar initials={pro.initials} size={76} />
+          <Avatar initials={me.initials} size={76} />
           <div className="min-w-0 flex-1 pt-1">
-            <h1 className="truncate text-lead font-semibold t-heading">{pro.name}</h1>
-            <p className="mt-0.5 truncate text-meta t-body">{pro.specialization}</p>
+            <h1 className="truncate text-lead font-semibold t-heading">{me.name}</h1>
+            <p className="mt-0.5 truncate text-meta t-body">{me.specialization}</p>
             <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] t-faint tnum">
-              <span className="font-bold t-sub">{pro.rating}</span> rating
+              {/* Rating, reviews and followers are phase 9 and still seed —
+                  the experience figure beside them is not. */}
+              <span className="font-bold t-sub">{me.rating}</span> rating
               <span aria-hidden="true">·</span>
-              <span className="font-bold t-sub">{pro.reviewCount.toLocaleString('en-IN')}</span> reviews
+              <span className="font-bold t-sub">{me.reviewCount.toLocaleString('en-IN')}</span> reviews
               <span aria-hidden="true">·</span>
-              <span className="font-bold t-sub">{pro.experience}</span>
+              <span className="font-bold t-sub">
+                {me.experienceYrs ? `${me.experienceYrs} yrs` : '—'}
+              </span>
               <span aria-hidden="true">·</span>
-              <span className="font-bold t-sub">{pro.followers}</span> followers
+              <span className="font-bold t-sub">{me.followers}</span> followers
             </p>
           </div>
         </div>
 
-        <p className="mt-4 text-meta leading-relaxed t-sub">{pro.bio}</p>
+        <p className="mt-4 text-meta leading-relaxed t-sub">{me.bio}</p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {pro.credentials.map((cr) => (
+          {me.credentials.map((cr) => (
             <Tag key={cr}>{cr}</Tag>
           ))}
         </div>
@@ -66,7 +83,15 @@ export default function ProProfile() {
             already exists at /consult/:id and stays in sync for free. Linking
             to it beats rebuilding it here and then watching the two drift. */}
         <div className="mt-5">
-          <Row to={`/consult/${pro.id}`} title="View your public page" note="Exactly what a client sees" />
+          <Row
+            to={`/consult/${me.id}`}
+            title="View your public page"
+            note={
+              me.status === 'approved'
+                ? 'Exactly what a client sees'
+                : 'Nobody can reach this until you are approved'
+            }
+          />
         </div>
       </section>
 
@@ -79,7 +104,7 @@ export default function ProProfile() {
       <div key={tab} className="animate-fade">
         {tab === 'content' && <Content />}
         {tab === 'reviews' && <Reviews />}
-        {tab === 'settings' && <Settings />}
+        {tab === 'settings' && <Settings me={me} />}
       </div>
 
       <div className="h-24" />
@@ -147,7 +172,7 @@ function Reviews() {
   )
 }
 
-function Settings() {
+function Settings({ me }) {
   const { showToast } = useStore()
 
   return (
@@ -155,16 +180,25 @@ function Settings() {
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Practice</Kicker>
         <div className="mt-2">
+          {/* Real, and read-only on purpose: the price is a platform band, not
+              a number to type. Changing band is an edit to your application
+              until there is a screen for it. */}
           <Row
-            onClick={() => showToast('Pricing — prototype only')}
+            onClick={() => showToast('Your band is set on your application. Ask us to move it.')}
             title="Session pricing"
-            note={`From ₹${pro.price.toLocaleString('en-IN')} · ${pro.slots.join(' · ')}`}
+            note={
+              me.pricePaise == null
+                ? 'No sessions priced yet'
+                : `${me.fixed.map((s) => `${s.duration_mins} min ₹${rupees(s.price_paise)}`).join(' · ')}${
+                    me.perMinute ? ` · ₹${rupees(me.perMinute.price_paise)}/min` : ''
+                  }`
+            }
           />
           <Row to="/pro/consult" title="Availability" note="Which slots you are open for" />
           <Row
             onClick={() => showToast('Languages — prototype only')}
             title="Languages"
-            note={pro.languages.join(' · ')}
+            note={me.languages.join(' · ') || 'Not set'}
           />
           <Row
             onClick={() => showToast('Payout settings — prototype only')}
@@ -183,7 +217,8 @@ function Settings() {
           <Row onClick={() => showToast('Help — prototype only')} title="Help & support" />
         </div>
         <p className="mt-6 text-meta t-faint">
-          Prototype. Nothing here is saved and no session is really booked.
+          Your practice, your prices and your availability are real. Content, reviews and
+          earnings are not yet.
         </p>
       </section>
     </>

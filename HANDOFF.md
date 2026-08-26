@@ -3,18 +3,24 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 25 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built, replayed
-to production, and one done-condition away from finished.** KYC/activation
-cleared (it happened back in Jun 2025, well before this phase started). Both
-Edge Functions are deployed to production with live secrets, `006_payments.sql`
-is applied there, and the front-end top-up sheet is live. The one thing left —
-"a real ₹1 payment credits the wallet exactly once" — is blocked on Razorpay's
-own website verification: `atharvborse2004-ops.github.io` is registered and
-**"Under review," a 24-48h queue on their side**, not work remaining on ours.
-Until it clears, live checkout refuses every method with "Payment blocked as
-website does not match registered website(s)" — this looked like a broken UPI
-QR at first and cost real time before the card error made the actual cause
-legible. §2 says exactly where the line is.
+Updated 26 Aug 2026. **Phases 0, 1 and 2 are done. Phase 3 is built and
+replayed to production, one done-condition away from finished — Razorpay's
+website review of `atharvborse2004-ops.github.io` was still queued on their
+side as of 25 Aug, and until it clears every live checkout is refused with
+"Payment blocked as website does not match registered website(s)". §2 says
+exactly where that line is.**
+
+**Phase 4 is built and seeded on both projects. The front end is not deployed
+yet.**
+Consultants, price bands, services, availability, time off, bookings, the slots
+function and the two views exist on both projects, and the phase's own SQL
+check passes on both. Dev also carries the six mock consultants and their seven
+bookings as real rows, and the front end reads all of it on both sides. Production's six are **`pending`** — invisible, unbookable, earning nothing —
+so the live `/consult` will be empty until somebody approves them, which is a
+deliberate one-line edit and not an oversight. What is outstanding is the
+**deploy**: the front end still has to be committed and pushed, and that order
+is the right way round, since deploying first would have pointed the live site
+at tables that did not exist. §6.
 
 This file describes **state**. It does not describe the system — that is
 `docs/` — and it is not a changelog. History lives in `git log`, which is
@@ -99,6 +105,11 @@ Two sides in one codebase. Most values on screen still come from
 - **The wallet** (phase 2). Balance and ledger are server rows read under RLS,
   and every debit is decided by a server function. Nothing in the browser can
   move either.
+- **Top-up** (phase 3). Razorpay checkout, credited by a webhook.
+- **The whole consultant surface** (phase 4). Who a consultant is, what they
+  charge, when they are open, and which requests are waiting. `/consult`,
+  `/consult/:id` and every `/pro` screen read real rows; the availability grid
+  and accept/decline write them.
 
 Everything else evaporates on reload, deliberately.
 
@@ -113,7 +124,9 @@ Everything else evaporates on reload, deliberately.
 - **`flags` is the extensibility hatch** — a `Set` of namespaced strings with
   `hasFlag` / `toggleFlag`. Reach for it before adding a store slice. It carries
   `like:` · `save:` · `follow:` · `remind:` · `tarot:free1|free2` ·
-  `offline:{proId}` · `setting:croppedDeityImage`.
+  `setting:croppedDeityImage`. Phase 4 removed three of them —
+  `accept:` and `decline:` are `bookings.status` writes now, and
+  `closed:{day}:{time}` is a row in `consultant_availability`.
 - **Everything reusable is in `src/index.css`** under `@layer components`. Read
   it before writing markup.
 - **`.subnav` is deliberately dead code.** Do not clean it up without asking.
@@ -162,16 +175,18 @@ Everything else evaporates on reload, deliberately.
   Feed — a consultant runs a practice, she does not browse the seeker feed. The
   route is `/pro/live`, **not** `/pro/golive`, which hits the catch-all and
   lands silently on Studio.
-- **`/pro` is exempt from the session gate**, plus the two seeker routes it
-  links out to: `/chart` (a booking row's "view kundli", prefilled from
-  query params) and `/consult/:id` ("view your public page"). Both read mock
-  data. `/home` from "Switch to seeking" is **not** exempt — that one is
-  genuinely asking for the seeker app. Note `/profile` starts with the four
+- **`/pro` is gated on a real `consultants` row** as of phase 4 — it used to be
+  exempt from the session gate entirely, which is how anyone who typed the URL
+  became `consultants[0]`. No session, or no row, lands on `/pro/apply`. Still
+  exempt are the two seeker routes it links out to: `/chart` (a booking row's
+  "view kundli", prefilled from query params) and `/consult/:id` ("view your
+  public page"). `/home` from "Switch to seeking" is **not** exempt — that one
+  is genuinely asking for the seeker app. Note `/profile` starts with the four
   characters `/pro`, so the check is on a segment boundary.
 
 ---
 
-## 2. Backend — phases 1 and 2
+## 2. Backend — phases 1 to 4
 
 **Both are built, verified and deployed.** Migrations are numbered SQL files in
 `backend/schema/`, forward-only, applied via the Supabase MCP rather than the
@@ -186,6 +201,13 @@ what ran, not the thing that ran it.
 | `003_wallets_ledger_check.sql` | **a test, not a migration** — never in a replay |
 | `004_refuse_mutation_search_path.sql` | lint fix; 003 had already run |
 | `005_wallet_debit_drop_client_ref_type.sql` | removed a client-settable `ref_type` |
+| `006_payments.sql` | `payments`, `payment_capture()` |
+| `007_consultants.sql` | `price_bands` (seeded), `consultants`, `consultant_services`, `consultant_availability`, `consultant_time_off`, RLS, the column grants, `consultants_public` |
+| `008_bookings.sql` | `bookings`, the partial unique slot claim, read-own and the accept/decline policy |
+| `009_slots.sql` | `consultant_open_slots()` — the one slots source |
+| `009_slots_check.sql` | **a test, not a migration** — nine assertions, never in a replay |
+| `010_bookings_view.sql` | `bookings_view`, which is what carries the other party's name |
+| `011_round_price_bands.sql` | derived band prices to whole rupees; restores the six the PRD names |
 | `006_payments.sql` | `payments`, RLS, `payment_capture` |
 | `006_payments_check.sql` | **a test, not a migration** — never in a replay |
 
@@ -432,6 +454,88 @@ either.
 
 ---
 
+### Phase 4 — consultants, availability, approval
+
+**Built and checked on dev. Not on production, and not seeded.**
+
+Run `backend/schema/009_slots_check.sql` in the dev SQL editor after touching
+anything near slots or prices. Passing looks like
+`ERROR: PHASE 4 CHECKS PASSED` — same trick as the phase 2 check, it raises on
+its last line to roll back every row it wrote. Nine assertions, and assertion 5
+is the one that matters: it runs the subtraction on **all seven weekdays**,
+which is exactly what the old bug passed only on Thursday.
+
+- **Consultant-ness is the existence of a `consultants` row.** No role column
+  anywhere, same reason `isPro` is derived from the URL. `/pro` is no longer
+  exempt from the session gate: no session or no row sends you to
+  `/pro/apply`, which is the application.
+- **`status` is the public-read predicate**, so approval is enforced on the row
+  rather than in a screen. Verified rather than assumed: a `pending` consultant
+  returns nothing from the list, from a direct id lookup, from their prices,
+  from their availability *and* from the slots function.
+- **The applicant cannot approve themselves.** `status` and `verified` sit
+  outside the column grant, exactly as `admin` does on `profiles`. Approving is
+  an `UPDATE` in the GUI until phase 13.
+- **The price is a band, not a number.** `price_bands` holds six tiers; the
+  write policy on `consultant_services` refuses any row whose price, length and
+  billing do not match an active band. **Qualify every column of the new row in
+  that policy** — unqualified, `price_paise` resolves to the *band's* column,
+  the comparison becomes `b.x = b.x`, and the check silently passes anything.
+  That shipped, and assertion 9 caught it.
+- **One slots source, and it is a Postgres function, not an Edge Function.**
+  `consultant_open_slots(consultant, date)` does the three-way subtraction in
+  SQL next to the tables. `security definer`, because it subtracts other
+  people's bookings — it returns times, never rows. Horizon 14 days, times IST,
+  both named there and nowhere else.
+- **`bookings` moved here from phase 5** — the table, not the transaction.
+  There is still no client INSERT policy; the only write a client can make is
+  the consultant moving their own booking out of `pending`. A decline has
+  nothing to reverse yet because no booking carries money until phase 5.
+- **`bookings_view` is not a convenience.** `profiles` is own-row-only, so
+  without it a consultant reading their own queue gets a UUID and no name. It
+  carries the seeker's birth details to the consultant on that booking, on
+  purpose: a reading cannot be done without them.
+
+Two things that cost time and are worth not rediscovering:
+
+- **A weekday derived in the browser from an IST midnight is a day early.**
+  `new Date('...T00:00:00+05:30').getUTCDay()` reads the previous UTC day, so
+  the availability grid struck out Wednesday for a Thursday booking and every
+  row was shifted by one. It looks exactly like bad data. Anchor at noon UTC.
+- **`consultants` is not an own-row-only table.** An unfiltered `maybeSingle()`
+  for "my consultant row" returned every approved consultant and failed, which
+  showed a real consultant the application form for the practice they already
+  had. Filter by id even where RLS feels like enough.
+
+**What has been verified, in a browser, on dev:** two consultants at different
+bands, each seeing only their own grid; a pending consultant unreachable by
+list, by URL and by RPC; the seeker's sheet and the consultant's grid agreeing
+on open slots **on every day of the week**; Accept surviving a reload and not
+undoing itself on a second tap; a grid cell writing and deleting the right
+`(weekday, slot_time)` row; and `/pro/*` signed out landing on the application
+while `/profile` still resolves to the seeker's own.
+
+**The seed has run on dev, twice.** Six consultants, four services each, 35
+availability rows each, seven bookings — all seven on `a1` explicitly, which is
+seed trap 1 handled rather than fallen into — and seven placeholder profiles
+for the booking clients the mock names but never defines. The second run
+changed no counts, which is what `legacy_id` idempotency is for.
+
+**Two things it does that are worth knowing.** Booking amounts come from the
+*service* row, not from the mock: the mock charges ₹2,998 for 30 minutes, twice
+the 20-minute rate, where the bands say one and a half times. And seeded people
+get phone numbers starting with 1, which no Indian mobile does — nobody can
+sign in as a seeded consultant by owning their number.
+
+**Production has the schema and the seed.** `007`–`011` were replayed there
+by hand on 26 Aug — pasted into the SQL editor rather than applied through the
+MCP, because `.mcp.json` is pinned to dev on purpose (§3 of
+`backend/INSTRUCTIONS.md`) and no agent session can reach production. So
+production's `supabase_migrations` table carries no rows for them; the numbered
+files are the record, as they always were. The 24 price bands read back
+identical to dev, `009_slots_check.sql` passes there, and the seed ran clean —
+six consultants `pending`, seven bookings, seven placeholder profiles.
+
 ## 3. Decisions made
 
 Recorded so they are not re-argued. Reasoning is in the documents.
@@ -451,8 +555,15 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 - **UUIDs everywhere; no mock ID is ever migrated.** They collide seven ways.
 - **The admin console is a separate app on the service role.** No admin role in
   client RLS.
-- **Platform sets price bands**; consultants pick one. 18% commission, in basis
-  points.
+- **Platform sets price bands**; consultants pick one, out of `price_bands`, and
+  the database refuses anything else. 18% commission, in basis points.
+- **Sessions are sold two ways** — scheduled 15/20/30, and per-minute. Decided
+  26 Aug; per-minute is modelled in phase 4 and metered in phase 5/11.
+- **Seeded consultants land unapproved on production**, and **the marketplace
+  launches empty rather than seeded** — decided 26 Aug, reasoning in
+  `01-PRD.md` §7. `/consult` says so and offers the application. Flipping the
+  six on for a demo is one reversible statement; approving them for the public
+  is a different decision and gets re-argued there, not here.
 - **Swiss Ephemeris** for charts, as its own Python service.
 - **Payouts and KYC last.** Most regulated, least urgent.
 - **Dev and production are separate Supabase projects**, as of 23 Aug.
@@ -467,7 +578,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
-| Session duration ladder — flat 20 min, tiered, or per-minute | Phases 4-5 |
+| ~~Session duration ladder~~ | **Answered 26 Aug: both.** Tiered 15/20/30 *and* per-minute, `01-PRD.md` §5.1. Phase 4 models it; phase 5/11 meters it |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Refund and cancellation policy | Phase 5 |
 | Charge at booking or at session start | Phase 5 |
@@ -496,12 +607,17 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 ### Front-end defects, all recorded in `docs/03-APP-FLOW.md` §10
 
-The consultant availability view applies booked slots only on Thursday while the
-two seeker views apply them always · Reports writes to the cart with no way to
+Reports writes to the cart with no way to
 open it · question packs charge nothing · Ask AI shows a hardcoded wallet figure
 · `/chart` has no back control · consultant metrics disagree with the warnings
 citing them, 88% against 68% · **there is no sign-in-only route**, so a
-returning user must re-answer the onboarding questions to get a session.
+returning user must re-answer the onboarding questions to get a session — the
+consultant branch now routes through the same steps to `/pro/apply`, so the
+gap is felt on both sides.
+
+**Closed 26 Aug:** the Thursday-only booked-slot bug. Both sides call
+`consultant_open_slots()`, and `009_slots_check.sql` asserts the subtraction on
+all seven weekdays rather than the one it was written on.
 
 ### Deliberate omissions
 
@@ -533,40 +649,65 @@ it is built.
 
 ---
 
-## 6. Next — finish phase 3
+## 6. Next — deploy phase 4, then phase 5
 
-Everything that could be built, deployed, or proven by hand is done (§2).
-**One item is left, and it is a clock, not a task:**
+Phase 4 is built and walked on dev. Three things stand between it and done, in
+this order:
 
-1. **Wait for Razorpay's website-verification review** of
-   `atharvborse2004-ops.github.io` to clear — submitted 25 Aug, ETA 24-48h.
-   Nothing on our side unblocks this faster. Once it clears, run one real ₹1
-   live payment through the deployed site and confirm one `payments` row and
-   one `ledger` row land on **production** — that closes phase 3's last
-   done-condition.
+1. **Run the seed.** `backend/seed/seed.mjs`, which needs
+   `SUPABASE_SERVICE_ROLE_KEY` — the one credential this repo never holds:
 
-**Owed, not blocking v1 close:**
+   ```bash
+   SUPABASE_URL=https://mrjsatelbuiypodeulcx.supabase.co    SUPABASE_SERVICE_ROLE_KEY=…    node backend/seed/seed.mjs --ref=mrjsatelbuiypodeulcx
+   ```
+
+   It refuses unless `--ref` matches the URL, it is idempotent on `legacy_id`,
+   and it prints every display-name join that resolved to nothing. **It has
+   never run past that guard** — expect to fix something the first time.
+   Production takes the same command with the production ref, and lands the six
+   `pending` on purpose. Publish them deliberately:
+   `update consultants set status='approved' where legacy_id like 'a_';`
+
+2. **Replay `007` through `011` to production**, in order, via the MCP.
+   `009_slots_check.sql` is a test and never goes in a replay.
+
+3. **Walk the routes on production** once both are done. `npm run build`
+   passing proves almost nothing.
+
+Dev currently carries two hand-made consultants (`legacy_id` `dev:1` and
+`dev:2`) on the two test accounts, at bands 5 and 2, with two bookings between
+them. They are fixtures for the walk, not the seed, and the seed will not
+collide with them.
+
+**Then phase 5 — bookings.** `docs/06-IMPLEMENTATION.md`. The table and its
+conflict index already exist; what is missing is the transaction that writes a
+row, `orders`, `order_items`, `earnings_ledger`, and the reversing credit a
+decline owes once a booking carries money. Per-minute sessions need their meter
+here or in phase 11.
+
+**Still owed on phase 3, and it is a clock, not a task:** one real ₹1 live
+payment through the deployed site, once Razorpay's website review clears. That
+closes phase 3's last done-condition.
+
+**Owed, not blocking:**
 
 - **The reconciliation sweep is still not built.** The one lost payment
   (`order_TTiovPCUcREweJ`) was reconciled by hand, which proves the fix works
-  but leaves the next silent loss with no automated catch. Worth building
-  before this gets more real users than it has now.
+  but leaves the next silent loss with no automated catch.
 - **The checkout-dismiss path** (`ondismiss()` / `payment.failed()` in
-  `topup()`) has never run. The success path is proven twice over on both
-  projects; abandoning mid-payment is not.
-- Front-end review fixes from phases 1-2, listed below, still unwalked.
+  `topup()`) has never run.
+- **If the top-up minimum is ever lowered again for a test payment**, revert it
+  in the same session — both `MIN_PAISE` in
+  `backend/functions/razorpay-order/index.ts` and the client copy in
+  `Wallet.jsx`, redeploy the function, and push. Leaving it lowered is how a
+  ₹1 minimum ends up live for real users by accident.
 
-**Watch:** `topup()` polls the balance across several awaits and reads it from
-a ref rather than from the closed-over state, which is the kind of thing that
-is correct on paper and wrong in a browser. The Razorpay overlay is a third
-party's iframe over this app's own sheet, and both have now been seen
-rendered together, successfully, twice.
-
-**If the top-up minimum is ever lowered again for a test payment**, revert it
-in the same session — both `MIN_PAISE` in
-`backend/functions/razorpay-order/index.ts` and the client copy in
-`Wallet.jsx`, redeploy the function, and push. Leaving it lowered is how a
-₹1 minimum ends up live for real users by accident.
+**Three advisor lints on dev are intentional and will reappear on production.**
+`consultants_public` and `bookings_view` are owner-rights views — they must be,
+since `profiles` is own-row-only and an invoker-rights view would return an
+empty name for everyone but yourself; each restricts itself in its own `WHERE`.
+`consultant_open_slots` is a `security definer` function callable by `anon`,
+which is the entire point of it.
 
 ### Owed, not blocking
 

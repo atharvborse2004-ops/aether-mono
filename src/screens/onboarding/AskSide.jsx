@@ -13,6 +13,12 @@ import { Kicker } from '../../components/Pop.jsx'
  * Two tappable cards rather than a QuestionFrame — there is nothing to
  * validate and nothing to continue past, so a Continue button would be a
  * second tap for no reason.
+ *
+ * The consultant branch used to link straight to `/pro/studio`, which is how
+ * anyone who tapped it became consultants[0] with no account at all. It now
+ * carries `?next=pro` through the same name and phone steps the seeker takes,
+ * and lands on the application instead of the birth questions — a consultant
+ * still does not give us his own moment of birth.
  */
 const SIDES = [
   {
@@ -24,7 +30,7 @@ const SIDES = [
   },
   {
     key: 'pro',
-    to: '/pro/studio',
+    to: '/onboarding/name?next=pro',
     kicker: 'I give readings',
     line: 'You take the sessions. We take the scheduling, the payments and the arguing about time zones.',
     art: 'contour',

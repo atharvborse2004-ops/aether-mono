@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import QuestionFrame from './QuestionFrame.jsx'
 import { useStore } from '../../store.jsx'
 import { supabase } from '../../lib/supabase.js'
@@ -7,6 +7,9 @@ import { supabase } from '../../lib/supabase.js'
 export default function VerifyOtp() {
   const navigate = useNavigate()
   const { birth } = useStore()
+  /* The consultant branch has no birth details to write, so it skips
+     Computing entirely and lands on the application. */
+  const pro = useSearchParams()[0].get('next') === 'pro'
   const [code, setCode] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState('')
@@ -31,7 +34,7 @@ export default function VerifyOtp() {
       return
     }
 
-    navigate('/onboarding/computing')
+    navigate(pro ? '/pro/apply' : '/onboarding/computing')
   }
 
   const resend = async () => {

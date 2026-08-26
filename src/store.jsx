@@ -125,6 +125,40 @@ export function AppProvider({ children }) {
     setBalanceState(next)
   }, [])
 
+  /* The signed-in user's `consultants` row, or null. Phase 4: consultant-ness
+     is the existence of this row — there is no role column and no persisted
+     flag, for the same reason `isPro` is derived from the URL. `null` means
+     both "not a consultant" and "not loaded yet", which is why the gate waits
+     on `consultantLoading` rather than on the row.
+
+     It is read for every signed-in user, not only on /pro: a consultant who
+     opens the seeker side is still a consultant, and one fetch on sign-in is
+     cheaper than a fetch on every route change. */
+  const [consultant, setConsultant] = useState(null)
+  const [consultantLoading, setConsultantLoading] = useState(false)
+
+  const refreshConsultant = useCallback(async (userId) => {
+    if (!userId) return setConsultant(null)
+    setConsultantLoading(true)
+    /* Filtered by id, unlike the wallet reads a few lines down. `consultants`
+       is not an own-row-only table — `consultants_select_approved` makes every
+       approved practice readable by everybody, which is the whole point of it.
+       An unfiltered `maybeSingle()` here returned every approved consultant
+       and failed with "multiple rows", so a real consultant was shown the
+       application form for a practice they already had.
+
+       `maybeSingle` because not being a consultant is the common case, not an
+       error. */
+    const { data, error } = await supabase
+      .from('consultants')
+      .select('*')
+      .eq('profile_id', userId)
+      .maybeSingle()
+    if (error) console.error('[consultant] load failed:', error.message)
+    setConsultant(data ?? null)
+    setConsultantLoading(false)
+  }, [])
+
   const refreshProfile = useCallback(async (userId) => {
     if (!userId) return setProfile(null)
     setProfileLoading(true)
@@ -174,6 +208,7 @@ export function AppProvider({ children }) {
         if (initial) {
           refreshProfile(initial.user.id)
           refreshWallet(initial.user.id)
+          refreshConsultant(initial.user.id)
         }
       })
       .catch((err) => console.error('[auth] getSession failed:', err.message))
@@ -192,8 +227,10 @@ export function AppProvider({ children }) {
       if (next) {
         refreshProfile(next.user.id)
         refreshWallet(next.user.id)
+        refreshConsultant(next.user.id)
       } else {
         setProfile(null)
+        setConsultant(null)
         refreshWallet(null)
       }
     })
@@ -202,7 +239,7 @@ export function AppProvider({ children }) {
       active = false
       sub.subscription.unsubscribe()
     }
-  }, [refreshProfile, refreshWallet])
+  }, [refreshProfile, refreshWallet, refreshConsultant])
 
   const [questionsLeft, setQuestionsLeft] = useState(5)
   const [toast, setToast] = useState(null)
@@ -503,9 +540,31 @@ export function AppProvider({ children }) {
   const me = useMemo(
     () =>
       isPro
-        ? { ...pro, profileTo: '/pro/profile', homeTo: '/pro/studio' }
-        : { ...user, profileTo: '/profile', homeTo: '/home' },
-    [isPro],
+        ? {
+            ...pro,
+            /* Identity is the real row from phase 4 onward. The mock is still
+               spread underneath for the fields no table holds yet — followers,
+               review counts, content (phase 9) — but never for the name: a
+               consultant looking at Ritu Kashyap's name above her own bookings
+               is the identity bug that has already shipped twice on the seeker
+               side. Blank beats confidently wrong. */
+            name: session ? profile?.name || '' : pro.name,
+            initials: session ? (profile ? initialsOf(profile.name) : '') : pro.initials,
+            profileTo: '/pro/profile',
+            homeTo: '/pro/studio',
+          }
+        : {
+            ...user,
+            /* Same rule on this side, and it was overdue: `me` feeds the tab
+               header's avatar, so a signed-in seeker was still wearing the
+               seed person's initials on every tab while `useProfileFields()`
+               showed their own name one screen in. */
+            name: session ? profile?.name || '' : user.name,
+            initials: session ? (profile ? initialsOf(profile.name) : '') : user.initials,
+            profileTo: '/profile',
+            homeTo: '/home',
+          },
+    [isPro, session, profile],
   )
 
   // Hooks must stay unconditional; this list is just the public surface.
@@ -520,6 +579,9 @@ export function AppProvider({ children }) {
       profile,
       profileLoading,
       refreshProfile,
+      consultant,
+      consultantLoading,
+      refreshConsultant,
       cart,
       cartCount,
       cartTotal,
@@ -566,6 +628,9 @@ export function AppProvider({ children }) {
       profile,
       profileLoading,
       refreshProfile,
+      consultant,
+      consultantLoading,
+      refreshConsultant,
       cart,
       cartCount,
       cartTotal,
@@ -638,7 +703,16 @@ function loadCheckout() {
  * holds integers (backend/INSTRUCTIONS.md rule 1).
  */
 export function rupees(paise) {
-  return (paise / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })
+  /* Whole rupees print whole; anything with paise prints both digits. ₹2,248.5
+     is not a price — it is a number that happens to be money, and it appeared
+     on the consultant's own booking list the first time a band divided
+     unevenly. Wallet balances are whole rupees far more often than not, so
+     forcing two decimals everywhere is the worse default. */
+  const decimals = paise % 100 === 0 ? 0 : 2
+  return (paise / 100).toLocaleString('en-IN', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })
 }
 
 /**
@@ -695,6 +769,50 @@ function initialsOf(name) {
  * those stay seed data until then — identity and birth details are real the
  * moment a profile exists.
  */
+/**
+ * The consultant's own record, shaped the way the `/pro` screens already read
+ * `pro` from mock.js. The seeker-facing counterpart of `useProfileFields`, and
+ * it obeys the same rule: signed in, it is the real row or blank — never
+ * `consultants[0]`.
+ *
+ * Signed out it returns the seed consultant, which is the demo. That path
+ * survives only because `/pro` is gated on a real row from phase 4 on, so in
+ * practice nobody signed out reaches a screen that calls this.
+ *
+ * `price` and `perMinute` are PAISE and come from `consultant_services`, which
+ * is priced off a platform band — there is no rupee number in this file and no
+ * price the browser computed.
+ */
+export function useConsultantFields(services = []) {
+  const { consultant, profile, session } = useStore()
+  const seed = (value) => (session ? '' : value)
+
+  const fixed = services.filter((s) => s.billing === 'fixed').sort((a, b) => a.duration_mins - b.duration_mins)
+  const perMinute = services.find((s) => s.billing === 'per_minute') ?? null
+  const base = fixed.find((s) => s.duration_mins === 20) ?? fixed[0] ?? null
+
+  return {
+    id: consultant?.profile_id ?? seed(pro.id),
+    name: profile?.name || seed(pro.name),
+    initials: profile ? initialsOf(profile.name) : seed(pro.initials),
+    category: consultant?.category || seed(pro.category),
+    specialization: consultant?.specialization || seed(pro.specialization),
+    languages: consultant?.languages ?? (session ? [] : pro.languages),
+    experienceYrs: consultant?.experience_yrs ?? null,
+    bio: consultant?.bio || seed(pro.bio),
+    credentials: consultant?.credentials ?? (session ? [] : pro.credentials),
+    status: consultant?.status ?? null,
+    verified: consultant?.verified ?? false,
+    fixed,
+    perMinute,
+    pricePaise: base?.price_paise ?? null,
+    // Phase 9 owns these. They are seed for everybody, visibly.
+    rating: pro.rating,
+    reviewCount: pro.reviewCount,
+    followers: pro.followers,
+  }
+}
+
 export function useProfileFields() {
   const { profile, session } = useStore()
 

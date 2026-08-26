@@ -299,17 +299,47 @@ formula that fills it is a product decision and lives in `01-PRD.md`**, not here
 ### 4.3 What a consultant sells
 
 ```sql
+create table price_bands (
+  id            uuid primary key default gen_random_uuid(),
+  tier          smallint not null,        -- 1..6, the thing a consultant picks
+  billing       text not null check (billing in ('fixed','per_minute')),
+  duration_mins smallint not null check (duration_mins > 0),
+  price_paise   integer not null check (price_paise >= 0),
+  active        boolean not null default true,
+  sort          smallint not null default 0,
+  created_at    timestamptz not null default now(),
+  unique (tier, billing, duration_mins)
+);
+
 create table consultant_services (
   id            uuid primary key default gen_random_uuid(),
   consultant_id uuid not null references consultants(profile_id) on delete cascade,
+  band_id       uuid not null references price_bands(id),
   mode          text not null check (mode in ('call','chat','live','booking')),
+  billing       text not null default 'fixed'
+                check (billing in ('fixed','per_minute')),
   duration_mins smallint not null,
   price_paise   integer not null check (price_paise >= 0),
   active        boolean not null default true,
   sort          smallint not null default 0,
-  created_at    timestamptz not null default now()
+  created_at    timestamptz not null default now(),
+  unique (consultant_id, mode, billing, duration_mins)
 );
 ```
+
+**`price_bands` is where "the platform sets the price" stops being a sentence
+in the PRD.** Six tiers, each carrying the three bookable lengths and a
+per-minute rate. `consultant_services.price_paise` is a copy of the band's, and
+the write policy refuses a row whose price, length and billing do not match an
+*active* band — so a consultant choosing a band is a rule the database holds,
+not six buttons a browser draws. A price change is an INSERT and a flip of
+`active`; live bookings do not move, because they froze their own amount.
+
+Every column of the new row in that policy's `EXISTS` **must be qualified**
+(`consultant_services.price_paise`, not `price_paise`) — unqualified, it
+resolves to the band's own column, the comparison becomes `b.x = b.x`, and the
+check silently passes anything. It shipped that way once and
+`009_slots_check.sql` assertion 9 is what caught it.
 
 **This table is the fix for the three-ladder problem.** The mock holds three
 incompatible pricing models at once: `SESSION` says a flat 20 minutes,
@@ -325,9 +355,19 @@ without also sending an amount, and why rule 3 in `backend/INSTRUCTIONS.md`
 client sends `{ consultantId, serviceId, startsAt }` and the server reads the
 price.
 
-In v1 this is **one row per consultant** — 20 minutes at their listed price — so
-it costs nothing now and the ladder decision (`01-PRD.md`, still open) changes
-data rather than schema.
+**`billing` is how both session models coexist**, which is the answer
+`01-PRD.md` §5.1 finally gives: scheduled sessions at 15, 20 or 30 minutes AND
+an instant per-minute call. A `per_minute` row is `duration_mins = 1` with
+`price_paise` as the rate for one minute, so `price_paise` always means "the
+price of one unit of `duration_mins` minutes" — one column, one meaning, and no
+second price column to disagree with the first.
+
+Phase 4 *models* per-minute and nothing meters it. The meter — a balance hold,
+a per-minute debit, a mid-session cutoff — is phase 5/11, and it needs no
+column this table does not already have.
+
+In v1 a consultant has **four rows**: 15, 20 and 30 minutes from their band,
+plus that band's per-minute rate.
 
 ### 4.4 Availability — a rule, an exception, and a fact
 
@@ -374,14 +414,28 @@ open = consultant_availability
 `bookedSlots` in the mock is the *result* of that subtraction, exported as a
 constant and imported by three screens.
 
-**One endpoint serves all three callers** — `GET /consultants/:id/slots?date=`.
-Today they disagree: `ProSessions.jsx:182` applies `bookedSlots` only when
-`day === 'Thu'`, while `Consult.jsx:230` and `ConsultantProfile.jsx:214` apply it
-unconditionally. Two queries is how the seeker and consultant views drift apart,
-and the comment above `bookedSlots` claims that cannot happen.
+**One source serves every caller** — `consultant_open_slots(consultant, date)`,
+a `security definer` Postgres function reached over RPC. `02-TRD.md` §5 names
+it as `GET /consultants/:id/slots?date=`; it is not an Edge Function, because
+the subtraction is pure SQL over three tables sitting right there and nothing
+it decides needs a secret. It is `security definer` because it must subtract
+*other people's* bookings, which RLS correctly hides from the caller — it
+returns times, never rows.
 
-Booking horizon and the fact that slots are IST are product constants; naming
-them here stops them being invented three times.
+Before phase 4 there were two implementations and they disagreed:
+`ProConsult.jsx` applied booked slots only when `day === 'Thu'`, while
+`ConsultantProfile.jsx` applied them always and ignored the consultant's own
+closures entirely. The comment above `bookedSlots` in the mock claimed that
+could not happen.
+
+**Booking horizon is 14 days and slot times are IST** (`Asia/Kolkata`). Both
+are product constants and both live in that function, once.
+
+`weekday` is `0 = Sunday … 6 = Saturday`, i.e. Postgres `dow`. `weekDays` in
+`mock.js` starts on Monday, so the screens convert; the database does not carry
+a second convention. Deriving a weekday in the browser is where this bites — an
+IST-anchored midnight is the previous day in UTC, and `getUTCDay()` on it
+shifted the whole grid by one.
 
 ### 4.5 Bookings
 
@@ -906,7 +960,8 @@ Enabled on every table. Policies for the v1 thirteen.
 |---|---|---|
 | `profiles` | own row | UPDATE own only |
 | `consultants` | anyone, `status = 'approved'` | own row only |
-| `consultant_services` | anyone, where parent approved | own only |
+| `price_bands` | anyone, where `active` | **none, ever** — the catalogue is not client-writable |
+| `consultant_services` | anyone, where parent approved | own only, **and the price must match an active band** |
 | `consultant_availability` | anyone, where parent approved | own only |
 | `consultant_time_off` | own only | own only |
 | `bookings` | `seeker_id = auth.uid() OR consultant_id = auth.uid()` | **no client INSERT.** UPDATE limited to the consultant setting `confirmed` / `declined` |
@@ -937,6 +992,28 @@ create view consultants_public as
   where c.status = 'approved';
 ```
 
+**And the read side of `bookings` comes from one too.**
+
+```sql
+create view bookings_view as
+  select b.*, s.name as seeker_name, s.birth_date, s.birth_time, s.birth_place,
+         c.name as consultant_name
+  from bookings b
+  join profiles s on s.id = b.seeker_id
+  join profiles c on c.id = b.consultant_id
+  where b.seeker_id = auth.uid() or b.consultant_id = auth.uid();
+```
+
+Without it the consultant's own screen cannot render: `bookings` carries
+`seeker_id`, `profiles` is own-row-only, and a consultant reading their own
+queue would get a UUID and no name. It restricts itself with the same predicate
+as `bookings_select_mine`, and it carries **the seeker's birth details to the
+consultant on that booking** — a reading cannot be done without them, a booking
+is the request for one, and there is no path here to the birth details of
+somebody who has not booked you. No phone, no email.
+
+Writes still go through the table.
+
 ### There is no `/pro` authorization endpoint
 
 Every consultant-side screen's data is a query already scoped by `auth.uid()`.
@@ -956,7 +1033,10 @@ Beyond primary keys and the unique constraints already declared.
 
 ```sql
 create index on bookings (consultant_id, starts_at);      -- slot query
-create index on bookings (seeker_id, created_at desc);    -- my sessions
+create index on bookings (seeker_id, starts_at desc);     -- my sessions
+create index on consultants (status);                     -- the public predicate
+create index on consultant_services (consultant_id) where active;
+create index on consultant_time_off (consultant_id, starts_at);
 create index on ledger (wallet_id, created_at desc);      -- statement
 create index on earnings_ledger (consultant_id, created_at desc);
 create index on messages (thread_id, created_at desc);    -- thread render
@@ -981,7 +1061,10 @@ admin console exists.
 Numbered SQL files in `backend/schema/`, forward-only, **never edited once
 applied**. A migration that has run against any real database is history.
 
-Applied so far: `001_profiles.sql`, `002_profiles_email.sql`. Both went in
+Applied so far: `001` through `011`, the phase 4 files being
+`007_consultants.sql`, `008_bookings.sql`, `009_slots.sql`,
+`010_bookings_view.sql` and `011_round_price_bands.sql`. The `_check.sql` files
+are tests, not migrations, and never appear in a replay. All went in
 through the Supabase MCP rather than the CLI — there is no `supabase/migrations`
 directory in this repo, so the numbered file is a record of what ran, not the
 thing that runs it. Keep the two in step by hand.
@@ -1040,14 +1123,16 @@ transliterated in the database.
 
 Carried, not guessed at. Each blocks something specific.
 
+**Answered in phase 4**, and recorded where they are owned rather than left
+here: the session duration ladder is *both* models — tiered 15/20/30 and
+per-minute, §4.3 — and the slots constants are a 14-day horizon in IST, §4.4.
+
 | Open | Blocks | Note |
 |---|---|---|
-| **Session duration ladder** | `consultant_services` seed | Flat 20 min, tiered 10/15/30, or per-minute. The table holds any of them; v1 seeds one row per consultant |
 | **`REPORT_MULTIPLIER` and duplicate SKUs** | report / premium seed | `01-PRD.md` |
 | **Chat window semantics** | `threads` | `booking_id` or `open_until` — both columns exist so either answer fits |
 | **Refund and cancellation policy** | the booking function | Default if undecided: debit at booking, no self-service cancellation, refunds as an admin-written reversing entry |
 | **Charge at booking or at session start** | the booking function | Recommending at booking — one write, and a hold never becomes a leakable state |
-| **Booking horizon and slot timezone** | the slots endpoint | How many days ahead, and IST assumed. Name both or they get invented three times |
 | **Consultant ranking formula** | `rank_score_cache` | `01-PRD.md` |
 | **Free tarot pull window** | `tarot_pulls` | Leaning rolling seven days from `pulled_at` |
 | **Bhaktamar card provenance** | `tarot_cards` seed | 48 faces with no attribution recorded |

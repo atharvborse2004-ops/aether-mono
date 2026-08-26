@@ -1,12 +1,13 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { categories, consultants, liveSessions, SESSION } from '../data/mock.js'
+import { categories, liveSessions, SESSION } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { firstName, Search } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useStore } from '../store.jsx'
+import { listConsultants } from '../lib/consultants.js'
 
 /**
  * The three promo banners at the top of Consult — same object as Shop's, a
@@ -57,11 +58,24 @@ const CHANNELS = {
 
 export default function Consult() {
   const { showToast, openChat } = useStore()
+  /* Real consultants from phase 4, read through `consultants_public` — the
+     view is the access control, so an unapproved practice is missing from
+     this list because the server never sent it, not because a filter here
+     dropped it. */
+  const [consultants, setConsultants] = useState(null)
   const [cat, setCat] = useState('All')
   const [query, setQuery] = useState('')
   const [slide, setSlide] = useState(0)
   const rail = useRef(null)
   const listRef = useRef(null)
+
+  useEffect(() => {
+    let live = true
+    listConsultants().then((rows) => live && setConsultants(rows))
+    return () => {
+      live = false
+    }
+  }, [])
 
   const step = (el) =>
     el.children[1] ? el.children[1].offsetLeft - el.children[0].offsetLeft : el.clientWidth
@@ -80,7 +94,8 @@ export default function Consult() {
 
   const filters = ['All', ...categories]
   const q = query.trim().toLowerCase()
-  const list = consultants.filter((c) => {
+  const roster = consultants ?? []
+  const list = roster.filter((c) => {
     const inCat = cat === 'All' || c.category === cat
     const inQuery =
       !q ||
@@ -90,7 +105,30 @@ export default function Consult() {
     return inCat && inQuery
   })
 
-  const online = consultants.filter((c) => c.online)
+  /* There is no `online` column and no presence yet — that is phase 6, and a
+     dot that is always green is worse than no dot. `verified` is a real column
+     on a real row, and it is the claim this rail was always making. */
+  const featured = roster.filter((c) => c.verified)
+
+  /* Nobody approved: the empty state IS the screen, not a line of grey text
+     under the furniture. Everything above it — three banners promising
+     screened experts, category chips reading `· 0`, a "0 verified" rail, a
+     line insisting every session is twenty minutes — describes a roster that
+     does not exist, and a page that advertises supply above an empty list
+     contradicts itself twice before you finish scrolling.
+
+     Search goes too. There is nothing to search. */
+  if (consultants !== null && roster.length === 0) {
+    return (
+      <>
+        <TabHeader />
+        <section className="px-5 pt-6">
+          <NobodyYet />
+        </section>
+        <div className="h-24" />
+      </>
+    )
+  }
 
   return (
     <>
@@ -157,7 +195,7 @@ export default function Consult() {
       <div className="relative mt-4">
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-4 pb-1">
           {filters.map((f) => {
-            const count = f === 'All' ? consultants.length : consultants.filter((c) => c.category === f).length
+            const count = f === 'All' ? roster.length : roster.filter((c) => c.category === f).length
             return (
               <button
                 key={f}
@@ -180,17 +218,17 @@ export default function Consult() {
           <p className="font-display text-lead t-heading">
             {SESSION.promise} in {SESSION.label}
           </p>
-          <span className="flex-none caps-sm text-ok">{online.length} online</span>
+          <span className="flex-none caps-sm text-ok">{featured.length} verified</span>
         </div>
         <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1">
-          {online.map((c) => (
+          {featured.map((c) => (
             <div key={c.id} className="pop-card w-36 flex-none p-3.5 text-center">
-              <PopAvatar initials={c.initials} size={64} online className="mx-auto" />
+              <PopAvatar initials={c.initials} size={64} online={c.verified} className="mx-auto" />
               <p className="mt-2.5 truncate text-meta t-heading">{c.name}</p>
               <p className="mt-0.5 truncate caps-sm t-faint">{c.specialization.split(' · ')[0]}</p>
               <div className="mt-2 flex items-center justify-between">
                 <span className="caps-sm gold tnum">{c.rating}</span>
-                <span className="text-meta t-heading tnum">₹{c.price.toLocaleString('en-IN')}</span>
+                <span className="text-meta t-heading tnum">₹{rupees(c.pricePaise)}</span>
               </div>
               <PopButton variant="gold" size="sm" className="mt-2.5" to={`/consult/${c.id}`}>
                 Book
@@ -207,7 +245,7 @@ export default function Consult() {
         </p>
 
         <Kicker>
-          {`${list.length} ${list.length === 1 ? 'person' : 'people'} · ${online.length} online`}
+          {`${list.length} ${list.length === 1 ? 'person' : 'people'} · ${featured.length} verified`}
         </Kicker>
 
         <ul className="mt-4 space-y-3">
@@ -217,21 +255,25 @@ export default function Consult() {
                 to={`/consult/${c.id}`}
                 className="flex items-start gap-4 transition-opacity hover:opacity-60"
               >
-                <PopAvatar initials={c.initials} size={56} online={c.online} />
+                <PopAvatar initials={c.initials} size={56} online={c.verified} />
 
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
                     <span className="truncate text-body text-t1">{c.name}</span>
                     <span className="flex-none text-body text-t1 tnum">
-                      ₹{Math.round(c.price / SESSION.mins)}
+                      {/* The per-minute rate is its own service row, priced off
+                          the same band. It is not `price / SESSION.mins` any
+                          more — that division was the browser inventing a
+                          price, which is the shape rule 3 exists to stop. */}
+                      ₹{c.perMinutePaise != null ? rupees(c.perMinutePaise) : '—'}
                       <span className="text-meta text-t3">/min</span>
                     </span>
                   </span>
                   <span className="mt-0.5 block truncate text-meta text-t3">{c.specialization}</span>
                   <span className="mt-1.5 flex items-center gap-2 text-micro uppercase tracking-caps text-t3 tnum">
-                    <span className="gold">{c.rating}</span>
+                    <span className="gold">{c.rating ?? 'New'}</span>
                     <span aria-hidden="true">·</span>
-                    <span>{c.experience}</span>
+                    <span>{c.experienceYrs ? `${c.experienceYrs} yrs` : 'Practising'}</span>
                   </span>
                   <span className="mt-2 flex flex-wrap gap-1.5">
                     {c.languages.map((lang) => (
@@ -250,8 +292,11 @@ export default function Consult() {
                   as Call rather than a fake destination. */}
               <div className="mt-4 flex items-center gap-2 border-t border-rule pt-4">
                 {['call', 'chat', 'live'].map((kind) => {
+                  /* Live rooms are still mock and keyed on mock ids, so this
+                     never matches a real consultant and every Live tap is the
+                     honest toast below. Phase 9 gives `content` real rows. */
                   const liveSession =
-                    kind === 'live' && c.online && liveSessions.find((l) => l.consultantId === c.id && l.live)
+                    kind === 'live' && liveSessions.find((l) => l.consultantId === c.id && l.live)
                   const onClick = liveSession
                     ? undefined
                     : kind === 'call'
@@ -267,7 +312,6 @@ export default function Consult() {
                       variant={kind === 'live' ? 'gold' : 'ghost'}
                       full={false}
                       className="flex-1"
-                      disabled={!c.online}
                       to={liveSession ? `/live/${liveSession.id}` : undefined}
                       onClick={onClick}
                     >
@@ -281,6 +325,10 @@ export default function Consult() {
           ))}
         </ul>
 
+        {consultants === null && (
+          <p className="py-10 text-center text-meta text-t3">Reading the roster.</p>
+        )}
+
         {list.length === 0 && (
           <p className="py-10 text-center text-meta text-t3">
             Nobody matches that. Clear the search or pick another category.
@@ -290,5 +338,43 @@ export default function Consult() {
 
       <div className="h-24" />
     </>
+  )
+}
+
+/**
+ * What `/consult` is before there is a marketplace.
+ *
+ * An empty list is the truthful state of a marketplace with no approved
+ * consultants, and it is worth saying plainly rather than dressing up: the
+ * alternative considered was seeding six invented astrologers with invented
+ * credentials so the page looked busy, which stops being decoration and starts
+ * being fraud the day phase 5 can take money for a session.
+ *
+ * It offers the one action that changes the situation. It does NOT offer to
+ * take your number and tell you when readings open: everybody standing here is
+ * already signed in, so their number is on file, and nothing in this app can
+ * send that message. An unimplemented promise on screen is the same mistake as
+ * the cashback label, and that one got deleted rather than deferred.
+ */
+function NobodyYet() {
+  return (
+    <div className="pop-card mt-4 overflow-hidden">
+      <Plate seed="consult-empty" variant="orbit" className="!rounded-none h-32 w-full !shadow-none" />
+      <div className="p-5">
+        <Kicker>Nobody is reading yet</Kicker>
+        <p className="mt-3 text-meta t-sub">
+          No astrologer has been approved. Nothing is hidden from you and no filter is on — the
+          list is empty because the practice is new.
+        </p>
+        <p className="mt-3 text-meta t-sub">
+          We approve one at a time and read every application. Until somebody clears that, there
+          is nothing here to book.
+        </p>
+        <PopButton variant="gold" className="mt-5" to="/pro/apply">
+          Apply to take sessions
+        </PopButton>
+        <p className="mt-3 caps-sm t-faint">For astrologers, tarot readers and coaches</p>
+      </div>
+    </div>
   )
 }

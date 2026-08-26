@@ -129,13 +129,23 @@ The top-up presets do return, at the amounts the PRD names.
 
 ## Phase 4 — Consultants, availability, approval
 
-**Build** — `consultants`, `consultant_services`, `consultant_availability`,
-`consultant_time_off`. The `consultants_public` view. The slots endpoint.
+**Build** — `price_bands`, `consultants`, `consultant_services`,
+`consultant_availability`, `consultant_time_off`, the `consultants_public` view,
+and the slots source. **`bookings` and `bookings_view` move here from phase 5**
+— the table only, not the transaction. Two reasons, neither stylistic: the slots
+subtraction reads it, so without it the phase's own done-condition is
+untestable; and the seed writes it, since seed trap 1 is about this table.
+`order_id` is nullable, which is what lets it arrive a phase early — a seeded
+booking carries no order because no money was ever taken for it.
 
 **Front end** — Consult and the consultant profile read real consultants. The
-consultant availability grid writes real rows. **All three callers switch to the
-one slots endpoint**, which fixes the existing disagreement where the consultant
-view applies booked slots only on Thursday.
+consultant availability grid writes real rows. **Every caller switches to the
+one slots source**, which fixes the disagreement where the consultant view
+applied booked slots only on Thursday. `/pro` stops being exempt from the
+session gate and is gated on a real `consultants` row instead, and the "I give
+readings" card in onboarding becomes an actual application rather than a link
+straight into somebody else's practice. Accept and decline stop being flag
+toggles.
 
 Approval ships here because `status` is the public-read predicate: an unapproved
 consultant is invisible, unbookable and unable to earn.
@@ -149,9 +159,13 @@ consultant is invisible, unbookable and unable to earn.
    direct URL.
 3. The seeker's booking sheet and the consultant's availability grid show
    **identical** open slots for the same day — every day, not just Thursday.
+4. A consultant cannot approve themselves, and cannot price a session at
+   anything but an active band.
+5. Accepting a request survives a reload, and a second tap does not undo it.
 
-**Blocked on:** the session duration decision (`01-PRD.md` §5.1). v1 seeds one
-service row per consultant, so a wrong answer costs data, not schema.
+**Not blocked any more:** the session duration question is answered — both
+models, `01-PRD.md` §5.1. Per-minute is modelled here and metered in phase
+5/11.
 
 ---
 
@@ -159,15 +173,20 @@ service row per consultant, so a wrong answer costs data, not schema.
 
 The phase the whole v1 exists for.
 
-**Build** — `bookings` with the partial unique index that *is* the conflict
-check. `orders` and `order_items`. `earnings_ledger`. The booking function: one
+**Build** — `orders` and `order_items`. `earnings_ledger`. The booking function: one
 transaction doing price lookup, availability check, slot claim, wallet debit,
 both ledger writes, order and line, booking insert, thread open. The status-change
 endpoint, where a decline writes a **reversing** entry.
 
-**Front end** — both booking sheets stop toasting and start booking. The client
-sends `{ consultantId, serviceId, startsAt }` and **never a price**. The
-consultant's accept and decline stop being flag toggles.
+`bookings` itself already exists — phase 4 built the table and the partial
+unique index that *is* the conflict check. What is missing is the transaction
+that writes a row, and the client INSERT policy that deliberately does not
+exist.
+
+**Front end** — the booking sheet stops toasting and starts booking. The client
+sends `{ consultantId, serviceId, startsAt }` and **never a price**. Per-minute
+sessions get their meter here or in phase 11: a balance hold, a per-minute
+debit, and a cutoff when the wallet runs out mid-call.
 
 **Done when:**
 1. **Two clients requesting the same slot at the same instant produce one
@@ -371,6 +390,18 @@ that way in writing or it grows.
 ## Seed
 
 The largest single task, in phase 4.
+
+**It runs against dev and production both**, from `backend/seed/seed.mjs`, with
+the service-role key and a `--ref` the operator has to type. On production the
+six land `status = 'pending'`: they are invented people with invented
+credentials, and an approved consultant is bookable with real money by anyone
+who finds the URL. Publishing them is one deliberate line.
+
+**A seeded person needs an auth user first.** `profiles` rows are created by
+`handle_new_user()` from `auth.users`, and `profiles.phone` is NOT NULL, so the
+script mints accounts through the admin API. Their numbers start with 1, which
+no Indian mobile does — nobody can ever sign in as a seeded consultant by
+owning their number.
 
 **No mock ID is ever migrated.** They collide across at least six entity families
 — the same string is a wallet transaction and a warning, an article and a tarot

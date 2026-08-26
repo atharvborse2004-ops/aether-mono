@@ -109,7 +109,7 @@ Status is honest: **UI** means the screen exists and is wired to mock data;
 | Insights | UI | Fixed |
 | Referrals | UI | Header total disagrees with its own list |
 | KYC | **None** | Legal gate on payouts |
-| Approval before going live | **None** | Anyone typing `/pro/feed` is a consultant today |
+| Approval before going live | `consultants.status`, phase 4 | Was: anyone typing a `/pro` URL was a consultant |
 
 ### Admin
 
@@ -136,8 +136,9 @@ Current consultant prices, which become the seed bands:
 **Platform commission: 18%**, expressed in basis points everywhere it is stored.
 A ₹1,499 session pays the consultant ₹1,229 and the platform ₹270.
 
-**Session length is an open decision — see §5.** Three incompatible models exist
-in the current data.
+Each band carries the three bookable lengths and a per-minute rate for instant
+calls — **§5.1, decided.** The bands are rows in `price_bands`, and a
+consultant's price is refused by the database if it does not match one.
 
 ### 4.2 Tarot
 
@@ -233,22 +234,33 @@ flow**, which is the primary revenue line.
 
 Not guessed at. Each one changes what gets seeded.
 
-### 5.1 Session length — TBD
+### 5.1 Session length — decided, phase 4
 
-Three models coexist in the data:
+**Both models are real.** A seeker either books a scheduled session of 15, 20 or
+30 minutes at a fixed price, or starts an instant call billed **per minute**
+against their wallet. They are two products, not two opinions about one.
 
-| Source | Says |
+| | |
 |---|---|
-| `SESSION` | One flat **20 minutes**, unlimited questions |
-| Consultant records | One price each, implying one length |
-| Booking records | **30 / 15 / 10 minutes** at ₹2,998 / ₹1,499 / ₹999 |
+| Scheduled | 15 / 20 / 30 minutes, one price each, paid up front, claims a slot |
+| Instant | Per minute, no slot, the wallet drains live |
 
-A fourth possibility, common in Indian astrology apps, is **per-minute billing**
-where the wallet drains live during a call. That is a materially different
-backend — metering, live balance checks, mid-session cutoff — and choosing it
-late is expensive.
+Both come from the same band. Choosing a tier gives a consultant all four
+prices — three lengths and a rate — so there is still exactly one pricing
+decision to make and it is still the platform's ladder they pick off.
 
-The schema holds any of them. **Decide before the booking phase.**
+The 20-minute price is the one everything is quoted against; the other two are
+rounded to the nearest ₹10 rather than derived exactly, because ₹2,248.50 is
+not a price. See `05-BACKEND-SCHEMA.md` §4.3.
+
+**Per-minute is modelled but not metered.** Phase 4 gives it a row and a rate.
+The meter — a balance hold, a per-minute debit, a mid-session cutoff — is phase
+5/11, and it is the reason instant sessions cannot be sold before then.
+
+What this replaces: the three incompatible ladders in the mock. `SESSION`'s
+flat 20 minutes survives as the quoted length. The booking records' ₹2,998 for
+30 minutes does not — it was twice the 20-minute rate where the bands say one
+and a half times.
 
 ### 5.2 The duplicate SKUs — TBD
 
@@ -365,6 +377,38 @@ earnings ledger.
 Shop · Academy · Pooja · Tarot · Reports · Premium · Ask AI · live video ·
 payouts · KYC · notifications · referrals · insights and earnings charts · the
 admin console.
+
+### Launch supply — decided, 26 Aug
+
+**The marketplace launches empty rather than seeded.** The six mock consultants
+exist on production as rows, `status = 'pending'`, and are not approved. `/consult`
+says so plainly and offers the one action that changes it: apply.
+
+The alternative was approving them so the site looked active. It was rejected
+on three grounds, and the reasoning is recorded because it will be tempting
+again the first week nobody signs up:
+
+- **Phase 5 turns props into fraud.** Today a booking toasts. The day the
+  booking transaction ships, an approved consultant is live inventory, and
+  somebody pays real money for a session with a person who does not exist.
+- **The seeded credentials are specific claims.** "ICAS Certified", "Jyotish
+  Visharad", "2,148 reviews", "4.9". Fabricated certifications and review counts
+  on fabricated people is an unfair trade practice under the Consumer
+  Protection Act, on top of §8's existing note that astrology advertising is
+  regulated. **Get this checked by someone qualified before any of it is
+  published**, including if the profiles are labelled as demos.
+- **It hides the only signal that matters.** An empty marketplace is a supply
+  problem, and fake supply removes the pressure to fix it.
+
+Flipping them on for a demo is one statement and reversible:
+`update consultants set status='approved' where legacy_id like 'a_';` — that is
+what they are for. Approving them for the public is a different decision, and
+this section is where it gets re-argued if it ever is.
+
+**No waitlist capture.** Everyone standing on `/consult` is already signed in,
+so their number is on file; a form asking for it collects data the database
+holds. And there is no way to send the message it would promise. Same call as
+the deleted cashback label: an unimplemented promise does not go on screen.
 
 **No admin console in v1.** Approving a consultant, blocking one, removing a post
 — do it in the database GUI. It is a marketplace with one real consultant. Build

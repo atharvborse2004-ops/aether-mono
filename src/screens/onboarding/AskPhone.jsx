@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import QuestionFrame from './QuestionFrame.jsx'
 import { useStore } from '../../store.jsx'
 import { supabase } from '../../lib/supabase.js'
@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase.js'
 export default function AskPhone() {
   const navigate = useNavigate()
   const { birth, setBirthField } = useStore()
+  const next = useSearchParams()[0].get('next') === 'pro' ? '?next=pro' : ''
   const [digits, setDigits] = useState(() => (birth.phone || '').replace('+91', ''))
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -51,7 +52,7 @@ export default function AskPhone() {
     }
 
     setBirthField('phone', phone)
-    navigate('/onboarding/verify')
+    navigate(`/onboarding/verify${next}`)
   }
 
   return (

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { bookedSlots, consultants, SESSION, SESSION_LENGTHS, timeSlots } from '../data/mock.js'
+import { consultants as seedConsultants, SESSION } from '../data/mock.js'
 import { Sheet, TopBar } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import Plate from '../components/Plate.jsx'
@@ -17,7 +17,8 @@ import {
   Tag,
   Ticks,
 } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useStore } from '../store.jsx'
+import { getConsultant, istToday, openSlots } from '../lib/consultants.js'
 
 const TABS = [
   { key: 'about', label: 'About' },
@@ -34,27 +35,80 @@ const DISTRIBUTION = [
   [1, 0.4],
 ]
 
+/** The next three days, as the sheet offers them. The server's horizon is
+ *  fourteen; this is as far ahead as one screen of six slots is useful. */
+function nextDays() {
+  const today = istToday()
+  return [0, 1, 2].map((n) => {
+    const d = new Date(`${today}T00:00:00+05:30`)
+    d.setUTCDate(d.getUTCDate() + n)
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d)
+    return {
+      key: iso,
+      label: n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : new Date(`${iso}T00:00:00+05:30`)
+        .toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+    }
+  })
+}
+
 export default function ConsultantProfile() {
   const { id } = useParams()
   const { showToast, hasFlag, toggleFlag, openChat } = useStore()
   const [tab, setTab] = useState('about')
   const [sheet, setSheet] = useState(false)
   const [slot, setSlot] = useState(null)
-  const [duration, setDuration] = useState(SESSION.mins)
+  const [service, setService] = useState(null)
+  const [c, setC] = useState(undefined)
+  const [days] = useState(nextDays)
+  const [day, setDay] = useState(days[0].key)
+  const [slots, setSlots] = useState(null)
 
-  const c = consultants.find((x) => x.id === id)
+  useEffect(() => {
+    let live = true
+    getConsultant(id).then((row) => {
+      if (!live) return
+      setC(row)
+      setService(row?.fixed.find((s) => s.duration_mins === SESSION.mins) ?? row?.fixed[0] ?? null)
+    })
+    return () => {
+      live = false
+    }
+  }, [id])
+
+  /* The one slots call. Both this sheet and the consultant's own grid go
+     through it, which is what stops them disagreeing — the subtraction of
+     time off and claimed slots happens on the server, once. */
+  useEffect(() => {
+    if (!c) return
+    let live = true
+    setSlots(null)
+    openSlots(c.id, day).then((rows) => live && setSlots(rows))
+    return () => {
+      live = false
+    }
+  }, [c, day])
+
+  // undefined is "still loading", null is "no such consultant, or not
+  // approved". They are different answers and only one of them redirects.
+  if (c === undefined) {
+    return (
+      <div className="flex h-full flex-col">
+        <TopBar title="Consultant" back backTo="/consult" />
+        <p className="p-10 text-center text-meta text-t3">Loading.</p>
+      </div>
+    )
+  }
   if (!c) return <Navigate to="/consult" replace />
 
   const following = hasFlag(`follow:${c.id}`)
-
-  /* `c.price` is quoted against SESSION.mins; every other length is that
-     same per-minute rate scaled up or down, not a separate price to keep in
-     sync. */
-  const total = Math.round((c.price / SESSION.mins) * duration)
+  const duration = service?.duration_mins ?? SESSION.mins
+  /* The total is a price the server owns, read off the service row. Nothing
+     here multiplies anything — backend/INSTRUCTIONS.md rule 3. */
+  const total = service?.price_paise ?? 0
 
   const openSheet = () => {
     setSlot(null)
-    setDuration(SESSION.mins)
+    setDay(days[0].key)
     setSheet(true)
   }
 
@@ -64,7 +118,7 @@ export default function ConsultantProfile() {
         title={c.name}
         back
         backTo="/consult"
-        sub={c.online ? 'Online now' : 'Offline'}
+        sub={c.verified ? 'Verified' : c.category}
         right={
           <button
             type="button"
@@ -93,14 +147,14 @@ export default function ConsultantProfile() {
                   were a four-column bordered grid taking 90px of height to
                   say four short numbers. */}
               <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] t-faint tnum">
-                <span className="font-bold t-sub">{c.rating}</span> rating
+                <span className="font-bold t-sub">{c.rating ?? 'New'}</span> rating
                 <span aria-hidden="true">·</span>
-                <span className="font-bold t-sub">{c.reviewCount.toLocaleString('en-IN')}</span>{' '}
+                <span className="font-bold t-sub">{(c.reviewCount ?? 0).toLocaleString('en-IN')}</span>{' '}
                 reviews
                 <span aria-hidden="true">·</span>
-                <span className="font-bold t-sub">{c.experience}</span>
-                <span aria-hidden="true">·</span>
-                <span className="font-bold t-sub">{c.followers}</span> followers
+                <span className="font-bold t-sub">
+                  {c.experienceYrs ? `${c.experienceYrs} yrs` : 'Practising'}
+                </span>
               </p>
             </div>
           </div>
@@ -191,7 +245,7 @@ export default function ConsultantProfile() {
             Bring the question you have been rewriting in your head. Not the polite version of it.
           </p>
           <Button onClick={openSheet} variant="solid">
-            Book a session · ₹{c.price.toLocaleString('en-IN')}
+            Book a session · ₹{rupees(c.pricePaise ?? 0)}
           </Button>
         </Section>
 
@@ -202,9 +256,10 @@ export default function ConsultantProfile() {
           which is the difference between a profile and a brochure. */}
       <div className="flex flex-none items-center gap-4 border-t border-rule bg-bg px-6 py-4">
         <div className="min-w-0">
-          <p className="text-lead font-light tnum">₹{c.price.toLocaleString('en-IN')}</p>
+          <p className="text-lead font-light tnum">₹{rupees(c.pricePaise ?? 0)}</p>
           <p className="mt-0.5 text-micro uppercase tracking-caps text-t3">
-            {SESSION.label} · {SESSION.promise}
+            {SESSION.label}
+            {c.perMinutePaise != null && ` · ₹${rupees(c.perMinutePaise)}/min live`}
           </p>
         </div>
         <Button onClick={openSheet} variant="solid" className="flex-1">
@@ -214,34 +269,43 @@ export default function ConsultantProfile() {
 
       <Sheet open={sheet} onClose={() => setSheet(false)} title={`Book ${firstName(c.name)}`}>
         <p className="label text-left mb-4">Length</p>
+        {/* The lengths are this consultant's own service rows, each priced off
+            a platform band. They are not `SESSION_LENGTHS` scaled by a rate the
+            browser worked out. */}
         <Segmented
-          items={SESSION_LENGTHS.map((m) => ({ key: m, label: `${m} min` }))}
-          value={duration}
-          onChange={setDuration}
+          items={c.fixed.map((s) => ({ key: s.id, label: `${s.duration_mins} min` }))}
+          value={service?.id}
+          onChange={(id) => setService(c.fixed.find((s) => s.id === id) ?? null)}
         />
 
-        <p className="label mt-8 text-left mb-4">Available today</p>
+        <p className="label mt-8 text-left mb-4">Day</p>
+        <Segmented items={days} value={day} onChange={setDay} />
+
+        <p className="label mt-8 text-left mb-4">Open times</p>
         <div className="mb-10 grid grid-cols-3 gap-3">
-          {timeSlots.map((t) => {
-            const taken = bookedSlots.includes(t)
-            return (
-              <Button
-                key={t}
-                variant={slot === t ? 'solid' : 'quiet'}
-                disabled={taken}
-                onClick={() => setSlot(t)}
-              >
-                {taken ? <s>{t}</s> : t}
-              </Button>
-            )
-          })}
+          {(slots ?? []).map((t) => (
+            <Button key={t} variant={slot === t ? 'solid' : 'quiet'} onClick={() => setSlot(t)}>
+              {t}
+            </Button>
+          ))}
         </div>
+        {/* A taken slot is absent, not struck through: the server returns what
+            is open and never says who took what. The old sheet drew every slot
+            and crossed out the booked ones from a list the consultant's own
+            screen read differently — which is how the two sides came to
+            disagree on every day except Thursday. */}
+        {slots === null && <p className="mb-10 -mt-6 text-meta text-t3">Checking the diary.</p>}
+        {slots?.length === 0 && (
+          <p className="mb-10 -mt-6 text-meta text-t3">
+            Nothing open {days.find((d) => d.key === day)?.label.toLowerCase()}. Try another day.
+          </p>
+        )}
 
         <Field k="Consultant" v={c.name} />
-        <Field k="When" v={slot ? `Today, ${slot}` : 'Not picked yet'} />
+        <Field k="When" v={slot ? `${days.find((d) => d.key === day)?.label}, ${slot}` : 'Not picked yet'} />
         <Field k="Length" v={`${duration} min`} />
         <Field k="Questions" v={SESSION.promise} />
-        <Field k="Total" v={`₹${total.toLocaleString('en-IN')}`} />
+        <Field k="Total" v={`₹${rupees(total)}`} />
 
         <Button
           className="mt-10"
@@ -249,13 +313,15 @@ export default function ConsultantProfile() {
           disabled={!slot}
           onClick={() => {
             setSheet(false)
-            showToast(`Booked · today ${slot} · ${duration} min`)
+            showToast(`Booked · ${slot} · ${duration} min`)
           }}
         >
           {slot ? `Confirm ${slot}` : 'Pick a time'}
         </Button>
         <p className="mt-5 text-center text-meta text-t3">
-          Prototype — no payment is taken and nothing is booked.
+          {/* Phase 5 makes this real: one transaction that claims the slot and
+              debits the wallet. The times above are already real. */}
+          The times are live. Confirming still books nothing — that is the next phase.
         </p>
       </Sheet>
     </div>
@@ -268,16 +334,20 @@ function About({ c }) {
       {/* The bio and credentials moved up into the identity block — repeating
           them here would be the same paragraph twice on one screen. */}
       <Section label="Practical">
-        <Field k="Speaks" v={c.languages.join(' · ')} />
+        <Field k="Speaks" v={c.languages.join(' · ') || '—'} />
         <Field k="Category" v={c.category} />
-        <Field k="Experience" v={c.experience} />
-        <Field k="Status" v={c.online ? 'Online now' : 'Offline'} />
+        <Field k="Experience" v={c.experienceYrs ? `${c.experienceYrs} yrs` : '—'} />
+        <Field k="Verified" v={c.verified ? 'Yes' : 'Not yet'} />
       </Section>
 
       <Section label="What a session is">
-        <Field k="Length" v={`${SESSION_LENGTHS.join(', ')} min`} />
+        {c.fixed.map((s) => (
+          <Field key={s.id} k={`${s.duration_mins} min`} v={`₹${rupees(s.price_paise)}`} />
+        ))}
+        {c.perMinute && (
+          <Field k="Instant call" v={`₹${rupees(c.perMinute.price_paise)} a minute`} />
+        )}
         <Field k="Questions" v={SESSION.promise} />
-        <Field k="Price" v={`₹${c.price.toLocaleString('en-IN')} for ${SESSION.label}`} />
         <p className="mt-6 text-center text-meta text-t3">
           Pick the length that fits when you book. Ask as much as you like inside it — if the
           call runs over, it runs over.
@@ -287,7 +357,32 @@ function About({ c }) {
   )
 }
 
+/**
+ * Published work and reviews are phase 9 tables and do not exist yet, so both
+ * tabs still read mock.js — matched to the real row BY DISPLAY NAME, which is
+ * exactly the join the schema document spends a section warning about.
+ *
+ * It is tolerable here and nowhere else: it decorates two tabs, it touches no
+ * money and no identity, and it resolves to nothing for a consultant who
+ * applied rather than being seeded — who then correctly shows zero. Phase 9
+ * deletes this function.
+ */
+function seedFor(c) {
+  return seedConsultants.find((m) => m.name === c.name) ?? null
+}
+
 function Work({ c }) {
+  const seed = seedFor(c)
+  if (!seed) {
+    return (
+      <Section label="Nothing published">
+        <p className="prose-c">
+          {firstName(c.name)} has not published anything yet. What they write will appear here.
+        </p>
+      </Section>
+    )
+  }
+  c = { ...c, content: seed.content }
   return (
     <Section label={`${c.content.length} pieces`}>
       <ul>
@@ -312,6 +407,22 @@ function Work({ c }) {
 
 function Reviews({ c }) {
   const { showToast } = useStore()
+  const seed = seedFor(c)
+
+  /* Honest and small beats large and invented: a consultant with no completed
+     sessions has no reviews, and phase 9 is where a review becomes a row that
+     can only be written against one. */
+  if (!seed) {
+    return (
+      <Section label="No reviews yet">
+        <p className="prose-c">
+          A review can only be left after a session that actually happened. There have not been
+          any.
+        </p>
+      </Section>
+    )
+  }
+  c = { ...c, rating: seed.rating, reviewCount: seed.reviewCount, reviews: seed.reviews }
 
   return (
     <Section label={`${c.reviewCount.toLocaleString('en-IN')} reviews`}>

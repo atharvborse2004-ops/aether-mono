@@ -1,11 +1,19 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { bookedSlots, bookings, pro, timeSlots, weekDays } from '../data/mock.js'
+import { timeSlots, weekDays } from '../data/mock.js'
 import { TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { Kicker, PopAvatar, PopButton, PopTag } from '../components/Pop.jsx'
 import { Segmented, firstName } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useStore } from '../store.jsx'
+import {
+  decideBooking,
+  listAvailability,
+  listBookings,
+  nextDateFor,
+  openSlots,
+  setAvailability,
+} from '../lib/consultants.js'
 
 /**
  * Consult — everything that runs today's practice, bundled: who is asking,
@@ -13,6 +21,12 @@ import { useStore } from '../store.jsx'
  * rather than three routes because they are three views onto the same
  * roster, not three separate places (mirrors how Live folded into the
  * seeker's own Consult tab as a mode).
+ *
+ * Phase 4 made all of it real. The queue is `bookings` rows, Accept and
+ * Decline are status writes the database validates, and the availability grid
+ * writes `consultant_availability`. The one thing that has not changed is
+ * where the open slots come from — except that now it is the same place the
+ * seeker's booking sheet reads, which is the entire point of the phase.
  */
 const TABS = [
   { key: 'sessions', label: 'Sessions' },
@@ -21,15 +35,24 @@ const TABS = [
 ]
 
 export default function ProConsult() {
-  const { hasFlag, toggleFlag, openChat } = useStore()
+  const { consultant, openChat } = useStore()
   const [tab, setTab] = useState('sessions')
+  const [rows, setRows] = useState(null)
 
-  const pending = bookings.filter((b) => decided(b, hasFlag) === 'pending')
+  const me = consultant?.profile_id
 
-  // Online/offline rides the same flags Set the slot grid below uses — a
-  // namespaced key, no new store slice. `pro.online` is the seed default;
-  // the flag only ever pushes it to offline.
-  const online = pro.online && !hasFlag(`offline:${pro.id}`)
+  const reload = useCallback(() => {
+    if (!me) return
+    listBookings(me).then(setRows)
+  }, [me])
+
+  useEffect(() => {
+    reload()
+  }, [reload])
+
+  const bookings = rows ?? []
+  const pending = bookings.filter((b) => b.status === 'pending')
+  const approved = consultant?.status === 'approved'
 
   return (
     <>
@@ -37,39 +60,27 @@ export default function ProConsult() {
         action={pending.length > 0 ? <PopTag tone="gold">{pending.length} waiting</PopTag> : null}
       />
 
-      {/* ── Availability, on the main app ─────────────────────────────────
-          The one control that isn't a subsection: whether clients see you as
-          bookable at all. Separate from the per-slot grid further down,
-          which is about *when*, not *whether*. */}
+      {/* ── Whether clients can see you at all ────────────────────────────
+          This was a toggle backed by a browser flag, on a `pro.online` field
+          no table has. It is now the one thing that actually decides whether
+          you are bookable: `consultants.status`, which is the predicate on
+          every public read of your practice. It is not yours to flip. */}
       <section className="px-5 pb-2 pt-5">
         <div className="pop-card flex items-center gap-3 p-4">
           <span
-            className={`h-2.5 w-2.5 flex-none rounded-full ${online ? 'bg-ok' : 'bg-t4'}`}
+            className={`h-2.5 w-2.5 flex-none rounded-full ${approved ? 'bg-ok' : 'bg-t4'}`}
             aria-hidden="true"
           />
           <span className="min-w-0 flex-1">
             <span className="block text-meta t-heading">
-              {online ? 'Online to clients' : 'Offline'}
+              {approved ? 'Visible to clients' : 'Not yet approved'}
             </span>
             <span className="mt-0.5 block caps-sm t-faint">
-              {online
-                ? 'Visible and bookable on the main app'
-                : 'Hidden from new bookings until you go back online'}
+              {approved
+                ? 'You are in search and open for bookings'
+                : 'Invisible, unbookable and earning nothing until we approve you'}
             </span>
           </span>
-          <PopButton
-            size="sm"
-            variant={online ? 'ghost' : 'gold'}
-            full={false}
-            onClick={() =>
-              toggleFlag(`offline:${pro.id}`, {
-                on: 'You are offline to clients',
-                off: 'You are online again',
-              })
-            }
-          >
-            {online ? 'Go offline' : 'Go online'}
-          </PopButton>
         </div>
       </section>
 
@@ -78,7 +89,9 @@ export default function ProConsult() {
       </div>
 
       <div key={tab} className="animate-fade">
-        {tab === 'sessions' && <Sessions />}
+        {tab === 'sessions' && (
+          <Sessions me={me} rows={rows} bookings={bookings} reload={reload} />
+        )}
         {tab === 'chat' && <Chat onOpen={() => openChat('live')} />}
         {tab === 'call' && <Call />}
       </div>
@@ -88,52 +101,96 @@ export default function ProConsult() {
   )
 }
 
-function decided(b, hasFlag) {
-  return hasFlag(`accept:${b.id}`) ? 'confirmed' : hasFlag(`decline:${b.id}`) ? 'declined' : b.status
-}
-
 /**
  * How each channel is actually delivered. The consultant's whole job runs
  * through these, so each start button goes somewhere real rather than firing
  * the same toast three times.
  */
 const CHANNELS = {
-  Chat: { icon: 'chat', verb: 'Open chat' },
-  Call: { icon: 'phone', verb: 'Start call' },
-  Live: { icon: 'live', verb: 'Go live' },
+  chat: { icon: 'chat', verb: 'Open chat' },
+  call: { icon: 'phone', verb: 'Start call' },
+  live: { icon: 'live', verb: 'Go live' },
 }
 
-/**
- * Sessions — the queue, the day, and what you are open for. Ported from the
- * old standalone /pro/sessions route unchanged, minus its own TabHeader
- * (Consult owns one now).
- *
- * ponytail: two booleans standing in for a four-state lifecycle. If a third
- * action appears (reschedule), this wants a real status map in the store.
- */
-function Sessions() {
-  const { hasFlag, toggleFlag, showToast, openChat } = useStore()
+/** `weekDays` starts on Monday; the `weekday` column is Postgres `dow`, which
+ *  starts on Sunday. One conversion, in one place. */
+const dowOf = (index) => (index + 1) % 7
+
+const hhmm = (iso) =>
+  new Date(iso).toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Kolkata',
+  })
+
+const dayLabel = (iso) => {
+  const on = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(iso))
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
+  if (on === today) return `Today · ${hhmm(iso)}`
+  return `${new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })} · ${hhmm(iso)}`
+}
+
+function Sessions({ me, rows, bookings, reload }) {
+  const { showToast, openChat } = useStore()
   const navigate = useNavigate()
-  const [day, setDay] = useState('Thu')
+  const [dayIndex, setDayIndex] = useState(0)
+  const [rules, setRules] = useState([])
+  const [open, setOpen] = useState(null)
+  const [busy, setBusy] = useState(null)
+
+  const day = weekDays[dayIndex]
+  const dow = dowOf(dayIndex)
+  const date = nextDateFor(dow)
+
+  const loadGrid = useCallback(() => {
+    if (!me) return
+    listAvailability(me).then(setRules)
+    setOpen(null)
+    openSlots(me, date).then(setOpen)
+  }, [me, date])
+
+  useEffect(() => {
+    loadGrid()
+  }, [loadGrid])
 
   /** Chat opens the panel, live opens the room, a call is the one stub. */
   const start = (b) => {
-    if (b.kind === 'Chat') return openChat('live')
-    if (b.kind === 'Live') return navigate('/live/l1')
-    return showToast(`Calling ${firstName(b.client)} — prototype only`)
+    if (b.mode === 'chat') return openChat('live')
+    if (b.mode === 'live') return navigate('/live/l1')
+    return showToast(`Calling ${firstName(b.seeker_name)} — prototype only`)
   }
 
-  const decidedStatus = (b) => decided(b, hasFlag)
+  const decide = async (b, status) => {
+    if (busy) return
+    setBusy(b.id)
+    const ok = await decideBooking(b.id, status)
+    setBusy(null)
+    if (!ok) return showToast('That did not go through. Try again.')
+    showToast(
+      status === 'confirmed'
+        ? `Accepted · ${firstName(b.seeker_name)} at ${hhmm(b.starts_at)}`
+        : `Declined · ${firstName(b.seeker_name)}`,
+    )
+    reload()
+    loadGrid()
+  }
 
-  const pending = bookings.filter((b) => decidedStatus(b) === 'pending')
-  const today = bookings.filter((b) => decidedStatus(b) === 'confirmed')
-  const done = bookings.filter((b) => decidedStatus(b) === 'done')
+  const pending = bookings.filter((b) => b.status === 'pending')
+  const confirmed = bookings.filter((b) => b.status === 'confirmed')
+  const done = bookings.filter((b) => b.status === 'completed')
 
   return (
     <>
       {/* ── Requests ───────────────────────────────────────────────────── */}
       <section className="border-b border-rule px-5 py-6">
-        <Kicker>{pending.length === 0 ? 'No requests waiting' : `${pending.length} requests`}</Kicker>
+        <Kicker>
+          {rows === null
+            ? 'Reading the queue'
+            : pending.length === 0
+              ? 'No requests waiting'
+              : `${pending.length} requests`}
+        </Kicker>
 
         {pending.length === 0 ? (
           <p className="mt-3 text-meta t-faint">
@@ -144,30 +201,29 @@ function Sessions() {
             {pending.map((b) => (
               <li key={b.id} className="pop-card p-4">
                 <div className="flex items-start gap-3">
-                  <PopAvatar initials={b.initials} size={40} />
+                  <PopAvatar initials={initials(b.seeker_name)} size={40} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-meta t-heading">{b.client}</p>
+                    <p className="truncate text-meta t-heading">{b.seeker_name}</p>
                     <p className="mt-0.5 caps-sm t-faint tnum">
-                      {b.kind} · {b.duration} · {b.when}
+                      {b.mode} · {b.duration_mins} min · {dayLabel(b.starts_at)}
                     </p>
                   </div>
-                  <p className="flex-none text-meta gold tnum">₹{b.price.toLocaleString('en-IN')}</p>
+                  <p className="flex-none text-meta gold tnum">₹{rupees(b.amount_paise)}</p>
                 </div>
 
                 {b.note && <p className="mt-3 text-meta t-sub">“{b.note}”</p>}
 
+                {/* Not toggles any more. The policy allows pending → confirmed
+                    or declined and nothing else, so a second tap on Accept
+                    changes nothing rather than undoing the first. */}
                 <div className="mt-4 flex items-center gap-2">
                   <PopButton
                     size="sm"
                     variant="gold"
                     full={false}
                     className="flex-1"
-                    onClick={() =>
-                      toggleFlag(`accept:${b.id}`, {
-                        on: `Accepted · ${firstName(b.client)} at ${b.at}`,
-                        off: 'Acceptance undone',
-                      })
-                    }
+                    disabled={busy === b.id}
+                    onClick={() => decide(b, 'confirmed')}
                   >
                     <Icon name="check" size={15} weight={2.1} />
                     <span className="ml-1.5">Accept</span>
@@ -177,12 +233,8 @@ function Sessions() {
                     variant="ghost"
                     full={false}
                     className="flex-1"
-                    onClick={() =>
-                      toggleFlag(`decline:${b.id}`, {
-                        on: `Declined · ${firstName(b.client)}`,
-                        off: 'Back in the queue',
-                      })
-                    }
+                    disabled={busy === b.id}
+                    onClick={() => decide(b, 'declined')}
                   >
                     <Icon name="close" size={15} weight={2.1} />
                     <span className="ml-1.5">Decline</span>
@@ -194,44 +246,39 @@ function Sessions() {
         )}
       </section>
 
-      {/* ── Today ──────────────────────────────────────────────────────── */}
+      {/* ── Confirmed ──────────────────────────────────────────────────── */}
       <section className="border-b border-rule px-5 py-6">
-        <Kicker>{`${today.length} confirmed`}</Kicker>
+        <Kicker>{`${confirmed.length} confirmed`}</Kicker>
         <ul className="mt-4 space-y-2">
-          {today.map((b) => (
+          {confirmed.map((b) => (
             <li key={b.id} className="pop-inset flex items-center gap-3 p-3">
-              <span className="w-12 flex-none text-meta tnum t-heading">{b.at}</span>
-              <PopAvatar initials={b.initials} size={34} />
+              <span className="w-12 flex-none text-meta tnum t-heading">{hhmm(b.starts_at)}</span>
+              <PopAvatar initials={initials(b.seeker_name)} size={34} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-meta t-heading">{b.client}</span>
+                <span className="block truncate text-meta t-heading">{b.seeker_name}</span>
                 <span className="mt-0.5 block caps-sm t-faint">
-                  {b.kind} · {b.duration}
+                  {b.mode} · {b.duration_mins} min
                 </span>
               </span>
-              {b.startsIn === 'Now' ? (
-                <span className="badge-live flex-none">● Now</span>
-              ) : (
-                <span className="flex-none caps-sm t-faint tnum">in {b.startsIn}</span>
-              )}
-              {/* Prototype-only: prefills /chart with this client's mock
-                  birth data, but the diagram itself still renders the seed
-                  user's own placements — there is no chart-calculation
-                  service yet. Chart.jsx flags that on screen rather than
-                  presenting a stranger's chart as if it were really computed. */}
+              {/* Prefills /chart with this client's real birth details, which
+                  the booking view carries for exactly this reason. The wheel
+                  itself is still the seed chart until phase 7 computes one —
+                  Chart.jsx says so on screen rather than presenting a
+                  stranger's chart as though it were calculated. */}
               <Link
-                to={`/chart?name=${encodeURIComponent(b.client)}&date=${encodeURIComponent(b.birthDate)}&time=${encodeURIComponent(b.birthTime)}`}
-                aria-label={`View ${firstName(b.client)}'s kundli`}
+                to={`/chart?name=${encodeURIComponent(b.seeker_name)}&date=${encodeURIComponent(b.birth_date ?? '')}&time=${encodeURIComponent(b.birth_time ?? '')}`}
+                aria-label={`View ${firstName(b.seeker_name)}'s kundli`}
                 className="pill knob !h-9 !w-9 flex-none justify-center"
               >
                 <Icon name="kundli" size={16} />
               </Link>
               <button
                 type="button"
-                aria-label={`${CHANNELS[b.kind].verb} with ${firstName(b.client)}`}
+                aria-label={`${CHANNELS[b.mode]?.verb ?? 'Open'} with ${firstName(b.seeker_name)}`}
                 onClick={() => start(b)}
                 className="pill knob !h-9 !w-9 flex-none justify-center"
               >
-                <Icon name={CHANNELS[b.kind].icon} size={16} />
+                <Icon name={CHANNELS[b.mode]?.icon ?? 'chat'} size={16} />
               </button>
             </li>
           ))}
@@ -239,22 +286,25 @@ function Sessions() {
       </section>
 
       {/* ── Availability ───────────────────────────────────────────────────
-          A week rather than a single day. Sold slots come from the same
-          `bookedSlots` the seeker's booking sheet reads, so the two views
-          cannot disagree about what is gone. */}
+          Tapping a cell is one INSERT or one DELETE against
+          `consultant_availability`. What is already taken comes from
+          `consultant_open_slots` — the same call the seeker's booking sheet
+          makes, on the same date. There is no longer a rule here to disagree
+          with, which is what the old `day === 'Thu'` guard was. */}
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Availability</Kicker>
         <p className="mt-2 text-meta t-body">
-          Tap to close a slot. Struck-through slots are already sold and cannot be pulled.
+          Tap to open or close a slot. Struck-through slots are taken or already past, and cannot
+          be pulled.
         </p>
 
         <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
-          {weekDays.map((d) => (
+          {weekDays.map((d, i) => (
             <button
               key={d}
               type="button"
-              aria-pressed={day === d}
-              onClick={() => setDay(d)}
+              aria-pressed={dayIndex === i}
+              onClick={() => setDayIndex(i)}
               className="pill caps-sm flex-none"
             >
               {d}
@@ -264,32 +314,31 @@ function Sessions() {
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           {timeSlots.map((t) => {
-            // Only today's sales are known; other days are all open.
-            const sold = day === 'Thu' && bookedSlots.includes(t)
-            const closed = hasFlag(`closed:${day}:${t}`)
+            const isRule = rules.some((r) => r.weekday === dow && r.slot === t)
+            // Open on paper but not on offer: someone has it, or it has been.
+            const gone = isRule && open !== null && !open.includes(t)
             return (
               <button
                 key={t}
                 type="button"
-                disabled={sold}
-                aria-pressed={!sold && !closed}
-                onClick={() =>
-                  toggleFlag(`closed:${day}:${t}`, {
-                    on: `${day} ${t} closed`,
-                    off: `${day} ${t} open again`,
-                  })
-                }
+                disabled={gone || open === null}
+                aria-pressed={isRule && !gone}
+                onClick={async () => {
+                  const ok = await setAvailability(me, dow, t, !isRule)
+                  if (!ok) return showToast('Could not change that slot.')
+                  showToast(isRule ? `${day} ${t} closed` : `${day} ${t} open`)
+                  loadGrid()
+                }}
                 className="pill caps-sm justify-center tnum"
               >
-                {sold ? <s>{t}</s> : t}
+                {gone ? <s>{t}</s> : t}
               </button>
             )
           })}
         </div>
 
         <p className="mt-4 caps-sm t-faint">
-          {timeSlots.filter((t) => !hasFlag(`closed:${day}:${t}`) && !(day === 'Thu' && bookedSlots.includes(t))).length}{' '}
-          open on {day}
+          {open === null ? 'Checking' : `${open.length} open on ${day}`}
         </p>
       </section>
 
@@ -305,11 +354,11 @@ function Sessions() {
               className="flex items-center justify-between gap-4 border-b border-rule py-3.5 last:border-b-0"
             >
               <span className="min-w-0">
-                <span className="block truncate text-meta t-sub">{b.client}</span>
-                <span className="mt-0.5 block caps-sm t-faint">{b.when}</span>
+                <span className="block truncate text-meta t-sub">{b.seeker_name}</span>
+                <span className="mt-0.5 block caps-sm t-faint">{dayLabel(b.starts_at)}</span>
               </span>
               <span className="flex-none text-meta tnum t-heading">
-                ₹{b.price.toLocaleString('en-IN')}
+                ₹{rupees(b.amount_paise)}
               </span>
             </li>
           ))}
@@ -317,6 +366,16 @@ function Sessions() {
       </section>
     </>
   )
+}
+
+function initials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 }
 
 /** Chat — the store already owns the whole inbox; this is the entry point. */

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import QuestionFrame from './QuestionFrame.jsx'
 import { useStore } from '../../store.jsx'
 
@@ -11,6 +11,10 @@ export default function AskName() {
   const navigate = useNavigate()
   const { setBirthField } = useStore()
   const [name, setName] = useState('')
+  /* `?next=pro` is the consultant branch of AskSide. It skips the four birth
+     questions — a consultant is not here for a reading — and rejoins at the
+     phone step, which is the same account either way. */
+  const pro = useSearchParams()[0].get('next') === 'pro'
 
   const valid = name.trim().length > 0
 
@@ -21,7 +25,7 @@ export default function AskName() {
       canContinue={valid}
       onNext={() => {
         setBirthField('name', name.trim())
-        navigate('/onboarding/date')
+        navigate(pro ? '/onboarding/phone?next=pro' : '/onboarding/date')
       }}
     >
       <label className="mx-auto flex max-w-[19rem] flex-col items-center gap-2">
