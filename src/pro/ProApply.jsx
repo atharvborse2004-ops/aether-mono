@@ -13,11 +13,13 @@ import { supabase } from '../lib/supabase.js'
  * `/pro/studio`, so anyone who tapped it *was* Ritu Kashyap, with no account,
  * no row and nothing of their own to look at.
  *
- * Four states, and the screen is all four because the gate sends every
+ * Five states, and the screen is all five because the gate sends every
  * unresolved `/pro` visit here:
  *
  *   no session          → sign up, reusing the seeker's own phone steps
  *   session, no row     → the application
+ *   the read failed     → say so, and offer a retry. NOT the application: a
+ *                         failed fetch is not the same answer as no practice
  *   status 'pending'    → under review, which is a real state and not a stall
  *   status 'approved'   → straight through to the studio
  *
@@ -26,7 +28,8 @@ import { supabase } from '../lib/supabase.js'
  * the interface to a rule rather than the rule itself.
  */
 export default function ProApply() {
-  const { session, consultant, consultantLoading, refreshConsultant, showToast } = useStore()
+  const { session, consultant, consultantLoading, consultantError, refreshConsultant, showToast } =
+    useStore()
 
   if (session && consultant?.status === 'approved') return <Navigate to="/pro/studio" replace />
 
@@ -38,10 +41,31 @@ export default function ProApply() {
         <Label>Checking your practice.</Label>
       ) : consultant ? (
         <UnderReview status={consultant.status} />
+      ) : consultantError ? (
+        <CouldNotCheck onRetry={() => refreshConsultant(session.user.id)} />
       ) : (
         <Application onDone={() => refreshConsultant(session.user.id)} toast={showToast} />
       )}
     </div>
+  )
+}
+
+/* The read failed, which is not the same as having no practice. Showing the
+   application form here would tell a working consultant to sign up again. */
+function CouldNotCheck({ onRetry }) {
+  return (
+    <>
+      <h1 className="mx-auto mt-10 max-w-[16ch] text-center text-display font-light">
+        We could not reach your practice.
+      </h1>
+      <p className="mx-auto mt-4 max-w-measure text-center text-meta t-sub">
+        The connection failed, so we do not know whether you have one. This is not a decision
+        about you. If your device clock is wrong, fix that first — it is the usual cause.
+      </p>
+      <Button variant="solid" className="mt-10" onClick={onRetry}>
+        Try again
+      </Button>
+    </>
   )
 }
 

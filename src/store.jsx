@@ -136,9 +136,20 @@ export function AppProvider({ children }) {
      cheaper than a fetch on every route change. */
   const [consultant, setConsultant] = useState(null)
   const [consultantLoading, setConsultantLoading] = useState(false)
+  /* A failed read is not the same answer as "no row", and here the difference
+     is a screen: the gate sends anyone without a `consultants` row to the
+     application, so an errored fetch would show a working consultant a signup
+     form for the practice they already have. It has already happened once on
+     production — a `JWT issued at future` from clock skew — and the UI could
+     not tell the two apart. `refreshProfile` carries the same warning about
+     wallets; this is that lesson, applied where it bites harder. */
+  const [consultantError, setConsultantError] = useState(false)
 
   const refreshConsultant = useCallback(async (userId) => {
-    if (!userId) return setConsultant(null)
+    if (!userId) {
+      setConsultantError(false)
+      return setConsultant(null)
+    }
     setConsultantLoading(true)
     /* Filtered by id, unlike the wallet reads a few lines down. `consultants`
        is not an own-row-only table — `consultants_select_approved` makes every
@@ -155,6 +166,7 @@ export function AppProvider({ children }) {
       .eq('profile_id', userId)
       .maybeSingle()
     if (error) console.error('[consultant] load failed:', error.message)
+    setConsultantError(Boolean(error))
     setConsultant(data ?? null)
     setConsultantLoading(false)
   }, [])
@@ -581,6 +593,7 @@ export function AppProvider({ children }) {
       refreshProfile,
       consultant,
       consultantLoading,
+      consultantError,
       refreshConsultant,
       cart,
       cartCount,
@@ -630,6 +643,7 @@ export function AppProvider({ children }) {
       refreshProfile,
       consultant,
       consultantLoading,
+      consultantError,
       refreshConsultant,
       cart,
       cartCount,

@@ -35,7 +35,7 @@ const TABS = [
 ]
 
 export default function ProConsult() {
-  const { consultant, openChat } = useStore()
+  const { consultant, consultantError, openChat } = useStore()
   const [tab, setTab] = useState('sessions')
   const [rows, setRows] = useState(null)
 
@@ -72,13 +72,19 @@ export default function ProConsult() {
             aria-hidden="true"
           />
           <span className="min-w-0 flex-1">
+            {/* Three states, not two. `consultant` is null both when there is
+                no row and when the read failed, and telling somebody they are
+                not approved because a request timed out is the same mistake
+                as sending them to the signup form. */}
             <span className="block text-meta t-heading">
-              {approved ? 'Visible to clients' : 'Not yet approved'}
+              {consultantError ? 'Could not check your status' : approved ? 'Visible to clients' : 'Not yet approved'}
             </span>
             <span className="mt-0.5 block caps-sm t-faint">
-              {approved
-                ? 'You are in search and open for bookings'
-                : 'Invisible, unbookable and earning nothing until we approve you'}
+              {consultantError
+                ? 'The connection failed. This says nothing about your practice'
+                : approved
+                  ? 'You are in search and open for bookings'
+                  : 'Invisible, unbookable and earning nothing until we approve you'}
             </span>
           </span>
         </div>

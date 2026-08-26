@@ -506,6 +506,13 @@ Two things that cost time and are worth not rediscovering:
   for "my consultant row" returned every approved consultant and failed, which
   showed a real consultant the application form for the practice they already
   had. Filter by id even where RLS feels like enough.
+- **A failed read of that row is not the same answer as no row**, and the gate
+  used to conflate them — so any error sent a working consultant to a signup
+  form for their own practice. Seen on production within minutes of the deploy
+  as `JWT issued at future`, which is clock skew and nothing worse. The store
+  now carries `consultantError`, the gate does not redirect on it, and
+  `ProApply` has a fifth state that says the connection failed and offers a
+  retry. Same lesson `refreshProfile` already carried about wallets.
 
 **What has been verified, in a browser, on dev:** two consultants at different
 bands, each seeing only their own grid; a pending consultant unreachable by

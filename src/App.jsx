@@ -112,7 +112,7 @@ function PlainLayout() {
  * is NOT exempt: that one is genuinely asking for the seeker app.
  */
 function SessionGate() {
-  const { session, sessionReady, consultant, consultantLoading } = useStore()
+  const { session, sessionReady, consultant, consultantLoading, consultantError } = useStore()
   const { pathname } = useLocation()
   const navigate = useNavigate()
 
@@ -129,6 +129,11 @@ function SessionGate() {
       // A row that has not arrived yet is not the same as no row. Waiting
       // costs one paint; guessing bounces a real consultant to the form.
       if (session && consultantLoading) return
+      // Nor is a failed read. Redirecting on an error would hand a working
+      // consultant a signup form for their own practice — seen on production
+      // as `JWT issued at future`, from nothing worse than a fast clock. The
+      // apply screen says what happened instead.
+      if (session && consultantError) return
       if (session && consultant) return
       navigate('/pro/apply', { replace: true })
       return
@@ -138,7 +143,7 @@ function SessionGate() {
     const fromPro = pathname === '/chart' || pathname.startsWith('/consult/')
     if (pathname.startsWith('/onboarding') || fromPro) return
     navigate('/onboarding', { replace: true })
-  }, [session, sessionReady, consultant, consultantLoading, pathname, navigate])
+  }, [session, sessionReady, consultant, consultantLoading, consultantError, pathname, navigate])
 
   return null
 }
