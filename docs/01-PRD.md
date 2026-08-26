@@ -291,13 +291,39 @@ catalogue.
 Six real prices get typed once, and the multiplier is deleted before anything
 reaches a database.
 
-### 5.4 Cancellation and refunds — TBD
+### 5.4 Cancellation and refunds — decided, 27 Aug
 
-Charging at booking time makes every cancellation a credit, and who may cancel,
-until when, and for how much is business policy that becomes ledger rows.
+**No cancellation and no refund on a session the seeker chose not to attend.**
+Booking debits the wallet; the seeker cannot cancel it back and does not get the
+money returned. Say it on the booking sheet, before the tap, not in a policy
+page nobody opens.
 
-Default if undecided: **debit at booking, no self-service cancellation, refunds
-only as an admin-written reversing entry.** Ship that and say so in the app.
+**This is not the same as "money never comes back", and the difference is the
+whole of it.** A refund is for a session that happened, or that the seeker
+simply skipped. These are not refunds and they are not optional:
+
+| What happened | What the ledger does |
+|---|---|
+| Consultant declines the request | **Reversing credit, in full.** Nothing was delivered |
+| Consultant never turns up | **Reversing credit, in full.** Same reason |
+| Platform failure — no room, no call, our fault | **Reversing credit, in full** |
+| Seeker does not attend | Nothing. This is the policy |
+| Seeker asks to cancel beforehand | Nothing self-service. An admin may still write a reversing entry |
+
+`03-APP-FLOW.md` §8.1 already has `declined` writing a reversing credit, and
+that stays. **A policy of "no refunds" must never be implemented as "declines
+do not reverse"** — that is a consultant tapping Decline and keeping a
+stranger's money.
+
+`cancelled` stays in the `bookings` status check for admin use. There is no
+client transition into it.
+
+**Two things this obliges before launch, both outside the code.** A published
+cancellation and refund policy page is a Razorpay activation requirement, so it
+has to exist on the domain either way — §8. And a blanket no-refund term does
+not override a service that was not delivered, which is exactly why the table
+above exists; **get it read by someone qualified** rather than taking this
+document's word for it.
 
 ### 5.5 Consultant ranking formula — TBD
 

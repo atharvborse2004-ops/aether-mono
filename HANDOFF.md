@@ -578,7 +578,6 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
-| **Refund and cancellation policy** | **Phase 5 — next** |
 | **Charge at booking or at session start** | **Phase 5 — next** |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Chat window — booking-bound or quota-bound | Phase 6 |
@@ -661,17 +660,46 @@ money. Per-minute sessions need their meter here or in phase 11.
 **Three things to settle before writing any of it**, and two are decisions, not
 code:
 
-1. **Refund and cancellation policy** (§4). The booking function cannot be
-   written without it — it decides whether a cancellation is a reversing entry,
-   a partial one, or nothing.
-2. **Charge at booking or at session start** (§4). Recommending at booking:
-   one write, and a hold never becomes a leakable state.
-3. **Razorpay's website review**, which is a clock rather than a task. Until it
-   clears, live checkout is refused, **production wallets cannot be funded**,
-   and phase 5's first done-condition — two clients racing one slot, one
-   booking, one refusal, no orphaned debit — cannot be exercised end to end
-   against real money. Dev is unaffected: fund a dev wallet by hand with the
-   recipe at the foot of `003`.
+1. **Charge at booking or at session start** (§4). Recommending at booking:
+   one write, and a hold never becomes a leakable state. It is also what the
+   refund decision assumes.
+2. **Razorpay's website review**, which is now a domain move rather than a wait
+   — see below. Until it clears, live checkout is refused, **production wallets
+   cannot be funded**, and phase 5's first done-condition — two clients racing
+   one slot, one booking, one refusal, no orphaned debit — cannot be exercised
+   end to end against real money. Dev is unaffected: fund a dev wallet by hand
+   with the recipe at the foot of `003`.
+
+**Refund policy is decided** (27 Aug, `01-PRD.md` §5.4): no cancellation and no
+refund on a session the seeker skipped. **It does not touch the reversing
+credit a decline owes** — a consultant tapping Decline and keeping the money is
+not a policy, and the booking function must implement both halves.
+
+### The domain move, which is what unblocks Razorpay
+
+Razorpay is reviewing `atharvborse2004-ops.github.io` and a real domain is what
+it wants. The move is GitHub Pages and DNS — **Supabase needs nothing**, since
+phone OTP has no redirect URLs. Four things touch it, in this order:
+
+1. **DNS at the registrar.** Apex `A` records to GitHub Pages' four addresses,
+   or a `CNAME` for `www`.
+2. **`public/CNAME`** holding the domain, plus Settings → Pages → Custom
+   domain. The file is what survives a redeploy.
+3. **`vite.config.js`.** `base` is `/${repo}/` whenever `GITHUB_REPOSITORY` is
+   set, because Pages serves from a repo subpath. On a custom domain the site
+   is at the apex and **base must become `/`** — leave it and every asset 404s
+   into a white screen.
+4. **`PAGES_ORIGIN` in `backend/functions/razorpay-order/index.ts`**, which is
+   the one that fails quietly. It is a hardcoded `https://atharvborse2004-ops.github.io`,
+   and the CORS list is explicit rather than a wildcard on purpose. After the
+   move the browser sends the new origin, the preflight is refused, and top-up
+   breaks with "Failed to send a request to the Edge Function" — which reads
+   like the function being down. **Update it and redeploy the function on both
+   projects.**
+
+Then register the domain with Razorpay, and publish the policy pages their
+activation asks for — terms, privacy, contact, and the cancellation and refund
+policy now written in `01-PRD.md` §5.4.
 
 **Owed on phase 3:** one real ₹1 live payment through the deployed site, once
 that review clears. That closes its last done-condition.
