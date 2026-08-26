@@ -44,7 +44,11 @@ export default function ProApply() {
       ) : consultantError ? (
         <CouldNotCheck onRetry={() => refreshConsultant(session.user.id)} />
       ) : (
-        <Application onDone={() => refreshConsultant(session.user.id)} toast={showToast} />
+        <Application
+          profileId={session.user.id}
+          onDone={() => refreshConsultant(session.user.id)}
+          toast={showToast}
+        />
       )}
     </div>
   )
@@ -127,7 +131,7 @@ function UnderReview({ status }) {
 
 /* ── The application ─────────────────────────────────────────────────────── */
 
-function Application({ onDone, toast }) {
+function Application({ profileId, onDone, toast }) {
   const [bands, setBands] = useState([])
   const [form, setForm] = useState({
     category: categories[0],
@@ -173,6 +177,14 @@ function Application({ onDone, toast }) {
     const { data: row, error: cErr } = await supabase
       .from('consultants')
       .insert({
+        /* Sent explicitly, and it has to be: the table's primary key has no
+           default, and the write policy is `profile_id = auth.uid()`. Omitting
+           it made the check compare null to the caller and the row was refused
+           with "new row violates row-level security policy" — which reads like
+           a permissions bug and is really a missing field. It is not a
+           client-supplied identity in the rule-3 sense either: the policy is
+           what decides whose row this is, and a lie here is a refusal. */
+        profile_id: profileId,
         category: form.category,
         specialization: form.specialization.trim(),
         languages: list(form.languages),

@@ -496,7 +496,17 @@ which is exactly what the old bug passed only on Thursday.
   carries the seeker's birth details to the consultant on that booking, on
   purpose: a reading cannot be done without them.
 
-Two things that cost time and are worth not rediscovering:
+Three things that cost time and are worth not rediscovering:
+
+- **The application form was shipped broken and nobody noticed for an hour,
+  because the insert omitted `profile_id`.** The policy is
+  `profile_id = auth.uid()`, so the check compared null to the caller and
+  Postgres refused with "new row violates row-level security policy" — which
+  reads like a permissions bug and is a missing field. It survived the walk
+  because **both dev accounts already had `consultants` rows**, so every path
+  tested landed on "under review" or went straight to the studio. Walking the
+  states *around* a form is not walking the form. To test it, free an account
+  first: `delete from consultants where legacy_id = 'dev:2';`
 
 - **A weekday derived in the browser from an IST midnight is a day early.**
   `new Date('...T00:00:00+05:30').getUTCDay()` reads the previous UTC day, so
