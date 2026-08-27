@@ -676,29 +676,48 @@ unblocked on everything except funding a production wallet:
 
 ### The domain move, which is what unblocks Razorpay
 
-Razorpay is reviewing `atharvborse2004-ops.github.io` and a real domain is what
-it wants. The move is GitHub Pages and DNS — **Supabase needs nothing**, since
-phone OTP has no redirect URLs. Four things touch it, in this order:
+**In progress.** The domain is `1namo.com` (apex). Razorpay wanted a real
+domain instead of `atharvborse2004-ops.github.io`. The move is GitHub Pages and
+DNS — **Supabase needs nothing schema-side**, since phone OTP has no redirect
+URLs, but the Edge Function CORS origin is a per-project secret now (step 4).
 
-1. **DNS at the registrar.** Apex `A` records to GitHub Pages' four addresses,
-   or a `CNAME` for `www`.
-2. **`public/CNAME`** holding the domain, plus Settings → Pages → Custom
-   domain. The file is what survives a redeploy.
-3. **`vite.config.js`.** `base` is `/${repo}/` whenever `GITHUB_REPOSITORY` is
-   set, because Pages serves from a repo subpath. On a custom domain the site
-   is at the apex and **base must become `/`** — leave it and every asset 404s
-   into a white screen.
-4. **`PAGES_ORIGIN` in `backend/functions/razorpay-order/index.ts`**, which is
-   the one that fails quietly. It is a hardcoded `https://atharvborse2004-ops.github.io`,
-   and the CORS list is explicit rather than a wildcard on purpose. After the
-   move the browser sends the new origin, the preflight is refused, and top-up
-   breaks with "Failed to send a request to the Edge Function" — which reads
-   like the function being down. **Update it and redeploy the function on both
-   projects.**
+**Done:**
 
-Then register the domain with Razorpay, and publish the policy pages their
-activation asks for — terms, privacy, contact, and the cancellation and refund
-policy now written in `01-PRD.md` §5.4.
+- **`public/CNAME`** holds `1namo.com`. Committed and deployed, so it survives
+  every redeploy. The github.io URL kept serving 200 with no forced redirect
+  after it landed — DNS not being configured yet means GitHub has not enforced
+  the custom domain.
+- **The four policy pages** are static files in `public/`, live at
+  `/{terms,privacy,contact,refunds}.html`. They bypass the SPA router
+  entirely. `refunds.html` is `01-PRD.md` §5.4: declines, no-shows and platform
+  failures reverse in full; a seeker who skips does not. `contact.html` and
+  `terms.html` carry `[fill]` markers for phone, operating address and
+  jurisdiction — those need a person.
+
+**Left, in this order:**
+
+1. **DNS at the registrar** for `1namo.com`. Apex `A` → `185.199.108.153`,
+   `.109.153`, `.110.153`, `.111.153`. Optionally `CNAME www` →
+   `atharvborse2004-ops.github.io`. Then Settings → Pages shows `1namo.com`
+   already (from the CNAME file) — wait for the check to pass, tick Enforce
+   HTTPS.
+2. **`vite.config.js`** — `base` is `/${repo}/` whenever `GITHUB_REPOSITORY` is
+   set. On the apex the site is at `/` and **base must become `/`**. Do NOT
+   change it before DNS resolves — a wrong base 404s every asset into a white
+   screen.
+3. **`PAGES_ORIGIN` in `backend/functions/razorpay-order/index.ts`** — the
+   quiet one. Hardcoded `https://atharvborse2004-ops.github.io` in an explicit
+   (non-wildcard, on purpose) CORS allowlist. After the move the browser sends
+   `https://1namo.com`, the preflight is refused, and top-up breaks with
+   "Failed to send a request to the Edge Function" — reads like the function is
+   down. Becoming a **function secret** (`PAGES_ORIGIN`), set on dev and
+   production both, so phase 5's two new functions don't each re-copy it.
+   Redeploy `razorpay-order` on both projects.
+
+Steps 2 and 3 go in **one commit** once the domain serves.
+
+4. **Register `1namo.com` with Razorpay** and submit the four policy-page URLs
+   (`https://1namo.com/terms.html` etc.) for activation.
 
 **Owed on phase 3:** one real ₹1 live payment through the deployed site, once
 that review clears. That closes its last done-condition.
