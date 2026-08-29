@@ -1,13 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// On GitHub Pages the app is served from https://<user>.github.io/<repo>/, so the
-// asset base has to match the repo name. GITHUB_REPOSITORY is set by Actions;
-// locally it is unset and the base stays '/'.
-const repo = process.env.GITHUB_REPOSITORY?.split('/')[1]
+// The site is served from the apex of its own domain (1namo.com) on GitHub
+// Pages, so the asset base is '/'. It was `/${repo}/` while Pages served from
+// github.io/<repo>/ — the move to a custom domain is what changed it.
 
 export default defineConfig({
-  base: repo ? `/${repo}/` : '/',
+  base: '/',
   plugins: [react()],
   server: { port: 5174 },
 })

@@ -17,7 +17,11 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 const MIN_PAISE = 10_000 //     ₹100
 const MAX_PAISE = 10_000_000 // ₹1,00,000
 
-const PAGES_ORIGIN = 'https://atharvborse2004-ops.github.io'
+// The deployed site's origin, for the CORS allowlist below. A function secret
+// rather than a constant: phase 5 adds more Edge Functions that need the same
+// value, and it must be set per Supabase project (dev and production both).
+// Falls back to the production domain if the secret is unset.
+const PAGES_ORIGIN = Deno.env.get('PAGES_ORIGIN') ?? 'https://1namo.com'
 
 /** Explicit list, never a wildcard (docs/02-TRD.md §11). The dev server picks
  *  a free port each run, so localhost is matched by shape rather than listed. */
