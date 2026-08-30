@@ -697,9 +697,9 @@ below — and then Razorpay.
 - **The four policy pages** — static files in `public/`, live at
   `/{terms,privacy,contact,refunds}.html`, bypassing the SPA router.
   `refunds.html` is `01-PRD.md` §5.4: declines, no-shows and platform failures
-  reverse in full; a seeker who skips does not. **`contact.html` and
-  `terms.html` carry `[fill]` markers** for phone, operating address and
-  jurisdiction — a person must fill these before Razorpay review.
+  reverse in full; a seeker who skips does not. Operator named on all four:
+  **AK International, C-143 Ground Floor, Brij Vihar, Ghaziabad, UP 201011**,
+  `support@1namo.com`, `+91 99538 08908`, jurisdiction Ghaziabad UP.
 - **`PAGES_ORIGIN`** in `razorpay-order/index.ts` now reads a function secret,
   falling back to `https://1namo.com`. **Deployed to dev (v9) and production.**
   Both preflights from `https://1namo.com` return 204 with the right
@@ -707,11 +707,10 @@ below — and then Razorpay.
 
 **Left:**
 
-1. **Fill the `[fill]` markers** in `contact.html` / `terms.html` (phone,
-   operating address, jurisdiction).
-2. **Register `1namo.com` with Razorpay** and submit the four policy-page URLs
-   (`https://1namo.com/terms.html` etc.) for activation.
-3. Minor: tick **Enforce HTTPS** in Settings → Pages (cert is issued; `http://`
+1. **Register `1namo.com` with Razorpay** and submit the four policy-page URLs
+   (`https://1namo.com/terms.html` etc.) for activation. Everything the review
+   needs is on those pages now.
+2. Minor: tick **Enforce HTTPS** in Settings → Pages (cert is issued; `http://`
    still serves without redirect).
 
 **Owed on phase 3:** one real ₹1 live payment through the site, once Razorpay
