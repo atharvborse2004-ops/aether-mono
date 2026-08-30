@@ -412,11 +412,16 @@ Two things the walk caught that a green build never would:
   a real reload swaps it. Worth knowing before trusting any two-account walk.
 
 **APPLIED TO PRODUCTION BY MISTAKE, AND ONLY TO PRODUCTION.** This is the
-important line in this section. The MCP server is **not** pinned to dev, whatever
-`.mcp.json` says: its URL carries `?project_ref=mrjsatelbuiypodeulcx` and the
-server ignores it. `mcp__supabase__get_project_url` returns
-`https://talqzgolttfgdzcoaqno.supabase.co` — production. Every
-`apply_migration` and `execute_sql` in the phase 5 session landed there.
+important line in this section. Every `apply_migration` and `execute_sql` in the
+phase 5 session landed on production, and `.mcp.json` was correct the whole time.
+
+**The cause: two MCP servers both named `supabase`.** The project's `.mcp.json`
+carried the dev ref; `~/.claude.json` carried a server of the same name on the
+production ref, and the user scope wins. `mcp__supabase__get_project_url`
+returned `https://talqzgolttfgdzcoaqno.supabase.co` and that was the truth.
+**Both files now point at dev** — the user-scoped one was repointed, not
+deleted, so nothing outside this repo lost its server. Production is reached by
+pasting SQL into its editor by hand, which is the design.
 
 **Dev got `012` afterwards**, pasted into its SQL editor by hand — the reverse
 of every phase before it, where dev came first and production was the replay.
@@ -615,12 +620,13 @@ reversed (§2).
 
 **One thing is owed before the next agent session writes anything:**
 
-- **Fix the MCP so it points at dev**, or stop trusting that it does. The
-  `?project_ref=` in `.mcp.json` is ignored by the server — it resolved to
-  production for a whole phase. Until that is settled, **the first call of any
-  session that writes is `get_project_url`**, checked against the dev ref. It is
-  now a rule in `backend/INSTRUCTIONS.md` §3 rather than a note here, because it
-  is a rule.
+- **The MCP is fixed** — `~/.claude.json` had a second server called `supabase`
+  on the production ref, shadowing the project's, and it now carries the dev ref
+  like `.mcp.json` does. **This takes effect on the next session**, not in the
+  one that changed it: a running connection keeps the URL it opened with.
+  **`get_project_url` before the first write stays a rule** (`INSTRUCTIONS.md`
+  §3) — it is one read, it would have caught this on the first call, and config
+  can drift again.
 
 **Dev test artefacts, deliberately left:** both test accounts funded ₹10,000
 each by hand, six bookings against seeded consultant `a1` from the race, one

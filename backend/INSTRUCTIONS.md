@@ -129,12 +129,16 @@ The rules that keep them apart:
   `VITE_SUPABASE_ANON_KEY` under Settings → Secrets and variables → Actions.
   They are the only place production credentials live, and the deploy workflow
   fails loudly if either is empty rather than shipping a white screen.
-- **`.mcp.json` asks for DEV, and the server does not have to listen.** This is
+- **`.mcp.json` points at DEV — and it is not the only file that can.** This is
   the one that matters for agents: an MCP server on the production ref means
   every `apply_migration` and `execute_sql` in every session lands on real data.
-  `.mcp.json` carries `?project_ref=<dev>` in the server URL — **and on 30 Aug
-  2026 that was ignored, and a whole phase was applied to production.** The
-  config is a request, not a guarantee.
+  `.mcp.json` carries `?project_ref=<dev>` in the server URL.
+
+  **A user-scoped server with the same name shadows it.** On 30 Aug 2026 a whole
+  phase went to production because `~/.claude.json` also defined a server called
+  `supabase`, on the production ref, and the user scope wins. The project file
+  was correct and irrelevant. **Both are now on dev**; if the two ever disagree
+  again, the one in the repo is not the one in force.
 
   **So the first call of any session that will write is
   `mcp__supabase__get_project_url`, and its answer is checked against the dev
