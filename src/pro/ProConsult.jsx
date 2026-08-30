@@ -322,7 +322,7 @@ function Sessions({ me, rows, bookings, reload }) {
           {timeSlots.map((t) => {
             const isRule = rules.some((r) => r.weekday === dow && r.slot === t)
             // Open on paper but not on offer: someone has it, or it has been.
-            const gone = isRule && open !== null && !open.includes(t)
+            const gone = isRule && open !== null && !open.some((o) => o.slot === t)
             return (
               <button
                 key={t}

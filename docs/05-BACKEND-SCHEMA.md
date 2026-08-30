@@ -658,6 +658,43 @@ stops being a catalogue and becomes a merchandising view** over `reports` and
   It debits `ledger` directly with `ref_type = 'adjustment'`. Promote it if a
   second metered price ever appears.
 
+**Who writes all of this: one function.** `book_session(p_consultant_id,
+p_service_id, p_starts_at)` — `security definer`, granted to `authenticated`,
+and the first purchase in the project whose price the server looks up for
+itself. It takes no amount, because there is nothing for the client to send:
+
+1. locks the wallet — two debits by the same seeker serialise there
+2. checks the balance against the locked number
+3. opens the `orders` row and its single `order_items` line
+4. **claims the slot** — the insert that can raise `23505`
+5. debits `ledger` with `ref_type = 'order'` and the order's id
+6. credits `earnings_ledger` with gross, `fee_bps = 1800`, fee and net
+
+**Step 4 sits before step 5 deliberately.** The loser of a race blocks on the
+partial unique index, wakes to a `23505` and never reaches the debit, so "no
+orphaned debit" is an ordering rather than a compensating write. Everything
+inside the block unwinds together, so a refusal leaves no order behind either.
+
+**Commission is 18%, stored as `fee_bps = 1800`**, and
+`fee_paise = round(gross_paise * fee_bps / 10000)`. The `earnings_ledger` CHECK
+makes `gross − fee = net` an invariant rather than a convention, including on
+the negative rows a reversal writes.
+
+**And one function reverses it.** `booking_reverse(p_booking_id, p_reason)`
+writes a full credit into `ledger` (`ref_type = 'refund'`), the mirror-image row
+into `earnings_ledger`, and moves the order to `refunded`. It edits nothing. It
+is idempotent on the refund row itself rather than on a flag, so a retry is a
+no-op instead of a second credit, and it is granted to nobody — a
+client-callable refund is a free session with extra steps. A trigger on
+`bookings.status` calls it when a booking becomes `declined`, which also covers
+an admin typing the status in the SQL editor. The other two reversing cases in
+`01-PRD.md` §5.4 — a consultant who never turns up, a platform failure — are an
+admin calling it by hand.
+
+**Per-minute sessions are refused by name**, not charged as though one minute
+were the whole call. The meter is phase 11, where a session with join and leave
+timestamps exists to meter against.
+
 ### 4.8 Payments
 
 ```sql
@@ -968,7 +1005,8 @@ Enabled on every table. Policies for the v1 thirteen.
 | `wallets` | own | **none, ever** |
 | `ledger` | own wallet | **none, ever**, plus the immutability trigger |
 | `earnings_ledger` | own consultant row | **none, ever** |
-| `orders`, `order_items` | own | **none** |
+| `orders` | own (`profile_id = auth.uid()`) | **none** |
+| `order_items` | own, through an EXISTS on the parent order — **and every column of the new row is qualified in it**, or the predicate collapses to `o.id = o.id` and returns every order in the database | **none** |
 | `payments` | own | **none** |
 | `threads` | participant | **none** — created server-side with the booking |
 | `messages` | participant | INSERT where participant **and** `sender_id = auth.uid()` **and** the thread window is open |

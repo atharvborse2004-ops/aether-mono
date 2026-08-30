@@ -11,6 +11,7 @@ import { useLocation } from 'react-router-dom'
 import { pro, user } from './data/mock.js'
 import { translate } from './data/i18n.js'
 import { supabase } from './lib/supabase.js'
+import { bookSession as book } from './lib/consultants.js'
 
 /**
  * In-memory store for prototype state (cart, remaining AI questions, toast
@@ -434,6 +435,40 @@ export function AppProvider({ children }) {
   )
 
   /**
+   * Book a session. It sits beside `spend` rather than inside it because the
+   * server call is a different one: `book_session` claims a slot and debits a
+   * wallet in one transaction, and there is no amount to pass — the price is
+   * looked up on the server from the service row.
+   *
+   * It borrows `spend`'s re-entrancy guard on purpose. Two taps in one tick
+   * cannot double-book — the partial unique index refuses the second — but the
+   * refusal a seeker would read is "Someone just took that time", about
+   * themselves, which is a true sentence and a terrible one.
+   *
+   * Returns the server's `{ ok, reason }` and toasts nothing: the sheet needs
+   * to know whether to close.
+   */
+  const bookSession = useCallback(
+    async (consultantId, serviceId, startsAt) => {
+      if (spendingRef.current) return { ok: false, reason: 'One payment at a time.' }
+      spendingRef.current = true
+      setSpending(true)
+      try {
+        const res = await book(consultantId, serviceId, startsAt)
+        // A refusal can move the balance too — it carries the server's number
+        // when the wallet was the reason. Refresh either way: on success the
+        // debit is already written, and the row's id only exists server-side.
+        await refreshWallet(session?.user?.id)
+        return res ?? { ok: false, reason: 'Could not take that booking.' }
+      } finally {
+        spendingRef.current = false
+        setSpending(false)
+      }
+    },
+    [refreshWallet, session],
+  )
+
+  /**
    * Add money. The mirror of `spend`, and deliberately not its equal: nothing
    * here credits anything. This opens a Razorpay order, hands the browser to
    * Razorpay's checkout, and stops. The wallet moves when Razorpay's webhook
@@ -614,6 +649,7 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
+      bookSession,
       topup,
       toppingUp,
       chatOpen,
@@ -663,6 +699,7 @@ export function AppProvider({ children }) {
       ledger,
       spend,
       spending,
+      bookSession,
       topup,
       toppingUp,
       chatOpen,

@@ -119,11 +119,17 @@ export async function listServices(id) {
 }
 
 /**
- * The open slots for one consultant on one date, as `'HH:MM'` strings.
+ * The open slots for one consultant on one date, as
+ * `[{ slot: 'HH:MM', startsAt }]`.
  *
  * The server subtracts time off and claimed slots; this returns what is left.
  * A slot is claimed at `pending`, not at `confirmed` — a request holds the
  * time while the consultant decides.
+ *
+ * `startsAt` is the server's own timestamp, carried through untouched, and it
+ * is what `bookSession` hands back. The browser must never rebuild it from the
+ * date and the `'HH:MM'`: an IST midnight parsed here reads as the previous
+ * UTC day, which is the phase 4 bug that shifted every row of the grid.
  */
 export async function openSlots(id, isoDate) {
   const { data, error } = await supabase.rpc('consultant_open_slots', {
@@ -134,7 +140,7 @@ export async function openSlots(id, isoDate) {
     console.error('[slots] load failed:', error.message)
     return []
   }
-  return (data ?? []).map((r) => r.slot_time.slice(0, 5))
+  return (data ?? []).map((r) => ({ slot: r.slot_time.slice(0, 5), startsAt: r.starts_at }))
 }
 
 /** A consultant's own availability rules — the 7 × 6 grid, one row per open
@@ -176,12 +182,51 @@ export async function listBookings(consultantId) {
   return data ?? []
 }
 
+/** Every booking this seeker has made, newest slot first. Same view as the
+ *  consultant's queue, restricting itself by the same predicate — it is what
+ *  carries the other party's name, since `profiles` is own-row-only. */
+export async function listMyBookings(seekerId) {
+  const { data, error } = await supabase
+    .from('bookings_view')
+    .select('*')
+    .eq('seeker_id', seekerId)
+    .order('starts_at', { ascending: false })
+  if (error) console.error('[bookings] load failed:', error.message)
+  return data ?? []
+}
+
+/**
+ * Book a session. One call, one transaction on the server: the price lookup,
+ * the slot claim, the wallet debit, both ledgers, the order and the booking.
+ *
+ * It sends `{ consultantId, serviceId, startsAt }` and NO PRICE — the total
+ * this screen renders is for the person reading it, never for the server
+ * (backend/INSTRUCTIONS.md rule 3). `startsAt` comes back from `openSlots`
+ * unmodified; nothing here builds a timestamp.
+ *
+ * Returns the server's own `{ ok, reason }`, so a refusal is shown in the
+ * words the server chose rather than a second vocabulary invented here.
+ */
+export async function bookSession(consultantId, serviceId, startsAt) {
+  const { data, error } = await supabase.rpc('book_session', {
+    p_consultant_id: consultantId,
+    p_service_id: serviceId,
+    p_starts_at: startsAt,
+  })
+  if (error) {
+    console.error('[bookings] booking failed:', error.message)
+    return { ok: false, reason: 'Could not reach the diary. Try again.' }
+  }
+  return data
+}
+
 /**
  * Accept or decline. A real status write, not a flag — tapping Accept twice
  * cannot un-accept, because the policy only allows the move *out of* pending.
  *
- * Phase 5 adds the reversing ledger entry a decline needs once a booking
- * carries money. Nothing seeded here does.
+ * A decline reverses the money, and that happens on the server: a trigger on
+ * the status change writes the credit. There is deliberately no second call
+ * here to forget — 012_bookings_transaction.sql.
  */
 export async function decideBooking(id, status) {
   const { error } = await supabase.from('bookings').update({ status }).eq('id', id)
@@ -219,4 +264,19 @@ export function nextDateFor(weekday) {
   const d = new Date(`${today}T12:00:00Z`)
   d.setUTCDate(d.getUTCDate() + ahead)
   return d.toISOString().slice(0, 10)
+}
+
+/** The consultant's own book — gross, the platform's cut and net, one row per
+ *  movement. A decline writes a second, negative row rather than editing the
+ *  first, so a session that was refused nets to zero here instead of
+ *  disappearing. Paise. */
+export async function listEarnings(consultantId) {
+  const { data, error } = await supabase
+    .from('earnings_ledger')
+    .select('*')
+    .eq('consultant_id', consultantId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+  if (error) console.error('[earnings] load failed:', error.message)
+  return data ?? []
 }

@@ -129,10 +129,23 @@ The rules that keep them apart:
   `VITE_SUPABASE_ANON_KEY` under Settings → Secrets and variables → Actions.
   They are the only place production credentials live, and the deploy workflow
   fails loudly if either is empty rather than shipping a white screen.
-- **`.mcp.json` points at DEV.** This is the one that matters for agents: an
-  MCP server pinned to the production ref means every `apply_migration` and
-  `execute_sql` in every session lands on real data. Pointing it at dev makes
-  the safe thing the default rather than something to remember.
+- **`.mcp.json` asks for DEV, and the server does not have to listen.** This is
+  the one that matters for agents: an MCP server on the production ref means
+  every `apply_migration` and `execute_sql` in every session lands on real data.
+  `.mcp.json` carries `?project_ref=<dev>` in the server URL — **and on 30 Aug
+  2026 that was ignored, and a whole phase was applied to production.** The
+  config is a request, not a guarantee.
+
+  **So the first call of any session that will write is
+  `mcp__supabase__get_project_url`, and its answer is checked against the dev
+  ref before anything else runs.** One read, before the first write, every time.
+  Dev is `mrjsatelbuiypodeulcx`; production is `talqzgolttfgdzcoaqno`.
+
+  **Two answers to one question means two databases, not a cache.** That
+  incident presented for an hour as a stale PostgREST schema cache — a function
+  returning `PGRST202` over REST while being plainly present in the SQL editor.
+  It was two databases. If the browser and the agent disagree about what exists,
+  check which project each is talking to before debugging either.
 - **Migrations run against dev first, then production.** Same file, same order,
   no edits between. A migration that has run anywhere is history (§2).
 - **Dev signs in with test OTP, production with Twilio Verify.** Dev has

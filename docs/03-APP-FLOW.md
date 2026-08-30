@@ -396,7 +396,7 @@ and open only from their own screen.
 
 ## 7. Money paths
 
-**Stated once, here.** Four paths move the wallet, and none of them is
+**Stated once, here.** Six paths move the wallet, and none of them is
 arithmetic in the browser any more.
 
 | # | Path | Effect |
@@ -406,19 +406,26 @@ arithmetic in the browser any more.
 | 3 | Reports *Buy now* | Debits the report price |
 | 4 | Tarot paid pull | Debits the per-pull price |
 | 5 | Wallet top-up | **Credits**, and only from a verified webhook |
+| 6 | **Booking a session** | Debits the price the SERVER looked up, inside the transaction that claims the slot |
+| 7 | **A decline** | **Credits** the full amount back, written by a trigger on the status change |
 
-Path 5 is the odd one and the only one that runs backwards. The other four
-begin and end inside a tap: the person presses Buy, the server decides, the
-balance moves. A top-up begins with a tap and ends somewhere else entirely —
-in a request Razorpay makes to a public URL, minutes later if it has to retry.
-Nothing the browser does credits a wallet, including reporting that the payment
-succeeded. §8.2 is the state machine.
+Paths 5 and 7 are the ones that run backwards. Paths 1–4 and 6 begin and end
+inside a tap: the person presses Buy, the server decides, the balance moves. A
+top-up begins with a tap and ends somewhere else entirely — in a request
+Razorpay makes to a public URL, minutes later if it has to retry. Nothing the
+browser does credits a wallet, including reporting that the payment succeeded.
+§8.2 is the state machine. A decline is a third party's tap moving somebody
+else's balance, which is why it is a trigger rather than a call the consultant's
+client makes: there is no second request for a client to forget.
 
-All four debits go through one function on the server, which decides under a
-row lock and refuses in the app's own words when the balance is short. The
-client compares nothing: the balance it holds is a read of a cache, and a
-screen that decided for itself would be deciding on a number devtools can
-edit.
+Paths 1–4 go through `wallet_debit()`, which takes the amount from the client
+because there is no server-side catalogue for a tarot card yet. **Path 6 is the
+first that does not**: `book_session()` is handed
+`{ consultantId, serviceId, startsAt }` and reads the price off the service row
+itself. Both decide under a row lock and refuse in the app's own words when the
+balance is short. The client compares nothing: the balance it holds is a read of
+a cache, and a screen that decided for itself would be deciding on a number
+devtools can edit.
 
 **Every caller awaits it.** The debit returns a promise, and `if (promise)` is
 truthy — a caller that forgets lets through a purchase the server refused. A
@@ -427,11 +434,12 @@ is refused even if a button forgets its pending state.
 
 ### Displayed but never charged
 
-Every booking flow, in both the Consult sheet and the consultant profile sheet ·
 Academy enrolment · Premium · question packs, which grant questions free · live
 room gifts · the consultant withdraw sheet.
 
-The primary revenue line is in that list.
+**The primary revenue line came off that list in phase 5.** The consultant
+profile sheet books for real; the Consult tab's own sheet is a link into it
+rather than a second flow.
 
 ---
 
@@ -456,10 +464,21 @@ The primary revenue line is in that list.
   original booking and the new one inherits them.
 - `cancelled` depends on a policy that is still open — see `01-PRD.md` §5.4.
 
-Today: `pending → confirmed | declined` is real, written by the consultant and
-validated by the policy. The rest of the machine is phase 5 — and so is the
-reversing credit a decline owes, which nothing seeded yet needs because no
-seeded booking carries money.
+Today: `[request] → pending` is `book_session()`, one transaction that looks up
+the price, claims the slot, debits the wallet and writes both books.
+`pending → confirmed | declined` is the consultant's own UPDATE, validated by
+the policy, and **`declined` now writes the reversing credit** — in both books,
+as new rows, from a trigger on the status change rather than a second call a
+client could skip. `booking_reverse()` is that movement, and an admin calls it
+by hand for the other two cases that reverse in full (`01-PRD.md` §5.4): a
+consultant who never turns up, and a platform failure.
+
+**`no_show` does not reverse automatically**, and that is the one asymmetry
+worth stating: the column cannot say whose no-show it was, and a seeker who
+simply did not attend is refunded nothing.
+
+`completed`, `rescheduled` and `cancelled` are still unreachable from any
+client.
 
 ### 8.2 Payment
 

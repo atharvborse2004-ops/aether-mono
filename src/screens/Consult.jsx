@@ -7,7 +7,7 @@ import Plate from '../components/Plate.jsx'
 import { Kicker, PopAvatar, PopButton } from '../components/Pop.jsx'
 import { firstName, Search } from '../components/Primitives.jsx'
 import { rupees, useStore } from '../store.jsx'
-import { listConsultants } from '../lib/consultants.js'
+import { listConsultants, listMyBookings } from '../lib/consultants.js'
 
 /**
  * The three promo banners at the top of Consult — same object as Shop's, a
@@ -57,7 +57,7 @@ const CHANNELS = {
 }
 
 export default function Consult() {
-  const { showToast, openChat } = useStore()
+  const { showToast, openChat, session } = useStore()
   /* Real consultants from phase 4, read through `consultants_public` — the
      view is the access control, so an unapproved practice is missing from
      this list because the server never sent it, not because a filter here
@@ -69,6 +69,12 @@ export default function Consult() {
   const rail = useRef(null)
   const listRef = useRef(null)
 
+  /* The seeker's own bookings, from `bookings_view` — the same view the
+     consultant's queue reads, restricting itself by the same predicate. This
+     is the half of a booking that survives a reload: the toast does not, and
+     before phase 5 there was nothing else to survive. */
+  const [mine, setMine] = useState([])
+
   useEffect(() => {
     let live = true
     listConsultants().then((rows) => live && setConsultants(rows))
@@ -76,6 +82,16 @@ export default function Consult() {
       live = false
     }
   }, [])
+
+  useEffect(() => {
+    let live = true
+    const uid = session?.user?.id
+    if (uid) listMyBookings(uid).then((rows) => live && setMine(rows))
+    else setMine([])
+    return () => {
+      live = false
+    }
+  }, [session])
 
   const step = (el) =>
     el.children[1] ? el.children[1].offsetLeft - el.children[0].offsetLeft : el.clientWidth
@@ -196,6 +212,47 @@ export default function Consult() {
           ))}
         </div>
       </div>
+
+      {/* ── Your sessions ─────────────────────────────────────────────────
+          Real rows, so a booking survives a reload — which the toast never
+          did. Hidden when there are none: a heading over an empty list
+          advertises a history that does not exist. Declined rows stay
+          visible, because the money came back and the seeker should be able
+          to see where it went. */}
+      {mine.length > 0 && (
+        <section className="px-5 pt-6">
+          <Kicker>Your sessions</Kicker>
+          <ul className="mt-3 space-y-2">
+            {mine.slice(0, 4).map((b) => (
+              <li key={b.id} className="pop-inset flex items-center gap-3 p-3">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-meta t-heading">{b.consultant_name}</span>
+                  <span className="mt-0.5 block caps-sm t-faint tnum">
+                    {new Date(b.starts_at).toLocaleString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      timeZone: 'Asia/Kolkata',
+                    })}{' '}
+                    · {b.duration_mins} min
+                  </span>
+                </span>
+                <span className="flex-none text-right">
+                  <span className="block caps-sm tnum t-heading">₹{rupees(b.amount_paise)}</span>
+                  <span
+                    className={`mt-0.5 block caps-sm ${
+                      b.status === 'declined' ? 't-faint' : 'text-ok'
+                    }`}
+                  >
+                    {b.status === 'declined' ? 'Declined · refunded' : b.status}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* ── Category chips ─────────────────────────────────────────────── */}
       <div className="relative mt-4">

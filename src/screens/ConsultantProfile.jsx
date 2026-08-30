@@ -53,7 +53,7 @@ function nextDays() {
 
 export default function ConsultantProfile() {
   const { id } = useParams()
-  const { showToast, hasFlag, toggleFlag, openChat } = useStore()
+  const { showToast, hasFlag, toggleFlag, openChat, bookSession, spending } = useStore()
   const [tab, setTab] = useState('about')
   const [sheet, setSheet] = useState(false)
   const [slot, setSlot] = useState(null)
@@ -110,6 +110,24 @@ export default function ConsultantProfile() {
     setSlot(null)
     setDay(days[0].key)
     setSheet(true)
+  }
+
+  /* One call, one transaction. The sheet sends the consultant, the service and
+     the server's own `startsAt` — and no price (rule 3). A refusal keeps the
+     sheet open with the times reloaded, because every refusal this can give is
+     one a different choice fixes: the slot went, or the wallet is short. */
+  const confirm = async () => {
+    if (!slot || !service) return
+    const res = await bookSession(c.id, service.id, slot.startsAt)
+    if (!res?.ok) {
+      showToast(res?.reason ?? 'Could not take that booking.')
+      setSlot(null)
+      openSlots(c.id, day).then(setSlots)
+      return
+    }
+    setSheet(false)
+    setSlot(null)
+    showToast(`Requested · ${slot.slot} · ${duration} min`)
   }
 
   return (
@@ -284,8 +302,12 @@ export default function ConsultantProfile() {
         <p className="label mt-8 text-left mb-4">Open times</p>
         <div className="mb-10 grid grid-cols-3 gap-3">
           {(slots ?? []).map((t) => (
-            <Button key={t} variant={slot === t ? 'solid' : 'quiet'} onClick={() => setSlot(t)}>
-              {t}
+            <Button
+              key={t.startsAt}
+              variant={slot?.startsAt === t.startsAt ? 'solid' : 'quiet'}
+              onClick={() => setSlot(t)}
+            >
+              {t.slot}
             </Button>
           ))}
         </div>
@@ -302,7 +324,10 @@ export default function ConsultantProfile() {
         )}
 
         <Field k="Consultant" v={c.name} />
-        <Field k="When" v={slot ? `${days.find((d) => d.key === day)?.label}, ${slot}` : 'Not picked yet'} />
+        <Field
+          k="When"
+          v={slot ? `${days.find((d) => d.key === day)?.label}, ${slot.slot}` : 'Not picked yet'}
+        />
         <Field k="Length" v={`${duration} min`} />
         <Field k="Questions" v={SESSION.promise} />
         <Field k="Total" v={`₹${rupees(total)}`} />
@@ -310,18 +335,17 @@ export default function ConsultantProfile() {
         <Button
           className="mt-10"
           variant="solid"
-          disabled={!slot}
-          onClick={() => {
-            setSheet(false)
-            showToast(`Booked · ${slot} · ${duration} min`)
-          }}
+          disabled={!slot || !service || spending}
+          onClick={confirm}
         >
-          {slot ? `Confirm ${slot}` : 'Pick a time'}
+          {spending ? 'Booking' : slot ? `Confirm ${slot.slot}` : 'Pick a time'}
         </Button>
         <p className="mt-5 text-center text-meta text-t3">
-          {/* Phase 5 makes this real: one transaction that claims the slot and
-              debits the wallet. The times above are already real. */}
-          The times are live. Confirming still books nothing — that is the next phase.
+          {/* Said before the tap, not in a policy page nobody opens —
+              01-PRD.md §5.4. The other half of that policy is on the server:
+              a decline reverses in full. */}
+          Your wallet is charged now. A session you skip is not refunded; if
+          {' '}{firstName(c.name)} declines, every rupee comes straight back.
         </p>
       </Sheet>
     </div>

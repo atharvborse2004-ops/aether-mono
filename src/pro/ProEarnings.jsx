@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   earnings,
   earningsSeries,
   insights,
   payouts,
-  proLedger,
   proMetrics,
   referrals,
   topUpAmounts,
@@ -15,7 +14,8 @@ import { Sheet, TabHeader } from '../components/Chrome.jsx'
 import Icon from '../components/Icon.jsx'
 import { Kicker, PopAvatar, PopButton, PopCard, PopTag, Stat } from '../components/Pop.jsx'
 import { Field, Segmented } from '../components/Primitives.jsx'
-import { useStore } from '../store.jsx'
+import { rupees, useStore } from '../store.jsx'
+import { listEarnings } from '../lib/consultants.js'
 
 /**
  * Earnings — the money and the reach that drives it, one tab. The two used
@@ -59,9 +59,27 @@ export default function ProEarnings() {
    credits of the sticker price is the one thing that makes this look fake. */
 
 function Earnings() {
-  const { showToast } = useStore()
+  const { showToast, consultant } = useStore()
   const [sheet, setSheet] = useState(false)
   const [amount, setAmount] = useState(earnings.available)
+
+  /* The real book, from phase 5. Every row carries gross, the platform's cut
+     and net, and a declined session shows as two rows that cancel rather than
+     as a row that vanished — the ledger is append-only.
+     `mock.js`'s `proLedger` is gone from this screen: fabricated rupees beside
+     real ones is a demo worse than no demo. The card above and the figures
+     below are still the prototype's, and stay that way until phase 12 has
+     payouts to draw a "clearing" number from. */
+  const [rows, setRows] = useState([])
+  useEffect(() => {
+    let live = true
+    if (consultant?.profile_id) {
+      listEarnings(consultant.profile_id).then((r) => live && setRows(r))
+    } else setRows([])
+    return () => {
+      live = false
+    }
+  }, [consultant])
 
   const fee = Math.round((amount * earnings.commissionPct) / 100)
 
@@ -161,23 +179,39 @@ function Earnings() {
       <section className="border-b border-rule px-5 py-6">
         <Kicker>Sessions</Kicker>
         <ul className="mt-3">
-          {proLedger.map((r) => (
+          {rows.map((r) => (
             <li
               key={r.id}
               className="flex items-baseline justify-between gap-4 border-b border-rule py-3.5 last:border-b-0"
             >
               <span className="min-w-0">
-                <span className="block truncate text-meta t-sub">{r.label}</span>
+                <span className="block truncate text-meta t-sub">{r.kind}</span>
                 <span className="mt-0.5 block caps-sm t-faint tnum">
-                  {r.date} · ₹{r.gross.toLocaleString('en-IN')} − ₹{r.fee}
+                  {new Date(r.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    timeZone: 'Asia/Kolkata',
+                  })}{' '}
+                  {/* Absolute values: the sign lives on the net figure to the
+                      right, and a reversing row rendered raw reads
+                      "₹-1,499 − ₹-269.82", which is two minus signs saying one
+                      thing badly. */}
+                  · ₹{rupees(Math.abs(r.gross_paise))} − ₹{rupees(Math.abs(r.fee_paise))}
                 </span>
               </span>
-              <span className="flex-none text-meta tnum text-ok">
-                +₹{r.net.toLocaleString('en-IN')}
+              <span
+                className={`flex-none text-meta tnum ${r.net_paise < 0 ? 't-faint' : 'text-ok'}`}
+              >
+                {r.net_paise < 0 ? '−' : '+'}₹{rupees(Math.abs(r.net_paise))}
               </span>
             </li>
           ))}
         </ul>
+        {rows.length === 0 && (
+          <p className="mt-3 text-meta t-faint">
+            Nothing earned yet. A session pays into this list the moment it is booked.
+          </p>
+        )}
       </section>
 
       {/* ── Referrals ──────────────────────────────────────────────────────

@@ -184,9 +184,15 @@ that writes a row, and the client INSERT policy that deliberately does not
 exist.
 
 **Front end** — the booking sheet stops toasting and starts booking. The client
-sends `{ consultantId, serviceId, startsAt }` and **never a price**. Per-minute
-sessions get their meter here or in phase 11: a balance hold, a per-minute
-debit, and a cutoff when the wallet runs out mid-call.
+sends `{ consultantId, serviceId, startsAt }` and **never a price**.
+
+**Per-minute sessions get their meter in phase 11 — decided, 30 Aug.** A meter
+needs something to meter: a call that starts, runs and can be cut off, which is
+`sessions` with join and leave timestamps and the SDK that produces them, and
+all of that is phase 11's build. Metering here would mean inventing a session
+lifecycle in this phase and replacing it in that one. Phase 5 refuses a
+`per_minute` service by name instead of half-charging it, so the gap is a
+message rather than a wrong number.
 
 **Done when:**
 1. **Two clients requesting the same slot at the same instant produce one
@@ -317,7 +323,10 @@ the catalogue price changes.
 ## Phase 11 — Live video
 
 **Build** — the SDK integration, `sessions` with join and leave timestamps, room
-lifecycle.
+lifecycle. **And the per-minute meter**, deferred here from phase 5: a balance
+hold, a per-minute debit, and a cutoff when the wallet runs out mid-call. The
+`per_minute` price rows and the band behind them already exist (phase 4);
+`book_session()` refuses them until this phase.
 
 **Done when:** a call actually rings, both parties connect, and the session's
 actual duration is recorded — which is also what phase 14 measures.

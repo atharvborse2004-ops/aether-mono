@@ -3,7 +3,7 @@
 **What is actually true right now.** Front end and backend in one file, because
 two files claiming to describe reality means neither gets trusted.
 
-Updated 29 Aug 2026.
+Updated 30 Aug 2026.
 
 | Phase | State |
 |---|---|
@@ -12,7 +12,8 @@ Updated 29 Aug 2026.
 | 2 · wallet | Done |
 | 3 · payments in | **Built and deployed. One done-condition short**, blocked on Razorpay's website review. The site is now on `1namo.com` (the move Razorpay's review wanted — §6); registering that domain and its policy pages with Razorpay is the remaining step. Until it clears, live checkout is refused and **production wallets cannot be funded** |
 | 4 · consultants, availability, approval | **Done.** Schema, seed and front end live on both projects; its check passes on both |
-| **5 · bookings** | **Next.** Product decisions made (§6); unblocked once a production wallet can be funded |
+| **5 · bookings** | **Done.** All four done-conditions pass on dev, walked in a browser. Applied to both projects — production first and by mistake (§2), dev by hand afterwards |
+| 6 · chat | **Next** |
 
 **Production has one real consultant**, who applied through `/pro/apply` and was
 approved by hand — the entire approval flow until phase 13. The six seeded
@@ -71,9 +72,10 @@ touched, in the **dev** SQL editor.
 | `003_wallets_ledger_check.sql` | the wallet: balance cache, refusals, replay, double-tap |
 | `006_payments_check.sql` | payments: idempotency, a failure leaving no ledger row |
 | `009_slots_check.sql` | consultants: slots on all seven weekdays, approval, bands, grants |
+| `012_bookings_transaction_check.sql` | bookings: the transaction, the refusals, the reversing credit, both books append-only, the new policies |
 
 **Passing looks like a failure:** `ERROR: PHASE 2 CHECKS PASSED`, and the same
-shape from the other two. Each raises on its last line to roll back every row it
+shape from the other three. Each raises on its last line to roll back every row it
 wrote — the ledger is append-only, so a check that inserted real rows could not
 clean up after itself. Any other error names the assertion that broke.
 
@@ -204,7 +206,7 @@ Everything else evaporates on reload, deliberately.
 
 ---
 
-## 2. Backend — phases 1 to 4
+## 2. Backend — phases 1 to 5
 
 **All four phases are built and applied to both projects.** Migrations are
 numbered SQL files in `backend/schema/`, forward-only. There is no
@@ -224,13 +226,15 @@ thing that ran it — keep the two in step by hand.
 | `009_slots.sql` | `consultant_open_slots()` — the one slots source |
 | `010_bookings_view.sql` | `bookings_view`, which carries the other party's name |
 | `011_round_price_bands.sql` | derived band prices to whole rupees; restores the six the PRD names |
+| `012_bookings_transaction.sql` | `orders`, `order_items`, `earnings_ledger`, `book_session()`, `booking_reverse()` and the decline trigger. On both projects |
 
-**Three `_check.sql` files sit beside them and are tests, not migrations.**
-`003_wallets_ledger_check`, `006_payments_check`, `009_slots_check`. They never
+**Four `_check.sql` files sit beside them and are tests, not migrations.**
+`003_wallets_ledger_check`, `006_payments_check`, `009_slots_check`,
+`012_bookings_transaction_check`. They never
 appear in a replay. Each raises on its last line to roll back every row it
 wrote, so **passing looks like an error**: `ERROR: PHASE N CHECKS PASSED`.
 
-**A fresh project is the eleven files in order.** Dev was built that way, which
+**A fresh project is the twelve files in order.** Dev was built that way, which
 is the proof they reproduce the system from nothing rather than describing what
 once happened.
 
@@ -371,132 +375,79 @@ arrives via a webhook on a different connection, so `topup()` polls the balance
 for about twelve seconds and then says the payment is settling. Razorpay's
 checkout script is fetched on first use rather than from `index.html`.
 
-**What is verified, and what is not:**
+**All four done-conditions pass, on dev, in a browser.**
 
-| Done-condition | State |
+1. **Two clients racing one slot.** Six concurrent requests for
+   `2026-09-02 05:30+00`, two accounts, six pre-connected sockets released by a
+   barrier: **one booking, one refusal from the unique index** (*"Someone just
+   took that time"*), four from the pre-check. Then the counts that matter —
+   6 bookings, 6 orders, 6 order lines, 6 debits, 6 earnings rows, exactly
+   matched. **The five refusals wrote nothing.**
+
+   The first attempt at this proved less than it looked like: both racers came
+   back refused *by the pre-check*, which means one had already committed before
+   the other read the slots — a sequential test in a concurrent costume. The TLS
+   handshake was the whole race. `race.py` now completes every handshake before
+   the barrier, so only the send is racing. **A concurrency test that never
+   shows the contended path is not passing, it is not running.**
+2. **A decline restores the balance via a new row.** Walked: booked at ₹1,499,
+   wallet ₹5,005 → ₹3,506, declined from `/pro/consult`, wallet back to ₹5,005
+   with a `Refund · session +₹1,499` row sitting *above* the untouched debit.
+3. **gross − fee = net.** `/pro/earnings` shows the pair — `Atharv · 20 min
+   ₹1,499 − ₹269.82 = +₹1,229.18` and `Reversed · declined … −₹1,229.18` —
+   cancelling to zero. 18% of ₹1,499 has paise in it, and that is the true
+   number, not a rounding bug.
+4. **Survives a reload on both sides.** Seeker: *Your sessions* on `/consult`
+   after a hard reload. Consultant: the request in the `/pro/consult` queue
+   after one.
+
+Two things the walk caught that a green build never would:
+
+- **A reversed earnings row rendered `₹-1,499 − ₹-269.82`** — two minus signs
+  saying one thing badly. The sign belongs on the net figure; the sub-line takes
+  absolute values now.
+- **Switching accounts by hash navigation does not switch accounts.** `#/wallet`
+  → `#/pro/consult` is a hash change, so supabase-js keeps the old session in
+  memory and the pro queue renders empty for a consultant who has requests. Only
+  a real reload swaps it. Worth knowing before trusting any two-account walk.
+
+**APPLIED TO PRODUCTION BY MISTAKE, AND ONLY TO PRODUCTION.** This is the
+important line in this section. The MCP server is **not** pinned to dev, whatever
+`.mcp.json` says: its URL carries `?project_ref=mrjsatelbuiypodeulcx` and the
+server ignores it. `mcp__supabase__get_project_url` returns
+`https://talqzgolttfgdzcoaqno.supabase.co` — production. Every
+`apply_migration` and `execute_sql` in the phase 5 session landed there.
+
+**Dev got `012` afterwards**, pasted into its SQL editor by hand — the reverse
+of every phase before it, where dev came first and production was the replay.
+
+It took an hour to see, because it presents as a stale PostgREST schema cache:
+`book_session` returns `PGRST202` and `orders` returns `PGRST205` over REST
+while phase 4's objects resolve fine — because the REST calls use `.env.local`,
+which correctly points at dev, and dev genuinely does not have the function. The
+tell that was missed: an unfiltered REST read of `consultants` returned a
+different consultant than the MCP said was the only approved one. **Two answers
+to one question means two databases, not a cache.**
+
+**What was written to production, and what was done about it.** All of it is
+reversed; the schema stays.
+
+| Written | State |
 |---|---|
-| A real ₹1 payment credits exactly once | **Blocked**, not unbuilt. Live mode and KYC are ready. Razorpay's website review wanted a real domain; the site is now on `1namo.com` (§6). Register that domain with Razorpay to clear it — until then every live checkout is refused with "Payment blocked as website does not match registered website(s)" |
-| The identical webhook payload twice credits once | **Yes.** Hand-replayed, then confirmed against real Razorpay deliveries |
-| A failed payment leaves a `payments` row and no ledger row | **Yes**, same probe |
+| `012_bookings_transaction.sql` in full | **Left in place.** It is the migration production was getting anyway, and it passes there. Unlike `007`–`011` it went through the MCP, so production *does* carry a `supabase_migrations` row for it |
+| ₹57,000 of "Added money" ledger credits across two real wallets, one of them a real person's | **Reversed** by matching `Correction` rows. Both wallets back to 0, and every wallet on the project replays to its stored balance |
+| 6 bookings with orders, debits and earnings rows | **Declined**, which put them through `booking_reverse` — all six net to zero in both books, all six orders `refunded` |
+| ~40 `consultant_availability` rows on the one real consultant, who deliberately had none | **Deleted.** Back to the two rows they had. This was the urgent one: it made a real practice publicly bookable at times nobody opened |
+| `tmp_cache_probe()`, a comment on `book_session` | Dropped / harmless |
 
-The replay was done by replaying, not by reasoning: a signed `payment.captured`
-body POSTed to the deployed function three times byte-for-byte returned
-`duplicate: false` then `true` twice, with one credit row. An invalid signature
-returns **401 with the body never parsed**; a valid signature for an unknown
-order returns **500**, which is `payment_capture()` refusing to guess a wallet
-and asking Razorpay to retry rather than swallowing the event.
+The incident is also the only reason done-conditions 2 and 3 have been seen
+against real rows at any scale: six bookings unwound cleanly through the
+trigger, six orders to `refunded`, every earnings pair cancelling to zero.
 
-**A real test payment has been through the whole path by hand** — sheet, order,
-checkout, signature, capture, credit — on both projects. Entering a card cannot
-be driven from an agent session: both controls live inside Razorpay's
-cross-origin iframe.
-
-Four things this phase cost that are worth not paying twice:
-
-- **Every Edge Function needs four CORS headers**, not two: `supabase-js` sends
-  `x-client-info` and `apikey` on every `functions.invoke()` alongside
-  `authorization` and `content-type`. Omit them and the preflight fails, the
-  request never leaves the browser, and it surfaces as `Failed to send a
-  request to the Edge Function` — which reads like the function being down.
-- **Razorpay never shows a saved webhook secret, only overwrites it.** Setting
-  the *key id* there instead produces `signature did not match; body ignored`
-  on every delivery, and the only way to rule it out is to retype it. Note also
-  that Razorpay's Status toggle **deletes** a webhook rather than disabling it.
-- **A captured payment can be lost, and one was.** `order_TTiovPCUcREweJ` — a
-  real ₹500 captured while the secret was wrong. Every delivery bounced off the
-  signature check, Razorpay gave up, and the row sat at `created` with no
-  credit. In test mode that is nothing; **in production that is a person who
-  paid and received nothing, with no alert and no way back.** It was reconciled
-  by hand, which proves the fix but is not the fix. **The sweep is still owed**
-  — see §6.
-- **The dismiss path has never run.** `ondismiss()` and `payment.failed()` in
-  `topup()` are unexercised, so abandoning checkout mid-payment is unproven.
-
-**Dev wallet `2ad16f66` holds a real balance** from those replays, and the
-`order_REPLAY_TEST` / `order_FAIL_TEST` rows in `payments` are left beside it
-deliberately: a ledger entry whose payment rows were deleted is an entry nobody
-can explain.
-
----
-
-### Phase 4 — consultants, availability, approval
-
-**Done, seeded and deployed on both projects.** The check to run after
-touching anything near slots or prices is `009_slots_check.sql`. Nine
-assertions; **assertion 5 is the one that matters** — it runs the subtraction on
-all seven weekdays, which is exactly what the old bug passed on one day and
-failed on six. Every count in it is relative, so it survives a database with
-real bookings in it; the first version asserted absolute numbers and broke the
-moment the seed landed.
-
-- **Consultant-ness is the existence of a `consultants` row.** No role column
-  anywhere, same reason `isPro` is derived from the URL. `/pro` is no longer
-  exempt from the session gate: no session or no row sends you to
-  `/pro/apply`, which is the application.
-- **`status` is the public-read predicate**, so approval is enforced on the row
-  rather than in a screen. Verified rather than assumed: a `pending` consultant
-  returns nothing from the list, from a direct id lookup, from their prices,
-  from their availability *and* from the slots function.
-- **The applicant cannot approve themselves.** `status` and `verified` sit
-  outside the column grant, exactly as `admin` does on `profiles`. Approving is
-  an `UPDATE` in the GUI until phase 13.
-- **The price is a band, not a number.** `price_bands` holds six tiers; the
-  write policy on `consultant_services` refuses any row whose price, length and
-  billing do not match an active band. **Qualify every column of the new row in
-  that policy** — unqualified, `price_paise` resolves to the *band's* column,
-  the comparison becomes `b.x = b.x`, and the check silently passes anything.
-  That shipped, and assertion 9 caught it.
-- **One slots source, and it is a Postgres function, not an Edge Function.**
-  `consultant_open_slots(consultant, date)` does the three-way subtraction in
-  SQL next to the tables. `security definer`, because it subtracts other
-  people's bookings — it returns times, never rows. Horizon 14 days, times IST,
-  both named there and nowhere else.
-- **`bookings` moved here from phase 5** — the table, not the transaction.
-  There is still no client INSERT policy; the only write a client can make is
-  the consultant moving their own booking out of `pending`. A decline has
-  nothing to reverse yet because no booking carries money until phase 5.
-- **`bookings_view` is not a convenience.** `profiles` is own-row-only, so
-  without it a consultant reading their own queue gets a UUID and no name. It
-  carries the seeker's birth details to the consultant on that booking, on
-  purpose: a reading cannot be done without them.
-
-Four things that cost time and are worth not rediscovering. Three were found
-*after* the phase was first called done — by walking production and by the first
-real person to use the application form:
-
-- **The application form was shipped broken and nobody noticed for an hour,
-  because the insert omitted `profile_id`.** The policy is
-  `profile_id = auth.uid()`, so the check compared null to the caller and
-  Postgres refused with "new row violates row-level security policy" — which
-  reads like a permissions bug and is a missing field. It survived the walk
-  because **both dev accounts already had `consultants` rows**, so every path
-  tested landed on "under review" or went straight to the studio. Walking the
-  states *around* a form is not walking the form. To test it, free an account
-  first: `delete from consultants where legacy_id = 'dev:2';`
-- **A weekday derived in the browser from an IST midnight is a day early.**
-  `new Date('...T00:00:00+05:30').getUTCDay()` reads the previous UTC day, so
-  the availability grid struck out Wednesday for a Thursday booking and every
-  row was shifted by one. It looks exactly like bad data. Anchor at noon UTC.
-- **`consultants` is not an own-row-only table.** An unfiltered `maybeSingle()`
-  for "my consultant row" returned every approved consultant and failed, which
-  showed a real consultant the application form for the practice they already
-  had. Filter by id even where RLS feels like enough.
-- **A failed read of that row is not the same answer as no row**, and the gate
-  used to conflate them — so any error sent a working consultant to a signup
-  form for their own practice. Seen on production within minutes of the deploy
-  as `JWT issued at future`, which is clock skew and nothing worse. The store
-  now carries `consultantError`, the gate does not redirect on it, and
-  `ProApply` has a fifth state that says the connection failed and offers a
-  retry. Same lesson `refreshProfile` already carried about wallets.
-
-**Verified in a browser, on both projects:** two consultants at different bands
-each seeing only their own grid; a pending consultant unreachable by list, by
-URL and by RPC; the seeker's sheet and the consultant's grid agreeing on open
-slots **on every day of the week**; Accept surviving a reload and not undoing
-itself on a second tap; a grid cell writing and deleting the right
-`(weekday, slot_time)` row; `/pro/*` signed out landing on the application while
-`/profile` still resolves to the seeker's own; and a real application submitted,
-approved by hand, and live on `/consult`.
+**The security advisor is clean on the new work** — RLS on all three tables, no
+missing-policy lint, and `booking_reverse` does not appear in the "signed-in
+users can execute" list because it is granted to nobody. `book_session` does
+appear, which is intended and is the same class as `wallet_debit`.
 
 ### The seed
 
@@ -559,7 +510,10 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 - **Platform sets price bands**; consultants pick one, out of `price_bands`, and
   the database refuses anything else. 18% commission, in basis points.
 - **Sessions are sold two ways** — scheduled 15/20/30, and per-minute. Decided
-  26 Aug; per-minute is modelled in phase 4 and metered in phase 5/11.
+  26 Aug; per-minute is modelled in phase 4 and **metered in phase 11, decided
+  30 Aug** — a meter needs a call it can cut off, and `sessions` with join and
+  leave timestamps is phase 11's build. Phase 5 refuses a `per_minute` service
+  by name rather than half-charging it.
 - **Seeded consultants land unapproved on production**, and **the marketplace
   launches empty rather than seeded** — decided 26 Aug, reasoning in
   `01-PRD.md` §7. `/consult` says so and offers the application. Flipping the
@@ -630,6 +584,14 @@ Shani as a single figure is thin on Commons.
   into the same account, then restart Chrome.
 - **CDP input dispatch times out on this machine** while screenshots and
   `javascript_tool` work fine. Drive clicks from JS.
+- **A function that is plainly in the database and returns `PGRST202` over REST
+  is probably not a stale schema cache. It is probably two databases.** Phase 5
+  lost an hour to that: the SQL editor could see `book_session`, the browser
+  could not, and `notify pgrst, 'reload schema'` changed nothing — because the
+  agent was writing to production and the browser was reading dev.
+  `mcp__supabase__get_project_url` answers it in one call.
+  `backend/INSTRUCTIONS.md` §3 now makes that the first call of any session
+  that writes.
 
 Both were logged for weeks as hardware problems. Both were configuration. The
 second-account check was the same mistake — recorded three times as "needs a
@@ -645,7 +607,36 @@ it is built.
 
 ---
 
-## 6. Next — phase 5, bookings
+## 6. Next — phase 6, chat
+
+**Phase 5 is closed.** Both projects carry `012`, all four done-conditions pass
+on dev, and production's stray data from the mis-targeted session is fully
+reversed (§2).
+
+**One thing is owed before the next agent session writes anything:**
+
+- **Fix the MCP so it points at dev**, or stop trusting that it does. The
+  `?project_ref=` in `.mcp.json` is ignored by the server — it resolved to
+  production for a whole phase. Until that is settled, **the first call of any
+  session that writes is `get_project_url`**, checked against the dev ref. It is
+  now a rule in `backend/INSTRUCTIONS.md` §3 rather than a note here, because it
+  is a rule.
+
+**Dev test artefacts, deliberately left:** both test accounts funded ₹10,000
+each by hand, six bookings against seeded consultant `a1` from the race, one
+booked-then-declined session between the two accounts, and `+919999900002` given
+birth details so it can reach `/consult` at all — there is still no
+sign-in-only route, so a signed-in account without birth details lands back on
+onboarding. None of this is on production.
+
+**`race.py` lives in the session scratchpad, not the repo.** If done-condition 1
+ever needs re-running, the shape that matters is in §2: pre-connect the sockets,
+release them with a barrier, and check that the loser's reason came from the
+index rather than the pre-check.
+
+---
+
+## 6a. What phase 4 left behind
 
 **Phase 4 is closed.** Migrations applied to dev through the MCP and replayed
 to production by hand, both seeded, front end deployed, routes walked on both.
@@ -672,6 +663,7 @@ money. Per-minute sessions need their meter here or in phase 11.
 unblocked on everything except funding a production wallet:
 
 - **Charge at booking**, inside the transaction that claims the slot. No hold.
+  Built in `012`.
 - **No cancellation, no refund** on a session the seeker skipped. **This does
   not touch the reversing credit a decline owes** — a consultant tapping
   Decline and keeping the money is not a policy. The booking function
