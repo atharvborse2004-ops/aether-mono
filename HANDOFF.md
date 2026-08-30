@@ -701,20 +701,18 @@ below — and then Razorpay.
   `terms.html` carry `[fill]` markers** for phone, operating address and
   jurisdiction — a person must fill these before Razorpay review.
 - **`PAGES_ORIGIN`** in `razorpay-order/index.ts` now reads a function secret,
-  falling back to `https://1namo.com`. **Deployed to dev** (v9); its preflight
-  from `https://1namo.com` returns 204 with the right allow-origin.
+  falling back to `https://1namo.com`. **Deployed to dev (v9) and production.**
+  Both preflights from `https://1namo.com` return 204 with the right
+  allow-origin; the old github.io origin is now refused on both.
 
 **Left:**
 
-1. **Redeploy `razorpay-order` on production** with the new code. Until then
-   production's preflight still echoes `https://atharvborse2004-ops.github.io`,
-   so top-up on the live site fails with "Failed to send a request to the Edge
-   Function". Optionally set the `PAGES_ORIGIN` secret on production first (the
-   fallback covers it, but phase 5's new functions will want the secret). MCP
-   is dev-only, so this is a dashboard/CLI deploy by hand.
-2. **Fill the `[fill]` markers** in `contact.html` / `terms.html`.
-3. **Register `1namo.com` with Razorpay** and submit the four policy-page URLs
+1. **Fill the `[fill]` markers** in `contact.html` / `terms.html` (phone,
+   operating address, jurisdiction).
+2. **Register `1namo.com` with Razorpay** and submit the four policy-page URLs
    (`https://1namo.com/terms.html` etc.) for activation.
+3. Minor: tick **Enforce HTTPS** in Settings → Pages (cert is issued; `http://`
+   still serves without redirect).
 
 **Owed on phase 3:** one real ₹1 live payment through the site, once Razorpay
 clears the domain. That closes its last done-condition.
