@@ -370,6 +370,12 @@ begin
   if (v_res ->> 'ok')::boolean then
     raise exception '8. a per-minute service was booked as if it were a session';
   end if;
+  -- Pin the REASON, not just the refusal. Any unrelated refusal — slot taken,
+  -- balance short, service inactive — satisfies a bare `not ok`, so the one
+  -- thing this assertion exists to prove would not actually be proven.
+  if v_res ->> 'reason' <> 'Instant calls are not bookable yet.' then
+    raise exception '8. per-minute was refused for the wrong reason: %', v_res ->> 'reason';
+  end if;
 
   ---------------------------------------------------------------------------
   -- 9. The three new tables are readable only by the person they are about,
@@ -412,7 +418,47 @@ begin
     raise exception '9. a client inserted a booking directly — that is a free session';
   end if;
 
+  -- And the ALLOW direction, which matters just as much: a policy that refuses
+  -- everybody passes every refusal test and leaves ProEarnings permanently
+  -- empty. The consultant must be able to read their OWN earnings.
+  select count(*) into v_n from public.earnings_ledger where consultant_id = v_pro;
+  if v_n < 1 then
+    raise exception '9. a consultant cannot read their own earnings rows';
+  end if;
+
   reset role;
+
+  perform set_config('request.jwt.claims',
+                     json_build_object('sub', v_seeker, 'role', 'authenticated')::text,
+                     true);
+  set local role authenticated;
+  select count(*) into v_n from public.orders where profile_id = v_seeker;
+  if v_n < 1 then
+    raise exception '9. a seeker cannot read their own orders';
+  end if;
+  select count(*) into v_n from public.order_items where order_id = v_order;
+  if v_n <> 1 then
+    raise exception '9. a seeker cannot read their own order line';
+  end if;
+  reset role;
+
+  ---------------------------------------------------------------------------
+  -- 10. Two reversals of one booking credit once. The guarantee is the unique
+  --     index from 013, not a check — two concurrent reversals both read no
+  --     refund row and both credit (INSTRUCTIONS.md rule 6).
+  ---------------------------------------------------------------------------
+  select count(*) into v_led0 from public.ledger where wallet_id = v_seeker;
+  begin
+    insert into public.ledger (wallet_id, delta_paise, kind, ref_type, ref_id, note)
+    values (v_seeker, v_price, 'Refund · session', 'refund', v_order, 'second reversal');
+    raise exception '10. a second refund against one order was accepted';
+  exception
+    when unique_violation then null;   -- the index refused it, which is the pass
+  end;
+  select count(*) into v_led from public.ledger where wallet_id = v_seeker;
+  if v_led <> v_led0 then
+    raise exception '10. a refused second refund still wrote % rows', v_led - v_led0;
+  end if;
 
   -- Aborts the transaction, discarding every row above. This is the pass.
   raise exception 'PHASE 5 CHECKS PASSED';

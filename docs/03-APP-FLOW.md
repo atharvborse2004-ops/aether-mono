@@ -396,7 +396,7 @@ and open only from their own screen.
 
 ## 7. Money paths
 
-**Stated once, here.** Six paths move the wallet, and none of them is
+**Stated once, here.** Seven paths move the wallet, and none of them is
 arithmetic in the browser any more.
 
 | # | Path | Effect |

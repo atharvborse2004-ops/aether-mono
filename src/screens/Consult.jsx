@@ -49,6 +49,23 @@ const BANNERS = [
   },
 ]
 
+/**
+ * The seven booking statuses as a seeker reads them, and what colour each one
+ * is. Rendering `b.status` raw printed the enum — `no_show` came out as
+ * "NO_SHOW" under `caps-sm` — and colouring everything except `declined` with
+ * `text-ok` painted a cancelled or missed session as a green success row.
+ * `03-APP-FLOW.md` §8.1 is the machine; this is its vocabulary.
+ */
+const STATUS = {
+  pending: { label: 'Awaiting reply', tone: 't-faint' },
+  confirmed: { label: 'Confirmed', tone: 'text-ok' },
+  completed: { label: 'Done', tone: 'text-ok' },
+  declined: { label: 'Declined · refunded', tone: 't-faint' },
+  cancelled: { label: 'Cancelled', tone: 't-faint' },
+  rescheduled: { label: 'Moved', tone: 't-faint' },
+  no_show: { label: 'Missed', tone: 't-faint' },
+}
+
 /** How each channel is actually delivered. */
 const CHANNELS = {
   call: { icon: 'phone', label: 'Call' },
@@ -240,12 +257,8 @@ export default function Consult() {
                 </span>
                 <span className="flex-none text-right">
                   <span className="block caps-sm tnum t-heading">₹{rupees(b.amount_paise)}</span>
-                  <span
-                    className={`mt-0.5 block caps-sm ${
-                      b.status === 'declined' ? 't-faint' : 'text-ok'
-                    }`}
-                  >
-                    {b.status === 'declined' ? 'Declined · refunded' : b.status}
+                  <span className={`mt-0.5 block caps-sm ${STATUS[b.status]?.tone ?? 't-faint'}`}>
+                    {STATUS[b.status]?.label ?? b.status}
                   </span>
                 </span>
               </li>

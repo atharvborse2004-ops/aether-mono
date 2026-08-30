@@ -12,7 +12,7 @@ Updated 30 Aug 2026.
 | 2 · wallet | Done |
 | 3 · payments in | **Built and deployed. One done-condition short**, blocked on Razorpay's website review. The site is now on `1namo.com` (the move Razorpay's review wanted — §6); registering that domain and its policy pages with Razorpay is the remaining step. Until it clears, live checkout is refused and **production wallets cannot be funded** |
 | 4 · consultants, availability, approval | **Done.** Schema, seed and front end live on both projects; its check passes on both |
-| **5 · bookings** | **Done.** All four done-conditions pass on dev, walked in a browser. Applied to both projects — production first and by mistake (§2), dev by hand afterwards |
+| **5 · bookings** | **Done**, with a review follow-up outstanding. All four done-conditions pass on dev, walked in a browser; `012` is on both projects. `013` fixes four defects a review found and **is not applied anywhere** (§2) |
 | 6 · chat | **Next** |
 
 **Production has one real consultant**, who applied through `/pro/apply` and was
@@ -227,6 +227,7 @@ thing that ran it — keep the two in step by hand.
 | `010_bookings_view.sql` | `bookings_view`, which carries the other party's name |
 | `011_round_price_bands.sql` | derived band prices to whole rupees; restores the six the PRD names |
 | `012_bookings_transaction.sql` | `orders`, `order_items`, `earnings_ledger`, `book_session()`, `booking_reverse()` and the decline trigger. On both projects |
+| `013_booking_review_fixes.sql` | Four defects found by review of 012. **Written and applied NOWHERE yet** — see below |
 
 **Four `_check.sql` files sit beside them and are tests, not migrations.**
 `003_wallets_ledger_check`, `006_payments_check`, `009_slots_check`,
@@ -454,6 +455,56 @@ missing-policy lint, and `booking_reverse` does not appear in the "signed-in
 users can execute" list because it is granted to nobody. `book_session` does
 appear, which is intended and is the same class as `wallet_debit`.
 
+### Phase 5 follow-up — what the review found
+
+A review of the phase 5 diff on 31 Aug found ten things. It also confirmed the
+parts that mattered: the slot claim really does precede the debit on every
+refusal path, the savepoint semantics hold, `order_items_select_own` is properly
+qualified (the phase 4 collapse is not repeated), the grants are right, and the
+basis-point arithmetic satisfies rule 1.
+
+**`013_booking_review_fixes.sql` carries the four schema fixes and is applied
+nowhere.** It must go to dev first, then production, both by hand.
+
+- **The reversal guard was a check-then-insert race** — the exact pattern rule 6
+  bans. Two reversals at once (an admin calling `booking_reverse` for a platform
+  failure while the consultant taps Decline) both read no refund row and both
+  credit. Now a partial unique index on `ledger (ref_id) where ref_type='refund'`,
+  with the duplicate caught rather than checked for — phase 3's shape, borrowed.
+- **`P0001` is not a private sentinel.** It is the SQLSTATE of every bare
+  `raise exception`, including `refuse_mutation()`. Latent today, but the first
+  trigger on any of the four tables that raises plainly would have told a seeker
+  "Not enough balance" with an unrelated balance figure. Now `WB001`.
+- **A zero-price service threw a raw error** instead of refusing, because
+  `ledger` rejects a zero delta. Guarded with a reason.
+- **The earnings row was labelled with the consultant's own name**, so their book
+  read as their own name repeated. Each party's book now names the other party.
+
+Two front-end fixes are already live in the code and walked on dev:
+
+- **The booking sheet did not reload slots after a SUCCESSFUL booking**, only
+  after a refusal — so reopening it offered the slot you had just taken, and
+  confirming it said "Someone just took that time" about yourself. Verified
+  fixed: 11:00 present before, absent on reopen.
+- **Raw enum statuses were rendered to seekers**, and everything except
+  `declined` was painted green — a cancelled or missed session read as success.
+  Now a seven-status map; `pending` reads "Awaiting reply".
+
+Two more went into the check file: assertion 8 pins the per-minute refusal to
+its actual words rather than accepting any refusal, and assertion 9 now tests
+the ALLOW direction of the new policies too — an over-restrictive policy would
+have left `ProEarnings` permanently empty and still reported PASSED. A new
+assertion 10 covers the reversal index.
+
+**One finding is not fixed, on purpose: a consultant who never answers.** Money
+is taken at `pending`, the only reversal is a decline, and the seeker has no
+rights over the row — so an unanswered request holds their money indefinitely
+and leaves a positive earnings row phase 12 would pay out. The manual remedy
+exists (`booking_reverse(booking, 'no answer')`). What is missing is a deadline,
+and that is a product decision: too short and a consultant loses bookings to a
+slow morning, too long and a seeker's money is held for a week. Logged in
+`01-PRD.md` §5.4 and in §4 below.
+
 ### The seed
 
 `backend/seed/seed.mjs`, run with the service-role key and a `--ref` that must
@@ -538,6 +589,7 @@ Recorded so they are not re-argued. Reasoning is in the documents.
 
 | Question | Blocks |
 |---|---|
+| How long a `pending` booking may hold a seeker's money before it expires | Phase 12, and any consultant who is not the founder — `01-PRD.md` §5.4 |
 | Report prices and the duplicate SKUs | Phases 8, 10 |
 | Chat window — booking-bound or quota-bound | Phase 6 |
 | Ephemeris reference chart | Phase 7 |

@@ -326,6 +326,21 @@ stranger's money.
 `cancelled` stays in the `bookings` status check for admin use. There is no
 client transition into it.
 
+**Open, and found by review of the phase 5 code on 31 Aug 2026: a consultant
+who never answers.** Money is taken at `pending`. The only reversal is a
+decline, and the seeker has no update rights at all — so an unanswered request
+holds the seeker's rupees indefinitely, and leaves a positive `earnings_ledger`
+row that phase 12 would pay out for a session that never happened. That is the
+same failure this section already refuses to accept from a decline.
+
+The remedy exists and is manual: an admin calls
+`booking_reverse(<booking>, 'no answer')`, which is the same function all three
+reversing cases use. What is missing is a **deadline** — how long a request may
+sit before it expires and reverses itself. That is a product decision, not a
+review fix: too short and a consultant loses real bookings to a slow morning,
+too long and a seeker's money is held for a week. **Decide it before the first
+consultant who is not the founder takes bookings.**
+
 **Two things this obliges before launch, both outside the code.** A published
 cancellation and refund policy page is a Razorpay activation requirement, so it
 has to exist on the domain either way — §8. And a blanket no-refund term does

@@ -127,6 +127,12 @@ export default function ConsultantProfile() {
     }
     setSheet(false)
     setSlot(null)
+    /* Reload on SUCCESS too, not only on refusal. The effect that fetches
+       slots is keyed on [c, day], and `openSheet` resets the day to today —
+       which is a no-op when you were already on today. So the sheet reopened
+       still offering the slot you just took, and confirming it came back
+       "Someone just took that time", about yourself. */
+    openSlots(c.id, day).then(setSlots)
     showToast(`Requested · ${slot.slot} · ${duration} min`)
   }
 
