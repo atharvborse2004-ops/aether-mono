@@ -774,9 +774,24 @@ is a `security definer` function callable by `anon`, which is the point of it.
 
 ### Owed, not blocking
 
-- **The reconciliation sweep.** `order_TTiovPCUcREweJ` was reconciled by hand,
-  which proves the fix and is not the fix. The next silent loss has no
-  automated catch. Cheap insurance now that production takes real money.
+- **The reconciliation sweep — now written.** `backend/tools/reconcile-payments.mjs`
+  reads every `payments` row stuck at `created` with no terminal sibling and
+  asks Razorpay what actually happened to it. Read-only by design: it credits
+  nothing, because a script that mints undoes the reason phase 3 is shaped the
+  way it is. It exits non-zero and names the people owed.
+
+  **Why it has to call Razorpay at all:** a lone `created` row is identical
+  whether the person abandoned the checkout or paid and got nothing. Nothing
+  inside the database can tell those apart. That, not the wrong secret, is why
+  the lost payment stayed lost — the secret was the trigger, the absence of an
+  expected outcome was the cause.
+
+  Run against production 31 Aug: 7 rows, 5 unresolved, **nothing owed** — three
+  abandoned checkouts and two orders whose every attempt Razorpay itself
+  refused with "website does not match registered website(s)". Run it after any
+  webhook change and before believing the first live payment worked.
+
+  Still owed: running it on a schedule rather than by hand.
 - **The checkout-dismiss path** — `ondismiss()` and `payment.failed()` in
   `topup()` have never run.
 - **The seeker onboarding branch has not been walked this session.** Every
